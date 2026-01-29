@@ -1,0 +1,46 @@
+# Render Blueprint - 9DTTT Game Platform
+# This file tells Render how to deploy your service automatically
+
+services:
+  - type: web
+    name: 9dttt
+    runtime: node
+    region: virginia
+    plan: free
+    branch: main
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NO_ANIMATION
+        value: "true"
+      # JWT Secret - auto-generated
+      - key: JWT_SECRET
+        generateValue: true
+      # Keep-alive URL (set to your Render URL after first deploy)
+      - key: RENDER_EXTERNAL_URL
+        sync: false
+      # Redis (optional - add Render Redis for persistence)
+      - key: REDIS_URL
+        sync: false
+      # OAuth - Discord (https://discord.com/developers/applications)
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_CLIENT_SECRET
+        sync: false
+      # OAuth - Google (https://console.cloud.google.com/apis/credentials)
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      # OAuth - Twitch (https://dev.twitch.tv/console/apps)
+      - key: TWITCH_CLIENT_ID
+        sync: false
+      - key: TWITCH_CLIENT_SECRET
+        sync: false
+      # OAuth - Twitter (https://developer.twitter.com/en/portal/dashboard)
+      - key: TWITTER_CLIENT_ID
+        sync: false
+      - key: TWITTER_CLIENT_SECRET
+        sync: false
