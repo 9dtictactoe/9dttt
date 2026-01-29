@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0e27">
+    <meta name="description" content="Beach Games - T&C Surf style minigame collection">
+    <title>Beach Games - Surf, Skate & More!</title>
+    
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/arcade-games.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="container">
+        <header role="banner">
+            <h1>🏄 Beach Games</h1>
+            <p class="subtitle">Surf • Skate • Hacky Sack!</p>
+        </header>
+
+        <div id="gamepad-status"></div>
+
+        <main id="main-content" role="main">
+            <div class="game-container">
+                <canvas id="game-canvas" width="800" height="500"></canvas>
+                
+                <div class="controls">
+                    <button onclick="game.startGame('surf')">🌊 Surfing</button>
+                    <button onclick="game.startGame('skate')">🛹 Skateboarding</button>
+                    <button onclick="game.startGame('hacky')">⚽ Hacky Sack</button>
+                </div>
+                
+                <div class="control-hint">
+                    <div>
+                        <h4>🌊 Surfing</h4>
+                        <p><kbd>←</kbd><kbd>→</kbd> - Steer</p>
+                        <p><kbd>↑</kbd> - Speed up</p>
+                        <p><kbd>Space</kbd> - Trick</p>
+                    </div>
+                    <div>
+                        <h4>🛹 Skateboarding</h4>
+                        <p><kbd>←</kbd><kbd>→</kbd> - Balance</p>
+                        <p><kbd>Space</kbd> - Jump/Trick</p>
+                        <p><kbd>↓</kbd> - Crouch</p>
+                    </div>
+                    <div>
+                        <h4>⚽ Hacky Sack</h4>
+                        <p><kbd>←</kbd><kbd>→</kbd> - Move</p>
+                        <p><kbd>↑</kbd> - Kick up</p>
+                        <p><kbd>Space</kbd> - Trick kick</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer role="contentinfo">
+            <p>&copy; 2026 Beach Games | 9DTTT Game Library</p>
+            <p><a href="../index.html" style="color: #4a90e2;">← Back to Game Library</a></p>
+        </footer>
+    </div>
+
+    <script src="../js/gamepad-manager.js"></script>
+    <script src="../js/accessibility-manager.js"></script>
+    <script src="../js/game-engine.js"></script>
+    <!-- Browser Native Authentication (Credential Management API) -->
+    <script src="../js/browser-auth-init.js"></script>
+    <script src="../js/auth-client.js"></script>
+    <script src="../js/game-ui.js"></script>
+    <script>
+        class BeachGames {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.width = this.canvas.width;
+                this.height = this.canvas.height;
+                
+                this.state = 'menu';
+                this.gameMode = 'surf';
+                
+                this.score = 0;
+                this.highScores = {
+                    surf: 0,
+                    skate: 0,
+                    hacky: 0
+                };
+                
+                this.keys = {};
+                this.setupInput();
+                this.gameLoop();
+            }
+            
+            setupInput() {
+                window.addEventListener('keydown', e => {
+                    this.keys[e.code] = true;
+                    if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) {
+                        e.preventDefault();
+                    }
+                });
+                window.addEventListener('keyup', e => this.keys[e.code] = false);
+            }
+            
+            startGame(mode) {
+                this.gameMode = mode;
+                this.state = 'playing';
+                this.score = 0;
+                
+                if (mode === 'surf') this.initSurf();
+                else if (mode === 'skate') this.initSkate();
+                else if (mode === 'hacky') this.initHacky();
+            }
+            
+            // ============ SURFING GAME ============
+            initSurf() {
+                this.surf = {
+                    x: this.width / 2,
+                    y: this.height - 150,
+                    angle: 0,
+                    speed: 3,
+                    inAir: false,
+                    airTime: 0,
+                    trick: null,
+                    trickTime: 0,
+                    combo: 0,
+                    wipeout: false
+                };
+                
+                this.waves = [];
+                this.obstacles = [];
+                this.waveOffset = 0;
+                this.gameTime = 60;
+                
+                // Generate initial waves
+                for (let i = 0; i < 5; i++) {
+                    this.waves.push({
+                        x: Math.random() * this.width,
+                        y: 100 + i * 100,
+                        width: 150 + Math.random() * 100,
+                        height: 30 + Math.random() * 20,
+                        speed: 1 + Math.random()
+                    });
+                }
+            }
+            
+            updateSurf(dt) {
+                if (this.surf.wipeout) {
+                    this.surf.wipeout -= dt;
+                    if (this.surf.wipeout <= 0) {
+                        this.surf.wipeout = false;
+                        this.surf.x = this.width / 2;
+                        this.surf.y = this.height - 150;
+                        this.surf.combo = 0;
+                    }
+                    return;
+                }
+                
+                this.gameTime -= dt;
+                if (this.gameTime <= 0) {
+                    this.endGame();
+                    return;
+                }
+                
+                const gp = window.gamepadManager?.getState(0);
+                
+                // Movement
+                if (this.keys['ArrowLeft'] || gp?.axes.leftX < -0.3) {
+                    this.surf.x -= 5;
+                    this.surf.angle = -0.2;
+                } else if (this.keys['ArrowRight'] || gp?.axes.leftX > 0.3) {
+                    this.surf.x += 5;
+                    this.surf.angle = 0.2;
+                } else {
+                    this.surf.angle *= 0.9;
+                }
+                
+                // Speed up
+                if (this.keys['ArrowUp'] || gp?.buttons.a) {
+                    this.surf.speed = Math.min(8, this.surf.speed + 0.1);
+                } else {
+                    this.surf.speed = Math.max(3, this.surf.speed - 0.05);
+                }
+                
+                // Trick
+                if ((this.keys['Space'] || gp?.buttons.x) && !this.surf.inAir) {
+                    this.surf.inAir = true;
+                    this.surf.airTime = 0;
+                    this.surf.trick = ['360', 'Flip', 'Grab', 'Aerial'][Math.floor(Math.random() * 4)];
+                    this.surf.trickTime = 0;
+                }
+                
+                // Air physics
+                if (this.surf.inAir) {
+                    this.surf.airTime += dt;
+                    this.surf.trickTime += dt;
+                    this.surf.y -= Math.sin(this.surf.airTime * 4) * 3;
+                    
+                    if (this.surf.airTime > 0.8) {
+                        this.surf.inAir = false;
+                        // Land trick
+                        if (Math.abs(this.surf.angle) < 0.3) {
+                            this.surf.combo++;
+                            const points = 100 * this.surf.combo;
+                            this.score += points;
+                        } else {
+                            this.surf.wipeout = 2;
+                            this.surf.combo = 0;
+                        }
+                    }
+                }
+                
+                // Keep in bounds
+                this.surf.x = Math.max(50, Math.min(this.width - 50, this.surf.x));
+                
+                // Update waves
+                this.waveOffset += this.surf.speed;
+                this.waves.forEach(wave => {
+                    wave.y += this.surf.speed * 0.5;
+                    if (wave.y > this.height + 50) {
+                        wave.y = -50;
+                        wave.x = Math.random() * this.width;
+                    }
+                });
+                
+                // Spawn obstacles
+                if (Math.random() < 0.01) {
+                    this.obstacles.push({
+                        x: Math.random() * this.width,
+                        y: -50,
+                        type: Math.random() < 0.5 ? 'rock' : 'shark',
+                        width: 40,
+                        height: 30
+                    });
+                }
+                
+                // Update obstacles
+                this.obstacles = this.obstacles.filter(obs => {
+                    obs.y += this.surf.speed;
+                    
+                    // Collision
+                    if (!this.surf.inAir && !this.surf.wipeout) {
+                        if (Math.abs(obs.x - this.surf.x) < 40 && Math.abs(obs.y - this.surf.y) < 40) {
+                            this.surf.wipeout = 2;
+                            this.surf.combo = 0;
+                        }
+                    }
+                    
+                    return obs.y < this.height + 50;
+                });
+                
+                // Bonus points for speed
+                this.score += Math.floor(this.surf.speed * 0.5);
+            }
+            
+            renderSurf() {
+                // Ocean gradient
+                const gradient = this.ctx.createLinearGradient(0, 0, 0, this.height);
+                gradient.addColorStop(0, '#1a5276');
+                gradient.addColorStop(0.5, '#2980b9');
+                gradient.addColorStop(1, '#3498db');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                // Wave patterns
+                this.ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                this.ctx.lineWidth = 2;
+                for (let y = (this.waveOffset % 40) - 40; y < this.height; y += 40) {
+                    this.ctx.beginPath();
+                    for (let x = 0; x < this.width; x += 10) {
+                        const waveY = y + Math.sin(x * 0.05 + this.waveOffset * 0.1) * 10;
+                        if (x === 0) this.ctx.moveTo(x, waveY);
+                        else this.ctx.lineTo(x, waveY);
+                    }
+                    this.ctx.stroke();
+                }
+                
+                // Waves (ramps)
+                this.waves.forEach(wave => {
+                    this.ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                    this.ctx.beginPath();
+                    this.ctx.ellipse(wave.x, wave.y, wave.width/2, wave.height, 0, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+                
+                // Obstacles
+                this.obstacles.forEach(obs => {
+                    if (obs.type === 'rock') {
+                        this.ctx.fillStyle = '#5d6d7e';
+                        this.ctx.beginPath();
+                        this.ctx.arc(obs.x, obs.y, 20, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    } else {
+                        // Shark fin
+                        this.ctx.fillStyle = '#2c3e50';
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(obs.x, obs.y + 15);
+                        this.ctx.lineTo(obs.x - 15, obs.y + 15);
+                        this.ctx.lineTo(obs.x, obs.y - 20);
+                        this.ctx.closePath();
+                        this.ctx.fill();
+                    }
+                });
+                
+                // Surfer
+                if (!this.surf.wipeout) {
+                    this.ctx.save();
+                    this.ctx.translate(this.surf.x, this.surf.y);
+                    this.ctx.rotate(this.surf.angle);
+                    
+                    // Board
+                    this.ctx.fillStyle = '#f1c40f';
+                    this.ctx.beginPath();
+                    this.ctx.ellipse(0, 10, 35, 8, 0, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Stripe on board
+                    this.ctx.fillStyle = '#e74c3c';
+                    this.ctx.fillRect(-25, 8, 50, 4);
+                    
+                    // Surfer body
+                    this.ctx.fillStyle = '#f5b041';
+                    this.ctx.fillRect(-8, -30, 16, 35);
+                    
+                    // Head
+                    this.ctx.fillStyle = '#f5cba7';
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, -40, 12, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Hair
+                    this.ctx.fillStyle = '#f4d03f';
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, -45, 10, Math.PI, 0);
+                    this.ctx.fill();
+                    
+                    // Arms
+                    this.ctx.fillStyle = '#f5cba7';
+                    this.ctx.fillRect(-25, -25, 15, 6);
+                    this.ctx.fillRect(10, -25, 15, 6);
+                    
+                    this.ctx.restore();
+                    
+                    // Trick text
+                    if (this.surf.inAir && this.surf.trick) {
+                        this.ctx.fillStyle = '#FFD700';
+                        this.ctx.font = 'bold 24px Arial';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.fillText(this.surf.trick + '!', this.surf.x, this.surf.y - 60);
+                    }
+                } else {
+                    // Wipeout animation
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = 'bold 36px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('WIPEOUT!', this.width/2, this.height/2);
+                }
+                
+                // UI
+                this.ctx.fillStyle = '#FFF';
+                this.ctx.font = 'bold 24px Arial';
+                this.ctx.textAlign = 'left';
+                this.ctx.fillText(`Score: ${this.score}`, 20, 35);
+                this.ctx.fillText(`Combo: x${this.surf.combo}`, 20, 65);
+                this.ctx.textAlign = 'right';
+                this.ctx.fillText(`Time: ${Math.ceil(this.gameTime)}s`, this.width - 20, 35);
+                this.ctx.fillText(`Speed: ${Math.floor(this.surf.speed * 10)}`, this.width - 20, 65);
+            }
+            
+            // ============ SKATEBOARDING GAME ============
+            initSkate() {
+                this.skate = {
+                    x: 200,
+                    y: this.height - 100,
+                    vy: 0,
+                    angle: 0,
+                    speed: 5,
+                    grounded: true,
+                    grinding: false,
+                    trick: null,
+                    trickRotation: 0,
+                    combo: 0,
+                    bail: false
+                };
+                
+                this.ramps = [];
+                this.rails = [];
+                this.coins = [];
+                this.scrollX = 0;
+                this.gameTime = 60;
+                
+                this.generateSkateLevel();
+            }
+            
+            generateSkateLevel() {
+                // Generate ramps and rails
+                for (let x = 400; x < 5000; x += 200 + Math.random() * 300) {
+                    if (Math.random() < 0.6) {
+                        this.ramps.push({
+                            x: x,
+                            width: 80 + Math.random() * 60,
+                            height: 40 + Math.random() * 40,
+                            type: Math.random() < 0.5 ? 'up' : 'quarter'
+                        });
+                    } else {
+                        this.rails.push({
+                            x: x,
+                            width: 100 + Math.random() * 100,
+                            y: this.height - 120 - Math.random() * 30
+                        });
+                    }
+                    
+                    // Coins
+                    for (let i = 0; i < 3; i++) {
+                        this.coins.push({
+                            x: x + i * 30,
+                            y: this.height - 150 - Math.random() * 100,
+                            collected: false
+                        });
+                    }
+                }
+            }
+            
+            updateSkate(dt) {
+                if (this.skate.bail) {
+                    this.skate.bail -= dt;
+                    if (this.skate.bail <= 0) {
+                        this.skate.bail = false;
+                        this.skate.y = this.height - 100;
+                        this.skate.vy = 0;
+                        this.skate.combo = 0;
+                    }
+                    return;
+                }
+                
+                this.gameTime -= dt;
+                if (this.gameTime <= 0) {
+                    this.endGame();
+                    return;
+                }
+                
+                const gp = window.gamepadManager?.getState(0);
+                const groundY = this.height - 100;
+                
+                // Gravity
+                if (!this.skate.grounded && !this.skate.grinding) {
+                    this.skate.vy += 0.8;
+                    this.skate.y += this.skate.vy;
+                }
+                
+                // Balance (affects landing)
+                if (this.keys['ArrowLeft'] || gp?.axes.leftX < -0.3) {
+                    this.skate.angle = Math.max(-0.5, this.skate.angle - 0.05);
+                } else if (this.keys['ArrowRight'] || gp?.axes.leftX > 0.3) {
+                    this.skate.angle = Math.min(0.5, this.skate.angle + 0.05);
+                } else {
+                    this.skate.angle *= 0.95;
+                }
+                
+                // Jump/Ollie
+                if ((this.keys['Space'] || gp?.buttons.a) && this.skate.grounded) {
+                    this.skate.vy = -15;
+                    this.skate.grounded = false;
+                    this.skate.trick = ['Kickflip', 'Heelflip', '360 Flip', 'Impossible'][Math.floor(Math.random() * 4)];
+                    this.skate.trickRotation = 0;
+                }
+                
+                // Trick rotation in air
+                if (!this.skate.grounded && this.skate.trick) {
+                    this.skate.trickRotation += 0.3;
+                }
+                
+                // Crouch for speed
+                if (this.keys['ArrowDown'] || gp?.buttons.b) {
+                    this.skate.speed = Math.min(10, this.skate.speed + 0.1);
+                } else {
+                    this.skate.speed = Math.max(5, this.skate.speed - 0.02);
+                }
+                
+                // Scroll
+                this.scrollX += this.skate.speed;
+                
+                // Ground collision
+                if (this.skate.y >= groundY) {
+                    this.skate.y = groundY;
+                    
+                    if (!this.skate.grounded) {
+                        // Landing
+                        if (Math.abs(this.skate.angle) < 0.3) {
+                            // Good landing
+                            if (this.skate.trick) {
+                                this.skate.combo++;
+                                this.score += 100 * this.skate.combo;
+                            }
+                        } else {
+                            // Bail!
+                            this.skate.bail = 1.5;
+                        }
+                        this.skate.trick = null;
+                    }
+                    
+                    this.skate.grounded = true;
+                    this.skate.vy = 0;
+                    this.skate.grinding = false;
+                }
+                
+                // Ramp collision
+                this.ramps.forEach(ramp => {
+                    const rampScreenX = ramp.x - this.scrollX;
+                    if (this.skate.x > rampScreenX && this.skate.x < rampScreenX + ramp.width) {
+                        if (this.skate.grounded) {
+                            // Going up ramp
+                            const rampProgress = (this.skate.x - rampScreenX) / ramp.width;
+                            const rampY = groundY - ramp.height * Math.sin(rampProgress * Math.PI / 2);
+                            this.skate.y = rampY;
+                            
+                            // Launch at end
+                            if (rampProgress > 0.9) {
+                                this.skate.vy = -12 - this.skate.speed;
+                                this.skate.grounded = false;
+                            }
+                        }
+                    }
+                });
+                
+                // Rail grinding
+                this.rails.forEach(rail => {
+                    const railScreenX = rail.x - this.scrollX;
+                    if (!this.skate.grounded && this.skate.x > railScreenX && this.skate.x < railScreenX + rail.width) {
+                        if (Math.abs(this.skate.y - rail.y) < 20 && this.skate.vy > 0) {
+                            this.skate.y = rail.y;
+                            this.skate.vy = 0;
+                            this.skate.grinding = true;
+                            this.score += 10;
+                        }
+                    }
+                    
+                    // End of rail
+                    if (this.skate.grinding && this.skate.x > railScreenX + rail.width) {
+                        this.skate.grinding = false;
+                        this.skate.combo++;
+                        this.score += 50 * this.skate.combo;
+                    }
+                });
+                
+                // Coin collection
+                this.coins.forEach(coin => {
+                    if (coin.collected) return;
+                    const coinScreenX = coin.x - this.scrollX;
+                    if (Math.abs(this.skate.x - coinScreenX) < 30 && Math.abs(this.skate.y - coin.y) < 30) {
+                        coin.collected = true;
+                        this.score += 25;
+                    }
+                });
+            }
+            
+            renderSkate() {
+                // Sky
+                const gradient = this.ctx.createLinearGradient(0, 0, 0, this.height);
+                gradient.addColorStop(0, '#87CEEB');
+                gradient.addColorStop(1, '#E0F6FF');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                // Sun
+                this.ctx.fillStyle = '#f39c12';
+                this.ctx.beginPath();
+                this.ctx.arc(650, 80, 50, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Ground
+                this.ctx.fillStyle = '#7f8c8d';
+                this.ctx.fillRect(0, this.height - 80, this.width, 80);
+                
+                // Concrete texture
+                this.ctx.fillStyle = '#95a5a6';
+                for (let x = -this.scrollX % 100; x < this.width; x += 100) {
+                    this.ctx.fillRect(x, this.height - 80, 2, 80);
+                }
+                
+                // Ramps
+                this.ramps.forEach(ramp => {
+                    const screenX = ramp.x - this.scrollX;
+                    if (screenX > -100 && screenX < this.width + 100) {
+                        this.ctx.fillStyle = '#d35400';
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(screenX, this.height - 80);
+                        this.ctx.lineTo(screenX + ramp.width, this.height - 80);
+                        this.ctx.lineTo(screenX + ramp.width, this.height - 80 - ramp.height);
+                        this.ctx.quadraticCurveTo(screenX + ramp.width/2, this.height - 80 - ramp.height * 1.2, screenX, this.height - 80);
+                        this.ctx.fill();
+                    }
+                });
+                
+                // Rails
+                this.rails.forEach(rail => {
+                    const screenX = rail.x - this.scrollX;
+                    if (screenX > -150 && screenX < this.width + 150) {
+                        // Posts
+                        this.ctx.fillStyle = '#7f8c8d';
+                        this.ctx.fillRect(screenX, rail.y, 5, this.height - 80 - rail.y);
+                        this.ctx.fillRect(screenX + rail.width - 5, rail.y, 5, this.height - 80 - rail.y);
+                        
+                        // Rail
+                        this.ctx.fillStyle = '#bdc3c7';
+                        this.ctx.fillRect(screenX, rail.y - 3, rail.width, 6);
+                    }
+                });
+                
+                // Coins
+                this.coins.forEach(coin => {
+                    if (coin.collected) return;
+                    const screenX = coin.x - this.scrollX;
+                    if (screenX > -20 && screenX < this.width + 20) {
+                        this.ctx.fillStyle = '#f1c40f';
+                        this.ctx.beginPath();
+                        this.ctx.arc(screenX, coin.y, 12, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        this.ctx.fillStyle = '#f39c12';
+                        this.ctx.beginPath();
+                        this.ctx.arc(screenX, coin.y, 8, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
+                });
+                
+                // Skater
+                if (!this.skate.bail) {
+                    this.ctx.save();
+                    this.ctx.translate(this.skate.x, this.skate.y);
+                    this.ctx.rotate(this.skate.angle);
+                    
+                    // Board
+                    if (this.skate.trick && !this.skate.grounded) {
+                        this.ctx.rotate(this.skate.trickRotation);
+                    }
+                    this.ctx.fillStyle = '#2c3e50';
+                    this.ctx.beginPath();
+                    this.ctx.ellipse(0, 5, 30, 5, 0, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Wheels
+                    this.ctx.fillStyle = '#e74c3c';
+                    this.ctx.beginPath();
+                    this.ctx.arc(-20, 8, 5, 0, Math.PI * 2);
+                    this.ctx.arc(20, 8, 5, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Reset rotation for body
+                    if (this.skate.trick && !this.skate.grounded) {
+                        this.ctx.rotate(-this.skate.trickRotation);
+                    }
+                    
+                    // Legs
+                    this.ctx.fillStyle = '#3498db';
+                    this.ctx.fillRect(-12, -25, 10, 30);
+                    this.ctx.fillRect(2, -25, 10, 30);
+                    
+                    // Body
+                    this.ctx.fillStyle = '#e74c3c';
+                    this.ctx.fillRect(-12, -50, 24, 28);
+                    
+                    // Head
+                    this.ctx.fillStyle = '#f5cba7';
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, -60, 12, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Cap
+                    this.ctx.fillStyle = '#2c3e50';
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, -65, 10, Math.PI, 0);
+                    this.ctx.fill();
+                    this.ctx.fillRect(-12, -65, 24, 5);
+                    
+                    // Arms
+                    this.ctx.fillStyle = '#f5cba7';
+                    this.ctx.fillRect(-20, -45, 8, 5);
+                    this.ctx.fillRect(12, -45, 8, 5);
+                    
+                    this.ctx.restore();
+                    
+                    // Trick text
+                    if (this.skate.trick && !this.skate.grounded) {
+                        this.ctx.fillStyle = '#e74c3c';
+                        this.ctx.font = 'bold 20px Arial';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.fillText(this.skate.trick + '!', this.skate.x, this.skate.y - 80);
+                    }
+                    
+                    // Grinding sparks
+                    if (this.skate.grinding) {
+                        this.ctx.fillStyle = '#f39c12';
+                        for (let i = 0; i < 5; i++) {
+                            this.ctx.beginPath();
+                            this.ctx.arc(
+                                this.skate.x - 10 + Math.random() * 20,
+                                this.skate.y + 5 + Math.random() * 10,
+                                2, 0, Math.PI * 2
+                            );
+                            this.ctx.fill();
+                        }
+                    }
+                } else {
+                    this.ctx.fillStyle = '#e74c3c';
+                    this.ctx.font = 'bold 36px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('BAIL!', this.width/2, this.height/2);
+                }
+                
+                // UI
+                this.ctx.fillStyle = '#2c3e50';
+                this.ctx.font = 'bold 24px Arial';
+                this.ctx.textAlign = 'left';
+                this.ctx.fillText(`Score: ${this.score}`, 20, 35);
+                this.ctx.fillText(`Combo: x${this.skate.combo}`, 20, 65);
+                this.ctx.textAlign = 'right';
+                this.ctx.fillText(`Time: ${Math.ceil(this.gameTime)}s`, this.width - 20, 35);
+            }
+            
+            // ============ HACKY SACK GAME ============
+            initHacky() {
+                this.hacky = {
+                    x: this.width / 2,
+                    y: this.height - 200,
+                    vx: 0,
+                    vy: 0,
+                    radius: 15
+                };
+                
+                this.player = {
+                    x: this.width / 2,
+                    footY: this.height - 50,
+                    kicking: false,
+                    kickFoot: 'right',
+                    kickTime: 0
+                };
+                
+                this.kicks = 0;
+                this.maxHeight = 0;
+                this.combo = 0;
+                this.tricks = [];
+                this.gameTime = 60;
+                this.dropped = false;
+            }
+            
+            updateHacky(dt) {
+                if (this.dropped) {
+                    this.dropped -= dt;
+                    if (this.dropped <= 0) {
+                        this.dropped = false;
+                        this.hacky.x = this.width / 2;
+                        this.hacky.y = this.height - 200;
+                        this.hacky.vx = 0;
+                        this.hacky.vy = 0;
+                        this.combo = 0;
+                    }
+                    return;
+                }
+                
+                this.gameTime -= dt;
+                if (this.gameTime <= 0) {
+                    this.endGame();
+                    return;
+                }
+                
+                const gp = window.gamepadManager?.getState(0);
+                
+                // Player movement
+                if (this.keys['ArrowLeft'] || gp?.axes.leftX < -0.3) {
+                    this.player.x = Math.max(50, this.player.x - 6);
+                }
+                if (this.keys['ArrowRight'] || gp?.axes.leftX > 0.3) {
+                    this.player.x = Math.min(this.width - 50, this.player.x + 6);
+                }
+                
+                // Kick
+                if ((this.keys['ArrowUp'] || gp?.buttons.a) && !this.player.kicking) {
+                    this.player.kicking = true;
+                    this.player.kickTime = 0;
+                    this.player.kickFoot = this.player.kickFoot === 'right' ? 'left' : 'right';
+                }
+                
+                // Trick kick
+                if ((this.keys['Space'] || gp?.buttons.x) && !this.player.kicking) {
+                    this.player.kicking = true;
+                    this.player.kickTime = 0;
+                    this.player.kickFoot = 'trick';
+                }
+                
+                // Update kick animation
+                if (this.player.kicking) {
+                    this.player.kickTime += dt;
+                    if (this.player.kickTime > 0.3) {
+                        this.player.kicking = false;
+                    }
+                }
+                
+                // Hacky sack physics
+                this.hacky.vy += 0.5; // Gravity
+                this.hacky.x += this.hacky.vx;
+                this.hacky.y += this.hacky.vy;
+                
+                // Air resistance
+                this.hacky.vx *= 0.99;
+                
+                // Track max height
+                if (this.hacky.y < this.maxHeight) {
+                    this.maxHeight = this.hacky.y;
+                }
+                
+                // Wall bounce
+                if (this.hacky.x < this.hacky.radius || this.hacky.x > this.width - this.hacky.radius) {
+                    this.hacky.vx *= -0.7;
+                    this.hacky.x = Math.max(this.hacky.radius, Math.min(this.width - this.hacky.radius, this.hacky.x));
+                }
+                
+                // Kick collision
+                if (this.player.kicking && this.player.kickTime < 0.15) {
+                    const kickX = this.player.kickFoot === 'left' ? this.player.x - 25 : 
+                                  this.player.kickFoot === 'right' ? this.player.x + 25 : this.player.x;
+                    const kickY = this.player.footY - 30;
+                    
+                    const dist = Math.hypot(this.hacky.x - kickX, this.hacky.y - kickY);
+                    
+                    if (dist < 40) {
+                        this.kicks++;
+                        this.combo++;
+                        
+                        // Calculate kick direction
+                        const angle = Math.atan2(this.hacky.y - kickY, this.hacky.x - kickX);
+                        const power = this.player.kickFoot === 'trick' ? 18 : 12;
+                        
+                        this.hacky.vx = Math.cos(angle) * power * 0.5;
+                        this.hacky.vy = -power;
+                        
+                        // Score
+                        let points = 10 * this.combo;
+                        if (this.player.kickFoot === 'trick') {
+                            points *= 2;
+                            this.tricks.push({ name: 'TRICK!', time: 1, x: this.hacky.x, y: this.hacky.y });
+                        }
+                        this.score += points;
+                        
+                        this.maxHeight = this.hacky.y;
+                    }
+                }
+                
+                // Ground - dropped!
+                if (this.hacky.y > this.height - 30) {
+                    this.dropped = 1.5;
+                    this.combo = 0;
+                }
+                
+                // Update trick texts
+                this.tricks = this.tricks.filter(t => {
+                    t.time -= dt;
+                    t.y -= 2;
+                    return t.time > 0;
+                });
+            }
+            
+            renderHacky() {
+                // Beach background
+                const gradient = this.ctx.createLinearGradient(0, 0, 0, this.height);
+                gradient.addColorStop(0, '#87CEEB');
+                gradient.addColorStop(0.6, '#87CEEB');
+                gradient.addColorStop(0.6, '#f4d03f');
+                gradient.addColorStop(1, '#d4ac0d');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                // Ocean in background
+                this.ctx.fillStyle = '#3498db';
+                this.ctx.fillRect(0, this.height * 0.55, this.width, 30);
+                
+                // Palm tree
+                this.ctx.fillStyle = '#7d5a50';
+                this.ctx.fillRect(680, this.height * 0.4, 20, this.height * 0.6);
+                
+                this.ctx.fillStyle = '#27ae60';
+                for (let i = 0; i < 5; i++) {
+                    this.ctx.save();
+                    this.ctx.translate(690, this.height * 0.4);
+                    this.ctx.rotate((i - 2) * 0.4);
+                    this.ctx.beginPath();
+                    this.ctx.ellipse(40, 0, 50, 15, 0, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.restore();
+                }
+                
+                // Player
+                this.ctx.save();
+                this.ctx.translate(this.player.x, this.player.footY);
+                
+                // Legs
+                this.ctx.fillStyle = '#3498db';
+                
+                if (this.player.kicking && this.player.kickFoot === 'left') {
+                    // Left leg kicking
+                    this.ctx.save();
+                    this.ctx.rotate(-0.8);
+                    this.ctx.fillRect(-15, -60, 12, 50);
+                    this.ctx.restore();
+                    this.ctx.fillRect(3, -50, 12, 50);
+                } else if (this.player.kicking && this.player.kickFoot === 'right') {
+                    // Right leg kicking
+                    this.ctx.fillRect(-15, -50, 12, 50);
+                    this.ctx.save();
+                    this.ctx.rotate(0.8);
+                    this.ctx.fillRect(3, -60, 12, 50);
+                    this.ctx.restore();
+                } else if (this.player.kicking && this.player.kickFoot === 'trick') {
+                    // Behind the back kick!
+                    this.ctx.fillRect(-15, -50, 12, 50);
+                    this.ctx.save();
+                    this.ctx.rotate(1.2);
+                    this.ctx.fillRect(-25, -60, 12, 50);
+                    this.ctx.restore();
+                } else {
+                    this.ctx.fillRect(-15, -50, 12, 50);
+                    this.ctx.fillRect(3, -50, 12, 50);
+                }
+                
+                // Body
+                this.ctx.fillStyle = '#e74c3c';
+                this.ctx.fillRect(-18, -90, 36, 45);
+                
+                // Head
+                this.ctx.fillStyle = '#f5cba7';
+                this.ctx.beginPath();
+                this.ctx.arc(0, -105, 18, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Sunglasses
+                this.ctx.fillStyle = '#000';
+                this.ctx.fillRect(-15, -110, 12, 6);
+                this.ctx.fillRect(3, -110, 12, 6);
+                this.ctx.fillRect(-3, -108, 6, 2);
+                
+                // Hair
+                this.ctx.fillStyle = '#8e6e53';
+                this.ctx.beginPath();
+                this.ctx.arc(0, -115, 15, Math.PI, 0);
+                this.ctx.fill();
+                
+                // Arms
+                this.ctx.fillStyle = '#f5cba7';
+                this.ctx.fillRect(-30, -85, 12, 6);
+                this.ctx.fillRect(18, -85, 12, 6);
+                
+                this.ctx.restore();
+                
+                // Hacky sack
+                if (!this.dropped) {
+                    this.ctx.fillStyle = '#9b59b6';
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.hacky.x, this.hacky.y, this.hacky.radius, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Pattern
+                    this.ctx.fillStyle = '#8e44ad';
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.hacky.x - 5, this.hacky.y - 5, 5, 0, Math.PI * 2);
+                    this.ctx.arc(this.hacky.x + 5, this.hacky.y + 3, 4, 0, Math.PI * 2);
+                    this.ctx.fill();
+                } else {
+                    this.ctx.fillStyle = '#e74c3c';
+                    this.ctx.font = 'bold 36px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('DROPPED!', this.width/2, this.height/2);
+                }
+                
+                // Trick texts
+                this.tricks.forEach(trick => {
+                    this.ctx.fillStyle = `rgba(231, 76, 60, ${trick.time})`;
+                    this.ctx.font = 'bold 24px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(trick.name, trick.x, trick.y);
+                });
+                
+                // UI
+                this.ctx.fillStyle = '#2c3e50';
+                this.ctx.font = 'bold 24px Arial';
+                this.ctx.textAlign = 'left';
+                this.ctx.fillText(`Score: ${this.score}`, 20, 35);
+                this.ctx.fillText(`Kicks: ${this.kicks}`, 20, 65);
+                this.ctx.fillText(`Combo: x${this.combo}`, 20, 95);
+                this.ctx.textAlign = 'right';
+                this.ctx.fillText(`Time: ${Math.ceil(this.gameTime)}s`, this.width - 20, 35);
+            }
+            
+            // ============ COMMON ============
+            endGame() {
+                this.state = 'gameover';
+                if (this.score > this.highScores[this.gameMode]) {
+                    this.highScores[this.gameMode] = this.score;
+                }
+            }
+            
+            gameLoop() {
+                this.update();
+                this.render();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+            
+            update() {
+                if (this.state !== 'playing') return;
+                
+                const dt = 1/60;
+                
+                if (this.gameMode === 'surf') this.updateSurf(dt);
+                else if (this.gameMode === 'skate') this.updateSkate(dt);
+                else if (this.gameMode === 'hacky') this.updateHacky(dt);
+            }
+            
+            render() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                
+                if (this.state === 'menu') {
+                    this.renderMenu();
+                } else if (this.state === 'playing') {
+                    if (this.gameMode === 'surf') this.renderSurf();
+                    else if (this.gameMode === 'skate') this.renderSkate();
+                    else if (this.gameMode === 'hacky') this.renderHacky();
+                } else if (this.state === 'gameover') {
+                    this.renderGameOver();
+                }
+            }
+            
+            renderMenu() {
+                // Beach gradient
+                const gradient = this.ctx.createLinearGradient(0, 0, 0, this.height);
+                gradient.addColorStop(0, '#FF6B6B');
+                gradient.addColorStop(0.3, '#f39c12');
+                gradient.addColorStop(0.5, '#87CEEB');
+                gradient.addColorStop(0.7, '#3498db');
+                gradient.addColorStop(1, '#f4d03f');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                // Title
+                this.ctx.fillStyle = '#FFF';
+                this.ctx.strokeStyle = '#e74c3c';
+                this.ctx.lineWidth = 4;
+                this.ctx.font = 'bold 64px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.strokeText('BEACH GAMES', this.width/2, 100);
+                this.ctx.fillText('BEACH GAMES', this.width/2, 100);
+                
+                this.ctx.font = 'bold 28px Arial';
+                this.ctx.fillStyle = '#FFF';
+                this.ctx.fillText('Surf • Skate • Hacky Sack', this.width/2, 150);
+                
+                // Game icons
+                this.ctx.font = '80px Arial';
+                this.ctx.fillText('🌊', 200, 280);
+                this.ctx.fillText('🛹', 400, 280);
+                this.ctx.fillText('⚽', 600, 280);
+                
+                // High scores
+                this.ctx.font = '18px Arial';
+                this.ctx.fillStyle = '#FFD700';
+                this.ctx.fillText(`Best: ${this.highScores.surf}`, 200, 330);
+                this.ctx.fillText(`Best: ${this.highScores.skate}`, 400, 330);
+                this.ctx.fillText(`Best: ${this.highScores.hacky}`, 600, 330);
+                
+                this.ctx.font = '24px Arial';
+                this.ctx.fillStyle = '#FFF';
+                this.ctx.fillText('Select a game above!', this.width/2, 420);
+                
+                this.ctx.font = '16px Arial';
+                this.ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                this.ctx.fillText('Arrow keys to move • Space for tricks', this.width/2, 460);
+            }
+            
+            renderGameOver() {
+                // Render last frame
+                if (this.gameMode === 'surf') this.renderSurf();
+                else if (this.gameMode === 'skate') this.renderSkate();
+                else if (this.gameMode === 'hacky') this.renderHacky();
+                
+                // Overlay
+                this.ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                this.ctx.fillStyle = '#f39c12';
+                this.ctx.font = 'bold 48px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('TIME UP!', this.width/2, 150);
+                
+                this.ctx.fillStyle = '#FFF';
+                this.ctx.font = '36px Arial';
+                this.ctx.fillText(`Final Score: ${this.score}`, this.width/2, 220);
+                
+                if (this.score >= this.highScores[this.gameMode]) {
+                    this.ctx.fillStyle = '#FFD700';
+                    this.ctx.fillText('★ NEW HIGH SCORE! ★', this.width/2, 280);
+                }
+                
+                this.ctx.fillStyle = '#3498db';
+                this.ctx.font = '24px Arial';
+                this.ctx.fillText('Select a game to play again!', this.width/2, 380);
+            }
+        }
+        
+        let game;
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize unified auth UI for login across all pages
+            if (window.GameUI) {
+                window.gameUI = new GameUI();
+                window.gameUI.init();
+            }
+
+            game = new BeachGames('game-canvas');
+            if (window.GamepadWidget) new GamepadWidget('gamepad-status');
+        });
+    </script>
+</body>
+</html>

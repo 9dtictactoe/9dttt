@@ -1,0 +1,23 @@
+{
+  "name": "9DTTT - Strategic Multiplayer Games",
+  "short_name": "9DTTT",
+  "description": "Free strategic multiplayer game library featuring Ultimate Tic-Tac-Toe, 4D Chess, Connect Four, and 15+ more games",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0e27",
+  "theme_color": "#0a0e27",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["games", "entertainment"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false
+}

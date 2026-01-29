@@ -1,0 +1,334 @@
+/*
+ * Maintenance Page Styles
+ * Includes classic Tic-Tac-Toe game
+ */
+
+/* Maintenance Message */
+.maintenance-message {
+    text-align: center;
+    background: linear-gradient(135deg, var(--secondary-bg) 0%, var(--tertiary-bg) 100%);
+    border: 2px solid var(--accent-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+}
+
+.status-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-md);
+    animation: spin 4s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.maintenance-message h2 {
+    color: var(--accent-color);
+    font-size: clamp(1.3rem, 4vw, 1.8rem);
+    margin-bottom: var(--spacing-md);
+}
+
+.maintenance-message p {
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.estimated-time {
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+/* Mini Game Section */
+.mini-game-section {
+    background: linear-gradient(135deg, var(--secondary-bg) 0%, var(--tertiary-bg) 100%);
+    border: 2px solid var(--primary-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    text-align: center;
+}
+
+.mini-game-section h2 {
+    color: var(--primary-color);
+    font-size: clamp(1.3rem, 4vw, 1.8rem);
+    margin-bottom: var(--spacing-sm);
+}
+
+.mini-game-intro {
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-lg);
+}
+
+.game-wrapper {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Game Status */
+.game-status {
+    background: var(--primary-bg);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-lg);
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.game-status.winner-x {
+    background: var(--player-x-color);
+    color: white;
+}
+
+.game-status.winner-o {
+    background: var(--player-o-color);
+    color: white;
+}
+
+.game-status.draw {
+    background: var(--draw-color);
+    color: #000;
+}
+
+/* Tic-Tac-Toe Board */
+.ttt-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.ttt-cell {
+    aspect-ratio: 1;
+    background: var(--primary-bg);
+    border: 2px solid var(--primary-color);
+    border-radius: var(--radius-md);
+    font-size: clamp(2rem, 10vw, 3rem);
+    font-weight: bold;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.ttt-cell:hover:not(.taken):not(:disabled) {
+    background: var(--secondary-bg);
+    border-color: var(--accent-color);
+    transform: scale(1.05);
+}
+
+.ttt-cell:focus {
+    outline: 3px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+.ttt-cell.x {
+    color: var(--player-x-color);
+}
+
+.ttt-cell.o {
+    color: var(--player-o-color);
+}
+
+.ttt-cell.taken {
+    cursor: not-allowed;
+}
+
+.ttt-cell.winning {
+    background: var(--win-color);
+    color: white;
+    animation: pulse 0.5s ease-in-out 3;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Game Controls */
+.game-controls {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-lg);
+}
+
+.game-controls button {
+    min-width: 140px;
+}
+
+#ai-toggle.active {
+    background: var(--win-color);
+    color: #000;
+}
+
+/* Scoreboard */
+.scoreboard {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+}
+
+.score {
+    background: var(--primary-bg);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-md);
+    text-align: center;
+    min-width: 80px;
+}
+
+.score-label {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.score-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.player-x .score-value {
+    color: var(--player-x-color);
+}
+
+.player-o .score-value {
+    color: var(--player-o-color);
+}
+
+.draws .score-value {
+    color: var(--draw-color);
+}
+
+/* Info Section */
+.info-section {
+    background: var(--secondary-bg);
+    border: 2px solid var(--primary-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+}
+
+.info-section h3 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-md);
+}
+
+.info-section ul {
+    list-style: none;
+    color: var(--text-secondary);
+}
+
+.info-section li {
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--tertiary-bg);
+}
+
+.info-section li:last-child {
+    border-bottom: none;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .ttt-board {
+        max-width: 250px;
+    }
+    
+    .game-controls {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .game-controls button {
+        width: 100%;
+        max-width: 200px;
+    }
+    
+    .scoreboard {
+        gap: var(--spacing-sm);
+    }
+    
+    .score {
+        min-width: 70px;
+        padding: var(--spacing-sm);
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .status-icon {
+        animation: none;
+    }
+    
+    .ttt-cell.winning {
+        animation: none;
+    }
+}
+
+/* App Store Section */
+.app-section {
+    margin-top: var(--spacing-xl);
+    text-align: center;
+}
+
+.app-section > p {
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-md);
+}
+
+.app-stores {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+    margin: var(--spacing-lg) 0;
+}
+
+.app-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: var(--primary-bg);
+    border: 2px solid var(--primary-color);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-md);
+    min-width: 160px;
+}
+
+.store-icon {
+    font-size: 2rem;
+}
+
+.store-text {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.coming-soon-label {
+    font-size: 0.65rem;
+    color: var(--accent-color);
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+.store-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.app-note {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}

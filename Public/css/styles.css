@@ -1,0 +1,591 @@
+/* 
+ * Game Library - Global Styles
+ * Shared styles for all games in the library
+ */
+
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    /* Color scheme */
+    --primary-bg: #0a0e27;
+    --secondary-bg: #1a1f3a;
+    --tertiary-bg: #2d3561;
+    --primary-color: #4a90e2;
+    --secondary-color: #357abd;
+    --accent-color: #ffcc00;
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --player-x-color: #4a90e2;
+    --player-o-color: #e74c3c;
+    --win-color: #2ecc71;
+    --loss-color: #e74c3c;
+    --draw-color: #f39c12;
+    
+    /* Spacing */
+    --spacing-xs: 5px;
+    --spacing-sm: 10px;
+    --spacing-md: 15px;
+    --spacing-lg: 20px;
+    --spacing-xl: 30px;
+    --spacing-xxl: 40px;
+    
+    /* Border radius */
+    --radius-sm: 5px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 15px;
+    
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+    background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
+    color: var(--text-primary);
+    padding: var(--spacing-sm);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+}
+
+/* Accessibility - Skip link */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--primary-color);
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    z-index: 100;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* Screen reader only - visually hidden but accessible */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Container */
+.container {
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Header */
+header {
+    background: linear-gradient(135deg, var(--secondary-bg) 0%, var(--tertiary-bg) 100%);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-lg);
+    border: 2px solid var(--primary-color);
+    text-align: center;
+}
+
+h1 {
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-xs);
+}
+
+.subtitle {
+    font-size: clamp(0.9rem, 3vw, 1.1rem);
+    color: var(--text-secondary);
+}
+
+/* Buttons */
+button {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all var(--transition-normal);
+    font-family: inherit;
+}
+
+button:hover,
+button:focus {
+    background: var(--secondary-color);
+    outline: 3px solid var(--accent-color);
+    outline-offset: 2px;
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button.secondary {
+    background: var(--tertiary-bg);
+}
+
+button.secondary:hover,
+button.secondary:focus {
+    background: #3d4571;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    margin-top: auto;
+    padding: var(--spacing-lg);
+    color: var(--text-secondary);
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+    body {
+        padding: var(--spacing-xs);
+    }
+
+    header {
+        padding: var(--spacing-sm);
+        margin-bottom: var(--spacing-sm);
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    body {
+        background: #000;
+    }
+
+    button,
+    header {
+        border-width: 3px;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* Accessibility Panel - Easy access for accessible gaming */
+.accessibility-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    border: 3px solid var(--accent-color);
+    cursor: pointer;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    box-shadow: 0 4px 20px rgba(74, 144, 226, 0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.accessibility-btn:hover,
+.accessibility-btn:focus {
+    transform: scale(1.1);
+    box-shadow: 0 6px 30px rgba(74, 144, 226, 0.6);
+    outline: 3px solid var(--accent-color);
+    outline-offset: 3px;
+}
+
+.accessibility-btn:focus {
+    animation: pulse-accessibility 1s ease infinite;
+}
+
+@keyframes pulse-accessibility {
+    0%, 100% { box-shadow: 0 4px 20px rgba(74, 144, 226, 0.4); }
+    50% { box-shadow: 0 4px 30px rgba(74, 144, 226, 0.8); }
+}
+
+.accessibility-btn[aria-expanded="true"] {
+    background: var(--accent-color);
+    color: #000;
+}
+
+.accessibility-panel {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 320px;
+    max-width: calc(100vw - 40px);
+    background: linear-gradient(135deg, var(--secondary-bg) 0%, var(--tertiary-bg) 100%);
+    border: 2px solid var(--primary-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    z-index: 9998;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    display: none;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.accessibility-panel.open {
+    display: block;
+    animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.accessibility-panel h2 {
+    font-size: 1.3rem;
+    margin-bottom: var(--spacing-md);
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.accessibility-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid rgba(74, 144, 226, 0.2);
+}
+
+.accessibility-option:last-child {
+    border-bottom: none;
+}
+
+.accessibility-option label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    cursor: pointer;
+    flex: 1;
+}
+
+.accessibility-option .option-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.accessibility-option .option-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Custom toggle switch */
+.toggle-switch {
+    position: relative;
+    width: 52px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--tertiary-bg);
+    border: 2px solid var(--primary-color);
+    border-radius: 28px;
+    transition: 0.3s;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 2px;
+    bottom: 2px;
+    background-color: var(--text-primary);
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: var(--primary-color);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(24px);
+    background-color: var(--accent-color);
+}
+
+.toggle-switch input:focus + .toggle-slider {
+    outline: 3px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+/* Accessibility shortcut hint */
+.accessibility-shortcuts {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 2px solid var(--primary-color);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.accessibility-shortcuts h3 {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.shortcut-list {
+    list-style: none;
+}
+
+.shortcut-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+}
+
+.shortcut-key {
+    background: var(--tertiary-bg);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    border: 1px solid var(--primary-color);
+}
+
+/* Accessibility category styling */
+.a11y-category {
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid rgba(74, 144, 226, 0.3);
+}
+
+.a11y-category:last-of-type {
+    border-bottom: none;
+}
+
+.a11y-category-title {
+    font-size: 0.95rem;
+    color: var(--accent-color);
+    margin-bottom: var(--spacing-sm);
+    font-weight: 600;
+}
+
+.a11y-guidelines-note {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: var(--spacing-sm);
+    text-align: center;
+}
+
+.a11y-guidelines-note a {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+/* ============================================
+   ACCESSIBILITY MODES (Game Accessibility Guidelines)
+   ============================================ */
+
+/* VISION: High contrast mode */
+body.high-contrast-mode {
+    --primary-bg: #000;
+    --secondary-bg: #111;
+    --tertiary-bg: #222;
+    --text-primary: #fff;
+    --text-secondary: #ddd;
+    --primary-color: #ffff00;
+    --accent-color: #00ffff;
+}
+
+body.high-contrast-mode .accessibility-btn,
+body.high-contrast-mode button {
+    border-width: 3px;
+}
+
+/* VISION: Large text mode */
+body.large-text-mode {
+    font-size: 1.2em;
+}
+
+body.large-text-mode h1 {
+    font-size: clamp(2rem, 6vw, 3rem);
+}
+
+body.large-text-mode .game-title {
+    font-size: 2.2rem;
+}
+
+body.large-text-mode .game-description {
+    font-size: 1.15rem;
+}
+
+/* VISION: Dyslexia-friendly font */
+body.dyslexia-font-mode {
+    font-family: 'OpenDyslexic', 'Comic Sans MS', 'Arial', sans-serif;
+    letter-spacing: 0.05em;
+    word-spacing: 0.1em;
+    line-height: 1.8;
+}
+
+/* VISION: Hide background movement */
+body.hide-background-mode .retro-banner::before,
+body.hide-background-mode [class*="animate"],
+body.hide-background-mode .pulse,
+body.hide-background-mode .scanlines::before {
+    animation: none !important;
+    display: none;
+}
+
+body.hide-background-mode {
+    background: var(--primary-bg) !important;
+    background-image: none !important;
+}
+
+/* MOTOR: Reduced motion - targets non-essential animations only */
+body.reduced-motion-mode *:not(.accessibility-btn):not(.toggle-slider) {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+}
+
+/* MOTOR: Large touch targets */
+body.large-targets-mode button,
+body.large-targets-mode a,
+body.large-targets-mode .game-card,
+body.large-targets-mode [role="button"],
+body.large-targets-mode input,
+body.large-targets-mode select {
+    min-height: 48px;
+    min-width: 48px;
+    padding: 12px 16px;
+}
+
+body.large-targets-mode .toggle-switch {
+    transform: scale(1.2);
+    margin-left: 10px;
+}
+
+/* COGNITIVE: Simplified interface */
+body.simplified-ui-mode .retro-banner,
+body.simplified-ui-mode .high-scores,
+body.simplified-ui-mode .arcade-frame::before,
+body.simplified-ui-mode .arcade-frame::after,
+body.simplified-ui-mode .neon-glow,
+body.simplified-ui-mode .pixel-art {
+    display: none !important;
+}
+
+body.simplified-ui-mode .game-card {
+    background: var(--secondary-bg);
+    border: 2px solid var(--text-secondary);
+}
+
+/* COGNITIVE: Highlight interactive elements */
+body.highlight-interactive-mode button,
+body.highlight-interactive-mode a,
+body.highlight-interactive-mode .game-card,
+body.highlight-interactive-mode [role="button"],
+body.highlight-interactive-mode input,
+body.highlight-interactive-mode select,
+body.highlight-interactive-mode [tabindex]:not([tabindex="-1"]) {
+    outline: 2px dashed var(--accent-color);
+    outline-offset: 2px;
+}
+
+body.highlight-interactive-mode button:hover,
+body.highlight-interactive-mode a:hover,
+body.highlight-interactive-mode .game-card:hover {
+    outline-style: solid;
+    outline-width: 3px;
+}
+
+/* HEARING: Visual sound cues */
+body.visual-cues-mode::after {
+    content: '🔇 Visual cues enabled';
+    position: fixed;
+    bottom: 80px;
+    left: 20px;
+    background: var(--secondary-bg);
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    border: 1px solid var(--primary-color);
+    z-index: 9000;
+    opacity: 0.9;
+}
+
+/* GENERAL: Enhanced focus indicators */
+body.enhanced-focus-mode *:focus {
+    outline: 4px solid var(--accent-color) !important;
+    outline-offset: 4px !important;
+    box-shadow: 0 0 0 6px rgba(255, 204, 0, 0.3) !important;
+}
+
+body.enhanced-focus-mode *:focus:not(:focus-visible) {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+body.enhanced-focus-mode *:focus-visible {
+    outline: 4px solid var(--accent-color) !important;
+    outline-offset: 4px !important;
+    box-shadow: 0 0 0 6px rgba(255, 204, 0, 0.3) !important;
+}
+
+/* Mobile accessibility panel adjustments */
+@media (max-width: 400px) {
+    .accessibility-panel {
+        right: 10px;
+        bottom: 80px;
+        width: calc(100vw - 20px);
+    }
+    
+    .accessibility-btn {
+        right: 10px;
+        bottom: 10px;
+        width: 50px;
+        height: 50px;
+    }
+}

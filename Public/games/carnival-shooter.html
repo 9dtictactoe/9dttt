@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0e27">
+    <meta name="description" content="Carnival Shooter - Shoot the stars and win prizes!">
+    <title>Carnival Shooter - Win Prizes!</title>
+    
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/arcade-games.css">
+    <link rel="stylesheet" href="../css/retro-arcade.css">
+    <style>
+        #game-canvas { cursor: crosshair; }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="container">
+        <header role="banner">
+            <h1>🎯 Carnival Shooter</h1>
+            <p class="subtitle">Shoot the Star to Win!</p>
+        </header>
+
+        <div id="gamepad-status"></div>
+
+        <main id="main-content" role="main">
+            <div class="game-container">
+                <canvas id="game-canvas" width="800" height="600"></canvas>
+                
+                <div class="controls">
+                    <button onclick="game.startGame()">Play ($1)</button>
+                </div>
+                
+                <div class="control-hint">
+                    <div>
+                        <h4>🖱️ Mouse</h4>
+                        <p>Move to aim</p>
+                        <p>Click to shoot</p>
+                    </div>
+                    <div>
+                        <h4>🎮 Gamepad</h4>
+                        <p>Left Stick - Aim</p>
+                        <p>A/LT/RT - Shoot</p>
+                    </div>
+                </div>
+                
+                <div class="instructions" style="margin-top: 20px;">
+                    <h2>🌟 Shoot the Star!</h2>
+                    <p>The classic carnival challenge - completely shoot out the red star to win!</p>
+                    <ul>
+                        <li>You get <strong>100 BBs</strong> per game</li>
+                        <li>Remove ALL the red paper from the star shape to win</li>
+                        <li>The gun has slight wobble - steady your aim!</li>
+                        <li>Win rate is fair - about 15-20% with good aim</li>
+                        <li>🏆 Prizes: Teddy Bear, Giant Stuffed Animal, Goldfish!</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+
+        <footer role="contentinfo">
+            <p>&copy; 2026 Carnival Shooter | 9DTTT Game Library</p>
+            <p><a href="../index.html" style="color: #4a90e2;">← Back to Game Library</a></p>
+        </footer>
+    </div>
+
+    <script src="../js/gamepad-manager.js"></script>
+    <script src="../js/accessibility-manager.js"></script>
+    <script src="../js/retro-arcade.js"></script>
+    <script src="../js/game-engine.js"></script>
+    <!-- Browser Native Authentication (Credential Management API) -->
+    <script src="../js/browser-auth-init.js"></script>
+    <script src="../js/auth-client.js"></script>
+    <script src="../js/game-ui.js"></script>
+    <script>
+        class CarnivalShooter {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.width = this.canvas.width;
+                this.height = this.canvas.height;
+                
+                this.state = 'menu';
+                this.ammo = 100;
+                this.totalAmmo = 100;
+                
+                // Star target
+                this.starCanvas = document.createElement('canvas');
+                this.starCanvas.width = 200;
+                this.starCanvas.height = 200;
+                this.starCtx = this.starCanvas.getContext('2d');
+                this.starX = this.width / 2;
+                this.starY = 280;
+                
+                // Crosshair
+                this.crosshair = { x: this.width / 2, y: this.height / 2 };
+                this.wobble = { x: 0, y: 0, time: 0 };
+                
+                // Holes punched in target
+                this.holes = [];
+                
+                // Stats
+                this.wins = 0;
+                this.plays = 0;
+                
+                this.setupInput();
+                this.gameLoop();
+            }
+            
+            setupInput() {
+                this.canvas.addEventListener('mousemove', e => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.crosshair.x = (e.clientX - rect.left) * (this.width / rect.width);
+                    this.crosshair.y = (e.clientY - rect.top) * (this.height / rect.height);
+                });
+                
+                this.canvas.addEventListener('click', () => this.shoot());
+                
+                // Track button states for gamepad
+                this.gamepadButtonStates = {};
+                this.setupGamepadEvents();
+            }
+            
+            setupGamepadEvents() {
+                // Set up gamepad event listeners once gamepadManager is available
+                let retryCount = 0;
+                const maxRetries = 50; // Max 5 seconds (50 * 100ms)
+                
+                const setupEvents = () => {
+                    if (window.gamepadManager) {
+                        window.gamepadManager.on('buttondown', (data) => {
+                            // Shooting with A button or Right/Left Trigger
+                            if (data.button === 'a' || data.button === 'rt' || data.button === 'lt') {
+                                this.shoot();
+                            }
+                            // Start game with Start button or A button when in menu
+                            if (data.button === 'start' || data.button === 'a') {
+                                if (this.state === 'menu' || this.state === 'win' || this.state === 'lose') {
+                                    this.startGame();
+                                }
+                            }
+                        });
+                    } else if (retryCount < maxRetries) {
+                        // Retry after a short delay if gamepadManager not ready
+                        retryCount++;
+                        setTimeout(setupEvents, 100);
+                    }
+                };
+                setupEvents();
+            }
+            
+            startGame() {
+                this.state = 'playing';
+                this.ammo = this.totalAmmo;
+                this.holes = [];
+                this.plays++;
+                this.drawStar();
+            }
+            
+            drawStar() {
+                const ctx = this.starCtx;
+                const size = 200;
+                const cx = size / 2;
+                const cy = size / 2;
+                
+                // Clear
+                ctx.clearRect(0, 0, size, size);
+                
+                // White background (paper)
+                ctx.fillStyle = '#FFF';
+                ctx.fillRect(0, 0, size, size);
+                
+                // Draw red star
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath();
+                
+                const outerRadius = 80;
+                const innerRadius = 35;
+                const points = 5;
+                
+                for (let i = 0; i < points * 2; i++) {
+                    const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                    const angle = (i * Math.PI / points) - Math.PI / 2;
+                    const x = cx + Math.cos(angle) * radius;
+                    const y = cy + Math.sin(angle) * radius;
+                    
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            shoot() {
+                if (this.state !== 'playing' || this.ammo <= 0) return;
+                
+                this.ammo--;
+                
+                // Calculate hit position with wobble
+                const wobbleAmount = 15;
+                const hitX = this.crosshair.x + this.wobble.x * wobbleAmount;
+                const hitY = this.crosshair.y + this.wobble.y * wobbleAmount;
+                
+                // Check if hit is on the star target area
+                const starLeft = this.starX - 100;
+                const starTop = this.starY - 100;
+                
+                if (hitX >= starLeft && hitX <= starLeft + 200 &&
+                    hitY >= starTop && hitY <= starTop + 200) {
+                    
+                    // Punch hole in star
+                    const localX = hitX - starLeft;
+                    const localY = hitY - starTop;
+                    
+                    this.punchHole(localX, localY);
+                }
+                
+                // Visual feedback
+                this.holes.push({
+                    x: hitX,
+                    y: hitY,
+                    time: 0.5
+                });
+                
+                // Vibrate
+                if (window.gamepadManager) {
+                    window.gamepadManager.vibrate(0, 30, 0.2, 0.5);
+                }
+                
+                // Check win/lose
+                if (this.ammo <= 0) {
+                    setTimeout(() => this.checkWin(), 500);
+                }
+            }
+            
+            punchHole(x, y) {
+                // Punch a hole in the star canvas (make it transparent)
+                const ctx = this.starCtx;
+                const holeSize = 8; // BB hole size
+                
+                ctx.save();
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.beginPath();
+                ctx.arc(x, y, holeSize, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+            
+            checkWin() {
+                // Count remaining red pixels
+                const imageData = this.starCtx.getImageData(0, 0, 200, 200);
+                const data = imageData.data;
+                
+                let redPixels = 0;
+                let totalChecked = 0;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    const a = data[i + 3];
+                    
+                    // Check if pixel is red (the star color)
+                    if (a > 0 && r > 200 && g < 100 && b < 100) {
+                        redPixels++;
+                    }
+                    totalChecked++;
+                }
+                
+                // Win if less than 2% of star remains
+                const remainingPercent = (redPixels / totalChecked) * 100;
+                
+                if (remainingPercent < 0.5) {
+                    this.state = 'win';
+                    this.wins++;
+                } else {
+                    this.state = 'lose';
+                }
+            }
+            
+            gameLoop() {
+                this.update();
+                this.render();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+            
+            update() {
+                // Update wobble
+                this.wobble.time += 0.05;
+                this.wobble.x = Math.sin(this.wobble.time * 3.7) * 0.7 + Math.sin(this.wobble.time * 7.3) * 0.3;
+                this.wobble.y = Math.cos(this.wobble.time * 4.1) * 0.7 + Math.cos(this.wobble.time * 6.7) * 0.3;
+                
+                // Gamepad aiming and input (poll for multiple controllers)
+                this.handleGamepadInput();
+                
+                // Update hole effects
+                this.holes = this.holes.filter(h => {
+                    h.time -= 0.016;
+                    return h.time > 0;
+                });
+            }
+            
+            handleGamepadInput() {
+                if (!window.gamepadManager) return;
+                
+                // Early exit if no gamepads connected (optimization)
+                if (window.gamepadManager.getConnectedCount() === 0) return;
+                
+                // Only use first connected gamepad for aiming (single player game)
+                for (let i = 0; i < 4; i++) {
+                    const gp = window.gamepadManager.getState(i);
+                    if (!gp) continue;
+                    
+                    // Aiming with left stick or right stick
+                    const leftX = gp.axes.leftX || 0;
+                    const leftY = gp.axes.leftY || 0;
+                    const rightX = gp.axes.rightX || 0;
+                    const rightY = gp.axes.rightY || 0;
+                    
+                    // Use whichever stick has more movement (sensitivity threshold 0.1)
+                    const leftMagnitude = Math.sqrt(leftX * leftX + leftY * leftY);
+                    const rightMagnitude = Math.sqrt(rightX * rightX + rightY * rightY);
+                    
+                    let aimX = 0, aimY = 0;
+                    if (leftMagnitude > 0.1 || rightMagnitude > 0.1) {
+                        if (leftMagnitude > rightMagnitude) {
+                            aimX = leftX;
+                            aimY = leftY;
+                        } else {
+                            aimX = rightX;
+                            aimY = rightY;
+                        }
+                        
+                        // Apply aiming movement (speed of 10 pixels per frame)
+                        this.crosshair.x += aimX * 10;
+                        this.crosshair.y += aimY * 10;
+                        
+                        // Clamp to canvas bounds
+                        this.crosshair.x = Math.max(0, Math.min(this.width, this.crosshair.x));
+                        this.crosshair.y = Math.max(0, Math.min(this.height, this.crosshair.y));
+                    }
+                    
+                    // Only use first connected controller
+                    break;
+                }
+            }
+            
+            render() {
+                // Carnival booth background
+                const gradient = this.ctx.createLinearGradient(0, 0, 0, this.height);
+                gradient.addColorStop(0, '#1a1a4e');
+                gradient.addColorStop(1, '#0a0a2e');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                // Booth frame
+                this.ctx.fillStyle = '#8B4513';
+                this.ctx.fillRect(0, 0, 40, this.height);
+                this.ctx.fillRect(this.width - 40, 0, 40, this.height);
+                this.ctx.fillRect(0, 0, this.width, 60);
+                
+                // Booth stripes
+                this.ctx.fillStyle = '#e74c3c';
+                for (let i = 0; i < 10; i++) {
+                    if (i % 2 === 0) {
+                        this.ctx.fillRect(40 + i * 72, 60, 72, 20);
+                    }
+                }
+                
+                // Lights
+                for (let i = 0; i < 12; i++) {
+                    const x = 70 + i * 60;
+                    const color = ['#FFD700', '#FF6B6B', '#4ECDC4', '#95E1D3'][i % 4];
+                    this.ctx.fillStyle = color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, 45, 12, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+                
+                // Target backing
+                this.ctx.fillStyle = '#2c2c54';
+                this.ctx.fillRect(this.starX - 120, this.starY - 120, 240, 240);
+                this.ctx.strokeStyle = '#FFD700';
+                this.ctx.lineWidth = 4;
+                this.ctx.strokeRect(this.starX - 120, this.starY - 120, 240, 240);
+                
+                // Draw the star target
+                this.ctx.drawImage(this.starCanvas, this.starX - 100, this.starY - 100);
+                
+                // Hole effects
+                this.holes.forEach(h => {
+                    this.ctx.fillStyle = `rgba(255, 200, 0, ${h.time})`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(h.x, h.y, 15, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+                
+                // Prizes display
+                this.ctx.font = '24px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillStyle = '#FFD700';
+                this.ctx.fillText('🧸 PRIZES 🧸', this.width / 2, 520);
+                this.ctx.font = '40px Arial';
+                this.ctx.fillText('🐻 🦊 🐠 🎁', this.width / 2, 570);
+                
+                // Ammo counter
+                this.ctx.fillStyle = '#FFF';
+                this.ctx.font = 'bold 28px Arial';
+                this.ctx.textAlign = 'left';
+                this.ctx.fillText(`BBs: ${this.ammo}/${this.totalAmmo}`, 60, 120);
+                
+                // Ammo bar
+                this.ctx.fillStyle = '#333';
+                this.ctx.fillRect(60, 130, 200, 20);
+                this.ctx.fillStyle = this.ammo > 20 ? '#4CAF50' : '#F44336';
+                this.ctx.fillRect(60, 130, 200 * (this.ammo / this.totalAmmo), 20);
+                
+                // Stats
+                this.ctx.fillStyle = '#888';
+                this.ctx.font = '16px Arial';
+                this.ctx.textAlign = 'right';
+                this.ctx.fillText(`Wins: ${this.wins}/${this.plays}`, this.width - 60, 120);
+                
+                // Crosshair with wobble
+                const wobbleAmount = 15;
+                const aimX = this.crosshair.x + this.wobble.x * wobbleAmount;
+                const aimY = this.crosshair.y + this.wobble.y * wobbleAmount;
+                
+                this.ctx.strokeStyle = '#0F0';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(aimX - 20, aimY);
+                this.ctx.lineTo(aimX + 20, aimY);
+                this.ctx.moveTo(aimX, aimY - 20);
+                this.ctx.lineTo(aimX, aimY + 20);
+                this.ctx.stroke();
+                
+                this.ctx.beginPath();
+                this.ctx.arc(aimX, aimY, 15, 0, Math.PI * 2);
+                this.ctx.stroke();
+                
+                // State screens
+                if (this.state === 'menu') {
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.85)';
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    
+                    this.ctx.fillStyle = '#FFD700';
+                    this.ctx.font = 'bold 48px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('🎯 SHOOT THE STAR 🎯', this.width / 2, 200);
+                    
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = '28px Arial';
+                    this.ctx.fillText('Completely shoot out the red star to win!', this.width / 2, 280);
+                    
+                    this.ctx.font = '24px Arial';
+                    this.ctx.fillStyle = '#4CAF50';
+                    this.ctx.fillText('100 BBs per game', this.width / 2, 340);
+                    
+                    this.ctx.fillStyle = '#FFD700';
+                    this.ctx.font = '32px Arial';
+                    this.ctx.fillText('Click Play to start!', this.width / 2, 420);
+                }
+                
+                if (this.state === 'win') {
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.85)';
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    
+                    this.ctx.fillStyle = '#4CAF50';
+                    this.ctx.font = 'bold 64px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('🎉 WINNER! 🎉', this.width / 2, 200);
+                    
+                    this.ctx.font = '80px Arial';
+                    this.ctx.fillText('🧸', this.width / 2, 320);
+                    
+                    this.ctx.fillStyle = '#FFD700';
+                    this.ctx.font = '32px Arial';
+                    this.ctx.fillText('You win a prize!', this.width / 2, 400);
+                    
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = '24px Arial';
+                    this.ctx.fillText('Click Play to try again!', this.width / 2, 480);
+                }
+                
+                if (this.state === 'lose') {
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.85)';
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    
+                    this.ctx.fillStyle = '#e74c3c';
+                    this.ctx.font = 'bold 48px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('So Close!', this.width / 2, 200);
+                    
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = '28px Arial';
+                    this.ctx.fillText('Some red still remains on the star', this.width / 2, 280);
+                    
+                    this.ctx.fillStyle = '#FFD700';
+                    this.ctx.font = '24px Arial';
+                    this.ctx.fillText('Try again? Click Play!', this.width / 2, 380);
+                }
+            }
+        }
+        
+        let game;
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize unified auth UI for login across all pages
+            if (window.GameUI) {
+                window.gameUI = new GameUI();
+                window.gameUI.init();
+            }
+
+            game = new CarnivalShooter('game-canvas');
+            game.drawStar();
+            if (window.GamepadWidget) new GamepadWidget('gamepad-status');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0e27">
+    <meta name="description" content="Air Hockey - Fast-paced 2 player arcade action!">
+    <title>Air Hockey - 2 Player</title>
+    
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/arcade-games.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="container">
+        <header role="banner">
+            <h1>🏒 Air Hockey</h1>
+            <p class="subtitle">Fast-Paced 2-Player Action!</p>
+        </header>
+
+        <div id="gamepad-status"></div>
+
+        <main id="main-content" role="main">
+            <div class="game-container">
+                <canvas id="game-canvas" width="600" height="800"></canvas>
+                
+                <div class="controls">
+                    <button onclick="hockey.startGame('ai')">vs Computer</button>
+                    <button onclick="hockey.startGame('local')">2 Players</button>
+                </div>
+                
+                <div class="control-hint">
+                    <div>
+                        <h4>Player 1 (Bottom - Blue)</h4>
+                        <p><kbd>WASD</kbd> or Mouse/Touch</p>
+                        <p>Gamepad 1: Left Stick or D-Pad</p>
+                    </div>
+                    <div>
+                        <h4>Player 2 (Top - Red)</h4>
+                        <p><kbd>Arrow Keys</kbd></p>
+                        <p>Gamepad 2: Left Stick or D-Pad</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer role="contentinfo">
+            <p>&copy; 2026 Air Hockey | 9DTTT Game Library</p>
+            <p><a href="../index.html" style="color: #4a90e2;">← Back to Game Library</a></p>
+        </footer>
+    </div>
+
+    <script src="../js/gamepad-manager.js"></script>
+    <script src="../js/accessibility-manager.js"></script>
+    <script src="../js/game-engine.js"></script>
+    <!-- Browser Native Authentication (Credential Management API) -->
+    <script src="../js/browser-auth-init.js"></script>
+    <script src="../js/auth-client.js"></script>
+    <script src="../js/game-ui.js"></script>
+    <script>
+        class AirHockey {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.width = this.canvas.width;
+                this.height = this.canvas.height;
+                
+                this.paddleRadius = 40;
+                this.puckRadius = 25;
+                this.goalWidth = 180;
+                this.maxSpeed = 20;
+                this.friction = 0.99;
+                this.winScore = 7;
+                
+                this.state = 'menu';
+                this.mode = 'ai';
+                this.scores = [0, 0];
+                
+                this.mouse = { x: 0, y: 0, active: false };
+                this.keys = {};
+                
+                this.reset();
+                this.setupInput();
+                this.gameLoop();
+            }
+            
+            reset() {
+                this.puck = {
+                    x: this.width / 2,
+                    y: this.height / 2,
+                    vx: 0,
+                    vy: 0
+                };
+                
+                this.paddles = [
+                    { x: this.width / 2, y: this.height - 80, vx: 0, vy: 0, color: '#4a90e2' },
+                    { x: this.width / 2, y: 80, vx: 0, vy: 0, color: '#e74c3c' }
+                ];
+            }
+            
+            setupInput() {
+                window.addEventListener('keydown', e => this.keys[e.code] = true);
+                window.addEventListener('keyup', e => this.keys[e.code] = false);
+                
+                this.canvas.addEventListener('mousemove', e => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.mouse.x = (e.clientX - rect.left) * (this.width / rect.width);
+                    this.mouse.y = (e.clientY - rect.top) * (this.height / rect.height);
+                    this.mouse.active = true;
+                });
+                
+                this.canvas.addEventListener('touchmove', e => {
+                    e.preventDefault();
+                    const rect = this.canvas.getBoundingClientRect();
+                    const touch = e.touches[0];
+                    this.mouse.x = (touch.clientX - rect.left) * (this.width / rect.width);
+                    this.mouse.y = (touch.clientY - rect.top) * (this.height / rect.height);
+                    this.mouse.active = true;
+                });
+            }
+            
+            startGame(mode) {
+                this.mode = mode;
+                this.scores = [0, 0];
+                this.state = 'playing';
+                this.reset();
+                
+                // Initial puck push
+                const angle = (Math.random() - 0.5) * Math.PI / 2;
+                const dir = Math.random() > 0.5 ? 1 : -1;
+                this.puck.vx = Math.sin(angle) * 5;
+                this.puck.vy = Math.cos(angle) * 5 * dir;
+            }
+            
+            gameLoop() {
+                this.update();
+                this.render();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+            
+            update() {
+                if (this.state !== 'playing') return;
+                
+                this.updatePaddles();
+                this.updatePuck();
+                this.checkCollisions();
+                this.checkGoals();
+            }
+            
+            updatePaddles() {
+                const speed = 10;
+                
+                // Player 1 (bottom)
+                const p1 = this.paddles[0];
+                let p1dx = 0, p1dy = 0;
+                
+                // Mouse/Touch control
+                if (this.mouse.active && this.mouse.y > this.height / 2) {
+                    p1dx = (this.mouse.x - p1.x) * 0.2;
+                    p1dy = (this.mouse.y - p1.y) * 0.2;
+                }
+                
+                // Keyboard
+                if (this.keys['KeyA']) p1dx -= speed;
+                if (this.keys['KeyD']) p1dx += speed;
+                if (this.keys['KeyW']) p1dy -= speed;
+                if (this.keys['KeyS']) p1dy += speed;
+                
+                // Gamepad (analog + D-pad)
+                const gp1 = window.gamepadManager?.getState(0);
+                if (gp1) {
+                    p1dx += gp1.axes.leftX * speed;
+                    p1dy += gp1.axes.leftY * speed;
+                    
+                    // D-pad support
+                    if (gp1.buttons.left) p1dx -= speed;
+                    if (gp1.buttons.right) p1dx += speed;
+                    if (gp1.buttons.up) p1dy -= speed;
+                    if (gp1.buttons.down) p1dy += speed;
+                }
+                
+                p1.vx = p1dx;
+                p1.vy = p1dy;
+                p1.x += p1.vx;
+                p1.y += p1.vy;
+                
+                // Constrain to bottom half
+                p1.x = Math.max(this.paddleRadius, Math.min(this.width - this.paddleRadius, p1.x));
+                p1.y = Math.max(this.height / 2 + this.paddleRadius, Math.min(this.height - this.paddleRadius, p1.y));
+                
+                // Player 2 (top)
+                const p2 = this.paddles[1];
+                let p2dx = 0, p2dy = 0;
+                
+                if (this.mode === 'local') {
+                    // Keyboard
+                    if (this.keys['ArrowLeft']) p2dx -= speed;
+                    if (this.keys['ArrowRight']) p2dx += speed;
+                    if (this.keys['ArrowUp']) p2dy -= speed;
+                    if (this.keys['ArrowDown']) p2dy += speed;
+                    
+                    // Gamepad (analog + D-pad)
+                    const gp2 = window.gamepadManager?.getState(1);
+                    if (gp2) {
+                        p2dx += gp2.axes.leftX * speed;
+                        p2dy += gp2.axes.leftY * speed;
+                        
+                        // D-pad support
+                        if (gp2.buttons.left) p2dx -= speed;
+                        if (gp2.buttons.right) p2dx += speed;
+                        if (gp2.buttons.up) p2dy -= speed;
+                        if (gp2.buttons.down) p2dy += speed;
+                    }
+                } else {
+                    // AI
+                    const targetX = this.puck.x + this.puck.vx * 10;
+                    const targetY = this.puck.vy < 0 ? this.puck.y + this.puck.vy * 5 : 80;
+                    
+                    p2dx = (targetX - p2.x) * 0.1;
+                    p2dy = (targetY - p2.y) * 0.08;
+                }
+                
+                p2.vx = p2dx;
+                p2.vy = p2dy;
+                p2.x += p2.vx;
+                p2.y += p2.vy;
+                
+                // Constrain to top half
+                p2.x = Math.max(this.paddleRadius, Math.min(this.width - this.paddleRadius, p2.x));
+                p2.y = Math.max(this.paddleRadius, Math.min(this.height / 2 - this.paddleRadius, p2.y));
+            }
+            
+            updatePuck() {
+                this.puck.x += this.puck.vx;
+                this.puck.y += this.puck.vy;
+                
+                // Friction
+                this.puck.vx *= this.friction;
+                this.puck.vy *= this.friction;
+                
+                // Wall bounce
+                if (this.puck.x <= this.puckRadius) {
+                    this.puck.x = this.puckRadius;
+                    this.puck.vx *= -0.9;
+                }
+                if (this.puck.x >= this.width - this.puckRadius) {
+                    this.puck.x = this.width - this.puckRadius;
+                    this.puck.vx *= -0.9;
+                }
+                
+                // Top/bottom walls (except goals)
+                const goalLeft = (this.width - this.goalWidth) / 2;
+                const goalRight = (this.width + this.goalWidth) / 2;
+                
+                if (this.puck.y <= this.puckRadius) {
+                    if (this.puck.x < goalLeft || this.puck.x > goalRight) {
+                        this.puck.y = this.puckRadius;
+                        this.puck.vy *= -0.9;
+                    }
+                }
+                if (this.puck.y >= this.height - this.puckRadius) {
+                    if (this.puck.x < goalLeft || this.puck.x > goalRight) {
+                        this.puck.y = this.height - this.puckRadius;
+                        this.puck.vy *= -0.9;
+                    }
+                }
+                
+                // Speed limit
+                const speed = Math.hypot(this.puck.vx, this.puck.vy);
+                if (speed > this.maxSpeed) {
+                    this.puck.vx = (this.puck.vx / speed) * this.maxSpeed;
+                    this.puck.vy = (this.puck.vy / speed) * this.maxSpeed;
+                }
+            }
+            
+            checkCollisions() {
+                this.paddles.forEach(paddle => {
+                    const dx = this.puck.x - paddle.x;
+                    const dy = this.puck.y - paddle.y;
+                    const dist = Math.hypot(dx, dy);
+                    const minDist = this.puckRadius + this.paddleRadius;
+                    
+                    if (dist < minDist) {
+                        // Push puck out
+                        const overlap = minDist - dist;
+                        const nx = dx / dist;
+                        const ny = dy / dist;
+                        
+                        this.puck.x += nx * overlap;
+                        this.puck.y += ny * overlap;
+                        
+                        // Transfer velocity + bounce
+                        const relVx = this.puck.vx - paddle.vx;
+                        const relVy = this.puck.vy - paddle.vy;
+                        
+                        const dot = relVx * nx + relVy * ny;
+                        
+                        this.puck.vx = relVx - 2 * dot * nx + paddle.vx * 0.8;
+                        this.puck.vy = relVy - 2 * dot * ny + paddle.vy * 0.8;
+                        
+                        // Vibrate gamepad
+                        if (window.gamepadManager) {
+                            window.gamepadManager.vibrate(0, 50, 0.3, 0.3);
+                            window.gamepadManager.vibrate(1, 50, 0.3, 0.3);
+                        }
+                    }
+                });
+            }
+            
+            checkGoals() {
+                const goalLeft = (this.width - this.goalWidth) / 2;
+                const goalRight = (this.width + this.goalWidth) / 2;
+                
+                // Goal for player 1 (puck at top)
+                if (this.puck.y < -this.puckRadius && 
+                    this.puck.x > goalLeft && this.puck.x < goalRight) {
+                    this.scores[0]++;
+                    this.goalScored(0);
+                }
+                
+                // Goal for player 2 (puck at bottom)
+                if (this.puck.y > this.height + this.puckRadius && 
+                    this.puck.x > goalLeft && this.puck.x < goalRight) {
+                    this.scores[1]++;
+                    this.goalScored(1);
+                }
+            }
+            
+            goalScored(scorer) {
+                if (this.scores[0] >= this.winScore || this.scores[1] >= this.winScore) {
+                    this.state = 'gameover';
+                } else {
+                    // Reset puck toward the scorer's opponent
+                    this.puck.x = this.width / 2;
+                    this.puck.y = this.height / 2;
+                    
+                    const angle = (Math.random() - 0.5) * Math.PI / 3;
+                    const dir = scorer === 0 ? 1 : -1;
+                    this.puck.vx = Math.sin(angle) * 5;
+                    this.puck.vy = Math.cos(angle) * 5 * dir;
+                }
+            }
+            
+            render() {
+                // Table
+                this.ctx.fillStyle = '#1a472a';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                // Border
+                this.ctx.strokeStyle = '#8B4513';
+                this.ctx.lineWidth = 15;
+                this.ctx.strokeRect(0, 0, this.width, this.height);
+                
+                // Center line
+                this.ctx.strokeStyle = '#FFF';
+                this.ctx.lineWidth = 3;
+                this.ctx.setLineDash([15, 10]);
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, this.height / 2);
+                this.ctx.lineTo(this.width, this.height / 2);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+                
+                // Center circle
+                this.ctx.beginPath();
+                this.ctx.arc(this.width / 2, this.height / 2, 80, 0, Math.PI * 2);
+                this.ctx.stroke();
+                
+                // Goals
+                const goalLeft = (this.width - this.goalWidth) / 2;
+                this.ctx.fillStyle = '#333';
+                this.ctx.fillRect(goalLeft, -10, this.goalWidth, 20);
+                this.ctx.fillRect(goalLeft, this.height - 10, this.goalWidth, 20);
+                
+                // Goal lines
+                this.ctx.strokeStyle = '#e74c3c';
+                this.ctx.lineWidth = 5;
+                this.ctx.beginPath();
+                this.ctx.moveTo(goalLeft, 0);
+                this.ctx.lineTo(goalLeft + this.goalWidth, 0);
+                this.ctx.stroke();
+                
+                this.ctx.strokeStyle = '#4a90e2';
+                this.ctx.beginPath();
+                this.ctx.moveTo(goalLeft, this.height);
+                this.ctx.lineTo(goalLeft + this.goalWidth, this.height);
+                this.ctx.stroke();
+                
+                // Scores
+                this.ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                this.ctx.font = 'bold 120px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(this.scores[1], this.width / 2, this.height / 4);
+                this.ctx.fillText(this.scores[0], this.width / 2, this.height * 3 / 4 + 40);
+                
+                // Paddles
+                this.paddles.forEach(p => {
+                    // Glow
+                    const gradient = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, this.paddleRadius);
+                    gradient.addColorStop(0, p.color);
+                    gradient.addColorStop(1, p.color + '00');
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, this.paddleRadius + 10, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Paddle
+                    this.ctx.fillStyle = p.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, this.paddleRadius, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Inner circle
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, this.paddleRadius / 2, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+                
+                // Puck
+                this.ctx.fillStyle = '#111';
+                this.ctx.beginPath();
+                this.ctx.arc(this.puck.x, this.puck.y, this.puckRadius, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                this.ctx.strokeStyle = '#333';
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                this.ctx.arc(this.puck.x, this.puck.y, this.puckRadius - 5, 0, Math.PI * 2);
+                this.ctx.stroke();
+                
+                // State screens
+                if (this.state === 'menu') {
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.85)';
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = 'bold 48px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('AIR HOCKEY', this.width / 2, 300);
+                    this.ctx.font = '24px Arial';
+                    this.ctx.fillText('Select mode to play', this.width / 2, 380);
+                }
+                
+                if (this.state === 'gameover') {
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.85)';
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    
+                    const winner = this.scores[0] >= this.winScore ? 'Blue' : 'Red';
+                    const winnerColor = this.scores[0] >= this.winScore ? '#4a90e2' : '#e74c3c';
+                    
+                    this.ctx.fillStyle = winnerColor;
+                    this.ctx.font = 'bold 48px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(`${winner} Wins!`, this.width / 2, 300);
+                    
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = '32px Arial';
+                    this.ctx.fillText(`${this.scores[0]} - ${this.scores[1]}`, this.width / 2, 370);
+                    
+                    this.ctx.font = '24px Arial';
+                    this.ctx.fillText('Click a button to play again', this.width / 2, 440);
+                }
+            }
+        }
+        
+        let hockey;
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize unified auth UI for login across all pages
+            if (window.GameUI) {
+                window.gameUI = new GameUI();
+                window.gameUI.init();
+            }
+
+            hockey = new AirHockey('game-canvas');
+            if (window.GamepadWidget) new GamepadWidget('gamepad-status');
+        });
+    </script>
+</body>
+</html>

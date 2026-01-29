@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0e27">
+    <meta name="description" content="Dragon Fist - Classic beat-em-up arcade action inspired by Double Dragon">
+    <title>Dragon Fist - Beat 'Em Up</title>
+    
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/arcade-games.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="container">
+        <header role="banner">
+            <h1>🐉 Dragon Fist</h1>
+            <p class="subtitle">Classic Beat 'Em Up Action!</p>
+        </header>
+
+        <div id="gamepad-status"></div>
+
+        <main id="main-content" role="main">
+            <div class="game-container">
+                <canvas id="game-canvas" width="800" height="400"></canvas>
+                
+                <div class="controls">
+                    <button onclick="game.startGame(1)">1 Player</button>
+                    <button onclick="game.startGame(2)">2 Players</button>
+                </div>
+                
+                <div class="control-hint">
+                    <div>
+                        <h4>Player 1</h4>
+                        <p><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> - Move</p>
+                        <p><kbd>J</kbd> - Punch | <kbd>K</kbd> - Kick</p>
+                        <p><kbd>L</kbd> - Jump | <kbd>J+K</kbd> - Special</p>
+                    </div>
+                    <div>
+                        <h4>Player 2</h4>
+                        <p><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> - Move</p>
+                        <p><kbd>1</kbd> - Punch | <kbd>2</kbd> - Kick</p>
+                        <p><kbd>3</kbd> - Jump | <kbd>1+2</kbd> - Special</p>
+                    </div>
+                    <div>
+                        <h4>🎮 Gamepad</h4>
+                        <p>Left Stick - Move</p>
+                        <p>X - Punch | Y - Kick</p>
+                        <p>A - Jump | LB - Special</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer role="contentinfo">
+            <p>&copy; 2026 Dragon Fist | 9DTTT Game Library</p>
+            <p><a href="../index.html" style="color: #4a90e2;">← Back to Game Library</a></p>
+        </footer>
+    </div>
+
+    <script src="../js/gamepad-manager.js"></script>
+    <script src="../js/accessibility-manager.js"></script>
+    <script src="../js/game-engine.js"></script>
+    <!-- Browser Native Authentication (Credential Management API) -->
+    <script src="../js/browser-auth-init.js"></script>
+    <script src="../js/auth-client.js"></script>
+    <script src="../js/game-ui.js"></script>
+    <script>
+        class DragonFist {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.width = this.canvas.width;
+                this.height = this.canvas.height;
+                
+                this.state = 'menu';
+                this.numPlayers = 1;
+                
+                // World/scrolling
+                this.worldX = 0;
+                this.stageWidth = 2500;
+                this.groundY = 320;
+                
+                // Players
+                this.players = [];
+                
+                // Enemies
+                this.enemies = [];
+                this.enemiesDefeated = 0;
+                this.wave = 0;
+                this.maxWavesPerStage = 4;
+                this.waveEnemies = 0;
+                
+                // Effects
+                this.effects = [];
+                this.pickups = [];
+                
+                // Stage/Area system
+                this.stage = 1;
+                this.maxStages = 5;
+                this.bossSpawned = false;
+                this.stageTransition = false;
+                this.transitionTimer = 0;
+                
+                // Stage definitions with unique themes and bosses
+                this.stageData = {
+                    1: { 
+                        name: 'City Streets', 
+                        bgColor: '#1a1a2e', 
+                        groundColor: '#2d2d44',
+                        enemies: ['punk', 'thug'],
+                        boss: { name: 'GANG LEADER VINCE', type: 'vince', health: 250, color: '#8e44ad', damage: 20 }
+                    },
+                    2: { 
+                        name: 'Abandoned Warehouse', 
+                        bgColor: '#1a1212', 
+                        groundColor: '#3d2d2d',
+                        enemies: ['punk', 'thug', 'biker'],
+                        boss: { name: 'BIKER BOSS CHAIN', type: 'chain', health: 350, color: '#d35400', damage: 25 }
+                    },
+                    3: { 
+                        name: 'Harbor Docks', 
+                        bgColor: '#0a1628', 
+                        groundColor: '#2a3a4a',
+                        enemies: ['thug', 'biker', 'ninja'],
+                        boss: { name: 'DOCK MASTER IRON', type: 'iron', health: 400, color: '#2c3e50', damage: 28 }
+                    },
+                    4: { 
+                        name: 'Ancient Temple', 
+                        bgColor: '#1a0a0a', 
+                        groundColor: '#3a2a2a',
+                        enemies: ['ninja', 'monk', 'shadow'],
+                        boss: { name: 'SHADOW SENSEI', type: 'sensei', health: 450, color: '#1a1a1a', damage: 32 }
+                    },
+                    5: { 
+                        name: 'Dragon\'s Lair', 
+                        bgColor: '#200a0a', 
+                        groundColor: '#4a1a1a',
+                        enemies: ['ninja', 'shadow', 'elite'],
+                        boss: { name: 'DRAGON MASTER KANG', type: 'kang', health: 600, color: '#c0392b', damage: 40 }
+                    }
+                };
+                
+                // Enemy type definitions
+                this.enemyTypes = {
+                    punk: { health: 30, speed: 1.5, damage: 8, color: '#9b59b6', points: 100 },
+                    thug: { health: 50, speed: 1.2, damage: 12, color: '#27ae60', points: 150 },
+                    biker: { health: 60, speed: 1.4, damage: 14, color: '#e67e22', points: 175 },
+                    ninja: { health: 35, speed: 2.5, damage: 15, color: '#2c3e50', points: 200 },
+                    monk: { health: 70, speed: 1.0, damage: 18, color: '#f39c12', points: 225 },
+                    shadow: { health: 40, speed: 2.8, damage: 20, color: '#1a1a2e', points: 275 },
+                    elite: { health: 80, speed: 1.8, damage: 22, color: '#c0392b', points: 300 }
+                };
+                
+                this.keys = {};
+                this.setupInput();
+                this.gameLoop();
+            }
+            
+            setupInput() {
+                window.addEventListener('keydown', e => {
+                    this.keys[e.code] = true;
+                });
+                window.addEventListener('keyup', e => this.keys[e.code] = false);
+            }
+            
+            startGame(numPlayers) {
+                this.numPlayers = numPlayers;
+                this.state = 'playing';
+                this.worldX = 0;
+                this.wave = 0;
+                this.enemiesDefeated = 0;
+                this.stage = 1;
+                this.bossSpawned = false;
+                this.stageTransition = false;
+                
+                this.players = [];
+                this.enemies = [];
+                this.effects = [];
+                this.pickups = [];
+                
+                // Create player 1 - Blue Dragon
+                this.players.push(this.createPlayer(100, this.groundY, '#4a90e2', '#2c5aa0', 'P1'));
+                
+                // Create player 2 - Red Dragon
+                if (numPlayers >= 2) {
+                    this.players.push(this.createPlayer(150, this.groundY, '#e74c3c', '#a93226', 'P2'));
+                }
+                
+                this.spawnWave();
+            }
+            
+            createPlayer(x, y, color, darkColor, name) {
+                return {
+                    x, y,
+                    vx: 0, vy: 0,
+                    width: 40,
+                    height: 60,
+                    color, darkColor, name,
+                    health: 100,
+                    maxHealth: 100,
+                    lives: 3,
+                    score: 0,
+                    facing: 1,
+                    state: 'idle',
+                    stateTime: 0,
+                    combo: 0,
+                    comboTimer: 0,
+                    attackCooldown: 0,
+                    invincible: 0,
+                    specialMeter: 0,
+                    grounded: true,
+                    // Leveling system
+                    level: 1,
+                    xp: 0,
+                    xpToNext: 100,
+                    // Stats that increase with level
+                    attackPower: 1.0,
+                    defense: 1.0,
+                    speed: 1.0
+                };
+            }
+            
+            gainXP(player, amount) {
+                player.xp += amount;
+                
+                // Check for level up
+                while (player.xp >= player.xpToNext) {
+                    player.xp -= player.xpToNext;
+                    player.level++;
+                    player.xpToNext = Math.floor(player.xpToNext * 1.5);
+                    
+                    // Stat increases
+                    player.attackPower += 0.1;
+                    player.defense += 0.08;
+                    player.speed += 0.05;
+                    player.maxHealth += 10;
+                    player.health = Math.min(player.health + 30, player.maxHealth);
+                    
+                    // Level up effect
+                    this.effects.push({
+                        type: 'levelup',
+                        x: player.x,
+                        y: player.y - 50,
+                        text: `LEVEL ${player.level}!`,
+                        life: 1.5
+                    });
+                    
+                    // Show stat bonuses
+                    this.effects.push({
+                        type: 'hit',
+                        x: player.x,
+                        y: player.y - 80,
+                        text: '+ATK +DEF +SPD +HP',
+                        color: '#FFD700',
+                        life: 1.2
+                    });
+                }
+            }
+            
+            spawnWave() {
+                this.wave++;
+                this.waveEnemies = 0;
+                
+                const stageInfo = this.stageData[this.stage];
+                const baseCount = 2 + Math.floor(this.wave * 1.2) + Math.floor(this.stage * 0.5);
+                const count = Math.min(baseCount, 6);
+                
+                // Spawn enemies ahead of the player
+                for (let i = 0; i < count; i++) {
+                    setTimeout(() => {
+                        if (this.state === 'playing' && !this.stageTransition) {
+                            this.spawnEnemy();
+                        }
+                    }, i * 600);
+                }
+                
+                // Boss on final wave of each stage
+                if (this.wave >= this.maxWavesPerStage && !this.bossSpawned) {
+                    setTimeout(() => {
+                        this.spawnBoss();
+                        this.bossSpawned = true;
+                    }, count * 600 + 1000);
+                }
+            }
+            
+            spawnEnemy() {
+                const stageInfo = this.stageData[this.stage];
+                const availableTypes = stageInfo.enemies;
+                const type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+                
+                const stats = this.enemyTypes[type];
+                // Scale enemy stats with stage
+                const stageMultiplier = 1 + (this.stage - 1) * 0.15;
+                
+                const side = Math.random() < 0.5 ? -1 : 1;
+                const x = side === 1 ? 
+                    this.worldX + this.width + 50 + Math.random() * 100 :
+                    this.worldX - 50 - Math.random() * 100;
+                
+                this.enemies.push({
+                    x,
+                    y: this.groundY,
+                    vx: 0, vy: 0,
+                    width: 35,
+                    height: 55,
+                    type,
+                    health: Math.floor(stats.health * stageMultiplier),
+                    maxHealth: Math.floor(stats.health * stageMultiplier),
+                    speed: stats.speed,
+                    damage: Math.floor(stats.damage * stageMultiplier),
+                    color: stats.color,
+                    points: Math.floor(stats.points * stageMultiplier),
+                    facing: side === 1 ? -1 : 1,
+                    state: 'idle',
+                    stateTime: 0,
+                    attackCooldown: 0,
+                    aiTimer: Math.random() * 60
+                });
+                
+                this.waveEnemies++;
+            }
+            
+            spawnBoss() {
+                const stageInfo = this.stageData[this.stage];
+                const bossData = stageInfo.boss;
+                
+                this.enemies.push({
+                    x: this.worldX + this.width + 100,
+                    y: this.groundY,
+                    vx: 0, vy: 0,
+                    width: 60,
+                    height: 80,
+                    type: bossData.type,
+                    name: bossData.name,
+                    health: bossData.health,
+                    maxHealth: bossData.health,
+                    speed: 1.2,
+                    damage: bossData.damage,
+                    color: bossData.color,
+                    points: 500 * this.stage,
+                    facing: -1,
+                    state: 'idle',
+                    stateTime: 0,
+                    attackCooldown: 0,
+                    aiTimer: 0,
+                    isBoss: true
+                });
+                
+                // Boss entrance effect
+                this.effects.push({
+                    type: 'bossEntrance',
+                    text: bossData.name,
+                    life: 2.5
+                });
+            }
+            
+            advanceStage() {
+                if (this.stage >= this.maxStages) {
+                    this.state = 'victory';
+                    return;
+                }
+                
+                this.stageTransition = true;
+                this.transitionTimer = 3;
+                
+                // Give bonus XP for completing stage
+                this.players.forEach(player => {
+                    if (player.lives > 0) {
+                        this.gainXP(player, 50 * this.stage);
+                        player.health = Math.min(player.health + 30, player.maxHealth);
+                    }
+                });
+            }
+            
+            gameLoop() {
+                this.update();
+                this.render();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+            
+            update() {
+                if (this.state !== 'playing') return;
+                
+                const dt = 1/60;
+                
+                // Handle stage transition
+                if (this.stageTransition) {
+                    this.transitionTimer -= dt;
+                    if (this.transitionTimer <= 0) {
+                        this.stageTransition = false;
+                        this.stage++;
+                        this.wave = 0;
+                        this.bossSpawned = false;
+                        this.worldX = 0;
+                        this.enemies = [];
+                        
+                        // Reset player positions
+                        this.players.forEach((player, i) => {
+                            if (player.lives > 0) {
+                                player.x = 100 + i * 50;
+                            }
+                        });
+                        
+                        this.spawnWave();
+                    }
+                    return;
+                }
+                
+                this.updatePlayers(dt);
+                this.updateEnemies(dt);
+                this.updateEffects(dt);
+                this.updatePickups(dt);
+                this.checkCombat();
+                this.updateCamera();
+                
+                // Check wave complete
+                if (this.enemies.length === 0 && this.waveEnemies > 0) {
+                    setTimeout(() => {
+                        if (this.state === 'playing' && this.enemies.length === 0) {
+                            if (this.bossSpawned) {
+                                // Boss defeated - advance stage
+                                this.advanceStage();
+                            } else if (this.wave < this.maxWavesPerStage) {
+                                this.spawnWave();
+                            }
+                        }
+                    }, 1500);
+                    this.waveEnemies = 0;
+                }
+                
+                // Check game over
+                const alivePlayers = this.players.filter(p => p.lives > 0);
+                if (alivePlayers.length === 0) {
+                    this.state = 'gameover';
+                }
+            }
+            
+            updatePlayers(dt) {
+                this.players.forEach((player, index) => {
+                    if (player.lives <= 0) return;
+                    
+                    // Get input
+                    const input = this.getPlayerInput(index);
+                    
+                    // Update cooldowns
+                    if (player.attackCooldown > 0) player.attackCooldown -= dt;
+                    if (player.invincible > 0) player.invincible -= dt;
+                    if (player.comboTimer > 0) {
+                        player.comboTimer -= dt;
+                        if (player.comboTimer <= 0) player.combo = 0;
+                    }
+                    if (player.specialMeter < 100) player.specialMeter += 0.1;
+                    
+                    // State machine
+                    player.stateTime += dt;
+                    
+                    if (player.state === 'hurt') {
+                        if (player.stateTime > 0.3) {
+                            player.state = 'idle';
+                        }
+                        return;
+                    }
+                    
+                    if (player.state === 'attacking') {
+                        if (player.stateTime > 0.25) {
+                            player.state = 'idle';
+                        }
+                        return;
+                    }
+                    
+                    // Movement
+                    player.vx = 0;
+                    if (input.left) { player.vx = -4; player.facing = -1; }
+                    if (input.right) { player.vx = 4; player.facing = 1; }
+                    if (input.up && player.grounded) player.y -= 2;
+                    if (input.down && player.grounded) player.y += 2;
+                    
+                    // Keep in vertical bounds
+                    player.y = Math.max(this.groundY - 80, Math.min(this.groundY, player.y));
+                    
+                    // Jump
+                    if (input.jump && player.grounded) {
+                        player.vy = -10;
+                        player.grounded = false;
+                        player.state = 'jumping';
+                        player.stateTime = 0;
+                    }
+                    
+                    // Attacks
+                    if (input.punch && player.attackCooldown <= 0) {
+                        player.state = 'attacking';
+                        player.stateTime = 0;
+                        player.attackType = 'punch';
+                        player.attackCooldown = 0.3;
+                    }
+                    
+                    if (input.kick && player.attackCooldown <= 0) {
+                        player.state = 'attacking';
+                        player.stateTime = 0;
+                        player.attackType = 'kick';
+                        player.attackCooldown = 0.35;
+                    }
+                    
+                    // Special attack
+                    if (input.special && player.specialMeter >= 50) {
+                        player.state = 'attacking';
+                        player.stateTime = 0;
+                        player.attackType = 'special';
+                        player.attackCooldown = 0.5;
+                        player.specialMeter -= 50;
+                        
+                        // Special effect
+                        this.effects.push({
+                            type: 'shockwave',
+                            x: player.x,
+                            y: player.y,
+                            radius: 0,
+                            maxRadius: 100,
+                            color: player.color,
+                            life: 0.4
+                        });
+                    }
+                    
+                    // Apply physics
+                    player.x += player.vx;
+                    player.vy += 0.35; // Gravity (reduced for smoother jumps)
+                    player.y += player.vy;
+                    
+                    // Ground collision
+                    if (player.y >= this.groundY) {
+                        player.y = this.groundY;
+                        player.vy = 0;
+                        player.grounded = true;
+                        if (player.state === 'jumping') {
+                            player.state = 'idle';
+                        }
+                    }
+                    
+                    // World bounds
+                    player.x = Math.max(this.worldX + 20, Math.min(this.worldX + this.width - 60, player.x));
+                    
+                    // Update state
+                    if (player.state === 'idle') {
+                        if (Math.abs(player.vx) > 0) {
+                            player.state = 'walking';
+                        }
+                    } else if (player.state === 'walking') {
+                        if (Math.abs(player.vx) === 0) {
+                            player.state = 'idle';
+                        }
+                    }
+                    // Keep jumping state while airborne
+                    if (!player.grounded && player.state !== 'attacking' && player.state !== 'hurt') {
+                        player.state = 'jumping';
+                    }
+                });
+            }
+            
+            getPlayerInput(playerIndex) {
+                const gp = window.gamepadManager?.getState(playerIndex);
+                
+                if (playerIndex === 0) {
+                    return {
+                        left: this.keys['KeyA'] || gp?.axes.leftX < -0.3,
+                        right: this.keys['KeyD'] || gp?.axes.leftX > 0.3,
+                        up: this.keys['KeyW'] || gp?.axes.leftY < -0.3,
+                        down: this.keys['KeyS'] || gp?.axes.leftY > 0.3,
+                        punch: this.keys['KeyJ'] || gp?.buttons.x,
+                        kick: this.keys['KeyK'] || gp?.buttons.y,
+                        jump: this.keys['KeyL'] || gp?.buttons.a,
+                        special: (this.keys['KeyJ'] && this.keys['KeyK']) || gp?.buttons.lb
+                    };
+                } else {
+                    return {
+                        left: this.keys['ArrowLeft'] || gp?.axes.leftX < -0.3,
+                        right: this.keys['ArrowRight'] || gp?.axes.leftX > 0.3,
+                        up: this.keys['ArrowUp'] || gp?.axes.leftY < -0.3,
+                        down: this.keys['ArrowDown'] || gp?.axes.leftY > 0.3,
+                        punch: this.keys['Digit1'] || gp?.buttons.x,
+                        kick: this.keys['Digit2'] || gp?.buttons.y,
+                        jump: this.keys['Digit3'] || gp?.buttons.a,
+                        special: (this.keys['Digit1'] && this.keys['Digit2']) || gp?.buttons.lb
+                    };
+                }
+            }
+            
+            updateEnemies(dt) {
+                this.enemies.forEach(enemy => {
+                    enemy.stateTime += dt;
+                    if (enemy.attackCooldown > 0) enemy.attackCooldown -= dt;
+                    enemy.aiTimer -= dt;
+                    
+                    // Find nearest player
+                    let nearestPlayer = null;
+                    let nearestDist = Infinity;
+                    
+                    this.players.forEach(player => {
+                        if (player.lives > 0) {
+                            const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+                            if (dist < nearestDist) {
+                                nearestDist = dist;
+                                nearestPlayer = player;
+                            }
+                        }
+                    });
+                    
+                    if (!nearestPlayer) return;
+                    
+                    // AI behavior
+                    if (enemy.state === 'hurt') {
+                        if (enemy.stateTime > 0.3) {
+                            enemy.state = 'idle';
+                        }
+                        return;
+                    }
+                    
+                    if (enemy.state === 'attacking') {
+                        if (enemy.stateTime > 0.3) {
+                            enemy.state = 'idle';
+                        }
+                        return;
+                    }
+                    
+                    // Face player
+                    enemy.facing = nearestPlayer.x > enemy.x ? 1 : -1;
+                    
+                    // Movement AI
+                    if (enemy.aiTimer <= 0) {
+                        enemy.aiTimer = 0.5 + Math.random() * 1;
+                        
+                        const dx = nearestPlayer.x - enemy.x;
+                        const dy = nearestPlayer.y - enemy.y;
+                        
+                        // Attack if close
+                        if (Math.abs(dx) < 50 && Math.abs(dy) < 30 && enemy.attackCooldown <= 0) {
+                            enemy.state = 'attacking';
+                            enemy.stateTime = 0;
+                            enemy.attackCooldown = 1 + Math.random();
+                            enemy.vx = 0;
+                        } else {
+                            // Move toward player
+                            enemy.vx = Math.sign(dx) * enemy.speed;
+                            
+                            // Vertical movement to match player depth
+                            if (Math.abs(dy) > 10) {
+                                enemy.y += Math.sign(dy) * enemy.speed * 0.5;
+                            }
+                        }
+                    }
+                    
+                    // Apply movement
+                    enemy.x += enemy.vx;
+                    enemy.y = Math.max(this.groundY - 80, Math.min(this.groundY, enemy.y));
+                });
+            }
+            
+            checkCombat() {
+                // Player attacks hitting enemies
+                this.players.forEach(player => {
+                    if (player.state !== 'attacking' || player.stateTime > 0.15) return;
+                    if (player.lives <= 0) return;
+                    
+                    const attackRange = player.attackType === 'kick' ? 60 : 45;
+                    const baseDamage = player.attackType === 'special' ? 40 : 
+                                        player.attackType === 'kick' ? 15 : 10;
+                    // Apply attack power multiplier from leveling
+                    const attackDamage = Math.floor(baseDamage * player.attackPower);
+                    
+                    this.enemies.forEach((enemy, ei) => {
+                        if (enemy.state === 'hurt') return;
+                        
+                        const dx = enemy.x - player.x;
+                        const dy = Math.abs(enemy.y - player.y);
+                        
+                        // Check if in attack range and correct direction
+                        if (Math.abs(dx) < attackRange && dy < 30 && Math.sign(dx) === player.facing) {
+                            // Hit!
+                            enemy.health -= attackDamage;
+                            enemy.state = 'hurt';
+                            enemy.stateTime = 0;
+                            enemy.vx = player.facing * 5;
+                            
+                            // Combo
+                            player.combo++;
+                            player.comboTimer = 2;
+                            player.specialMeter = Math.min(100, player.specialMeter + 5);
+                            
+                            // Hit effect
+                            this.effects.push({
+                                type: 'hit',
+                                x: enemy.x,
+                                y: enemy.y - 30,
+                                text: player.attackType === 'special' ? 'SPECIAL!' : 
+                                      player.combo > 2 ? `${player.combo} HIT!` : `${attackDamage}`,
+                                color: player.combo > 4 ? '#FFD700' : '#FFF',
+                                life: 0.5
+                            });
+                            
+                            // Check death
+                            if (enemy.health <= 0) {
+                                const scoreGain = Math.floor(enemy.points * (1 + player.combo * 0.1));
+                                player.score += scoreGain;
+                                this.enemiesDefeated++;
+                                
+                                // Grant XP
+                                const xpGain = Math.floor(enemy.points / 5) + (enemy.isBoss ? 100 : 0);
+                                this.gainXP(player, xpGain);
+                                
+                                // Death effect
+                                this.effects.push({
+                                    type: 'explosion',
+                                    x: enemy.x,
+                                    y: enemy.y,
+                                    particles: this.createParticles(enemy.x, enemy.y - 30, enemy.color, 15),
+                                    life: 0.6
+                                });
+                                
+                                // XP indicator
+                                this.effects.push({
+                                    type: 'hit',
+                                    x: enemy.x,
+                                    y: enemy.y - 50,
+                                    text: `+${xpGain} XP`,
+                                    color: '#9b59b6',
+                                    life: 0.7
+                                });
+                                
+                                // Maybe drop pickup (higher chance from bosses)
+                                if (Math.random() < (enemy.isBoss ? 0.8 : 0.2)) {
+                                    this.pickups.push({
+                                        x: enemy.x,
+                                        y: enemy.y,
+                                        type: Math.random() < 0.7 ? 'health' : 'power',
+                                        life: 10
+                                    });
+                                }
+                                
+                                // Remove enemy
+                                this.enemies.splice(ei, 1);
+                            }
+                        }
+                    });
+                    
+                    // Special attack hits all nearby
+                    if (player.attackType === 'special' && player.stateTime < 0.1) {
+                        this.enemies.forEach((enemy, ei) => {
+                            const dist = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+                            if (dist < 100) {
+                                const specialDamage = Math.floor(30 * player.attackPower);
+                                enemy.health -= specialDamage;
+                                enemy.state = 'hurt';
+                                enemy.stateTime = 0;
+                                
+                                if (enemy.health <= 0) {
+                                    player.score += enemy.points;
+                                    this.gainXP(player, Math.floor(enemy.points / 5));
+                                    this.effects.push({
+                                        type: 'explosion',
+                                        x: enemy.x,
+                                        y: enemy.y,
+                                        particles: this.createParticles(enemy.x, enemy.y - 30, enemy.color, 15),
+                                        life: 0.6
+                                    });
+                                    this.enemies.splice(ei, 1);
+                                }
+                            }
+                        });
+                    }
+                });
+                
+                // Enemy attacks hitting players
+                this.enemies.forEach(enemy => {
+                    if (enemy.state !== 'attacking' || enemy.stateTime > 0.15) return;
+                    
+                    this.players.forEach(player => {
+                        if (player.lives <= 0 || player.invincible > 0) return;
+                        if (player.state === 'hurt') return;
+                        
+                        const dx = player.x - enemy.x;
+                        const dy = Math.abs(player.y - enemy.y);
+                        
+                        if (Math.abs(dx) < 50 && dy < 30 && Math.sign(dx) === enemy.facing) {
+                            // Apply defense multiplier to reduce damage
+                            const damageTaken = Math.floor(enemy.damage / player.defense);
+                            
+                            // Player hit!
+                            player.health -= damageTaken;
+                            player.state = 'hurt';
+                            player.stateTime = 0;
+                            player.vx = enemy.facing * 3;
+                            player.combo = 0;
+                            
+                            this.effects.push({
+                                type: 'hit',
+                                x: player.x,
+                                y: player.y - 40,
+                                text: `-${damageTaken}`,
+                                color: '#e74c3c',
+                                life: 0.4
+                            });
+                            
+                            if (player.health <= 0) {
+                                player.lives--;
+                                if (player.lives > 0) {
+                                    player.health = player.maxHealth;
+                                    player.invincible = 2;
+                                    player.x = this.worldX + 100;
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+            
+            createParticles(x, y, color, count) {
+                const particles = [];
+                for (let i = 0; i < count; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 2 + Math.random() * 4;
+                    particles.push({
+                        x, y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed - 2,
+                        color,
+                        size: 3 + Math.random() * 4
+                    });
+                }
+                return particles;
+            }
+            
+            updateEffects(dt) {
+                this.effects = this.effects.filter(effect => {
+                    effect.life -= dt;
+                    
+                    if (effect.type === 'explosion' && effect.particles) {
+                        effect.particles.forEach(p => {
+                            p.x += p.vx;
+                            p.y += p.vy;
+                            p.vy += 0.3;
+                        });
+                    }
+                    
+                    if (effect.type === 'shockwave') {
+                        effect.radius += 8;
+                    }
+                    
+                    return effect.life > 0;
+                });
+            }
+            
+            updatePickups(dt) {
+                this.pickups = this.pickups.filter(pickup => {
+                    pickup.life -= dt;
+                    
+                    // Check player collision
+                    this.players.forEach(player => {
+                        if (player.lives <= 0) return;
+                        
+                        const dist = Math.hypot(pickup.x - player.x, pickup.y - player.y);
+                        if (dist < 40) {
+                            if (pickup.type === 'health') {
+                                player.health = Math.min(player.maxHealth, player.health + 30);
+                            } else if (pickup.type === 'power') {
+                                player.specialMeter = 100;
+                            }
+                            pickup.life = 0;
+                            
+                            this.effects.push({
+                                type: 'hit',
+                                x: pickup.x,
+                                y: pickup.y - 20,
+                                text: pickup.type === 'health' ? '+HEALTH' : '+POWER',
+                                color: pickup.type === 'health' ? '#4CAF50' : '#FFD700',
+                                life: 0.5
+                            });
+                        }
+                    });
+                    
+                    return pickup.life > 0;
+                });
+            }
+            
+            updateCamera() {
+                // Find rightmost player
+                let maxX = 0;
+                this.players.forEach(player => {
+                    if (player.lives > 0 && player.x > maxX) {
+                        maxX = player.x;
+                    }
+                });
+                
+                // Scroll when player moves right
+                const scrollThreshold = this.worldX + this.width * 0.6;
+                if (maxX > scrollThreshold && this.worldX < this.stageWidth - this.width) {
+                    this.worldX = Math.min(this.stageWidth - this.width, maxX - this.width * 0.6);
+                }
+            }
+            
+            render() {
+                const stageInfo = this.stageData[this.stage] || this.stageData[1];
+                
+                // Clear with stage-specific background
+                this.ctx.fillStyle = stageInfo.bgColor;
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                // Background layers (parallax)
+                this.renderBackground();
+                
+                // Ground with stage-specific color
+                this.ctx.fillStyle = stageInfo.groundColor;
+                this.ctx.fillRect(0, this.groundY + 30, this.width, this.height - this.groundY - 30);
+                
+                // Ground line
+                this.ctx.strokeStyle = '#4a4a6a';
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, this.groundY + 30);
+                this.ctx.lineTo(this.width, this.groundY + 30);
+                this.ctx.stroke();
+                
+                // Pickups
+                this.pickups.forEach(pickup => {
+                    const screenX = pickup.x - this.worldX;
+                    const bob = Math.sin(Date.now() / 200) * 5;
+                    
+                    this.ctx.fillStyle = pickup.type === 'health' ? '#4CAF50' : '#FFD700';
+                    this.ctx.beginPath();
+                    this.ctx.arc(screenX, pickup.y - 10 + bob, 15, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = 'bold 16px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(pickup.type === 'health' ? '+' : '⚡', screenX, pickup.y - 5 + bob);
+                });
+                
+                // Sort entities by Y for proper depth
+                const entities = [...this.players.filter(p => p.lives > 0), ...this.enemies];
+                entities.sort((a, b) => a.y - b.y);
+                
+                // Render entities
+                entities.forEach(entity => {
+                    if (entity.name) {
+                        this.renderPlayer(entity);
+                    } else {
+                        this.renderEnemy(entity);
+                    }
+                });
+                
+                // Effects
+                this.renderEffects();
+                
+                // UI
+                this.renderUI();
+                
+                // Stage transition overlay
+                if (this.stageTransition) {
+                    this.renderStageTransition();
+                }
+                
+                // State screens
+                this.renderStateScreens();
+            }
+            
+            renderStageTransition() {
+                this.ctx.fillStyle = 'rgba(0,0,0,0.85)';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                const nextStage = this.stageData[this.stage + 1];
+                if (!nextStage) return;
+                
+                this.ctx.fillStyle = '#FFD700';
+                this.ctx.font = 'bold 36px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(`STAGE ${this.stage} COMPLETE!`, this.width / 2, 120);
+                
+                this.ctx.fillStyle = '#FFF';
+                this.ctx.font = '28px Arial';
+                this.ctx.fillText(`Next: ${nextStage.name}`, this.width / 2, 180);
+                
+                // Show player stats
+                this.players.forEach((player, i) => {
+                    if (player.lives > 0) {
+                        this.ctx.fillStyle = player.color;
+                        this.ctx.font = '20px Arial';
+                        const yOffset = 230 + i * 80;
+                        this.ctx.fillText(`${player.name} - Level ${player.level}`, this.width / 2, yOffset);
+                        this.ctx.fillStyle = '#888';
+                        this.ctx.font = '16px Arial';
+                        this.ctx.fillText(`ATK: ${(player.attackPower * 100).toFixed(0)}% | DEF: ${(player.defense * 100).toFixed(0)}% | HP: ${player.maxHealth}`, this.width / 2, yOffset + 25);
+                    }
+                });
+                
+                this.ctx.fillStyle = '#4a90e2';
+                this.ctx.font = '20px Arial';
+                this.ctx.fillText('Prepare for the next challenge...', this.width / 2, this.height - 60);
+            }
+            
+            renderBackground() {
+                // City silhouette
+                this.ctx.fillStyle = '#12121e';
+                const bgOffset = -this.worldX * 0.1;
+                
+                for (let i = 0; i < 15; i++) {
+                    const x = (i * 120 + bgOffset) % (this.width + 200) - 100;
+                    const h = 80 + Math.sin(i * 1.5) * 40;
+                    this.ctx.fillRect(x, this.groundY - h, 100, h + 30);
+                }
+                
+                // Neon signs
+                const neonColors = ['#e74c3c', '#4a90e2', '#f39c12', '#9b59b6'];
+                for (let i = 0; i < 8; i++) {
+                    const x = (i * 200 + bgOffset * 1.5) % (this.width + 300) - 100;
+                    this.ctx.fillStyle = neonColors[i % 4];
+                    this.ctx.globalAlpha = 0.3 + Math.sin(Date.now() / 500 + i) * 0.2;
+                    this.ctx.fillRect(x + 20, this.groundY - 60, 60, 20);
+                    this.ctx.globalAlpha = 1;
+                }
+                
+                // Street elements
+                const streetOffset = -this.worldX * 0.5;
+                this.ctx.fillStyle = '#3a3a5a';
+                for (let i = 0; i < 10; i++) {
+                    const x = (i * 150 + streetOffset) % (this.width + 200) - 50;
+                    // Trash cans
+                    this.ctx.fillRect(x, this.groundY - 5, 25, 35);
+                }
+            }
+            
+            renderPlayer(player) {
+                const screenX = player.x - this.worldX;
+                const screenY = player.y;
+                
+                // Flash when invincible
+                if (player.invincible > 0 && Math.floor(player.invincible * 10) % 2) {
+                    return;
+                }
+                
+                this.ctx.save();
+                this.ctx.translate(screenX + player.width/2, screenY);
+                this.ctx.scale(player.facing, 1);
+                
+                // Shadow - scales smaller when jumping (higher = smaller shadow)
+                const heightFromGround = this.groundY - player.y;
+                const shadowScale = Math.max(0.3, 1 - heightFromGround / 150);
+                this.ctx.fillStyle = `rgba(0,0,0,${0.3 * shadowScale})`;
+                this.ctx.beginPath();
+                this.ctx.ellipse(0, 30 + heightFromGround, 25 * shadowScale, 8 * shadowScale, 0, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Legs
+                this.ctx.fillStyle = '#333';
+                if (player.state === 'jumping') {
+                    // Jumping pose - tucked legs for a more dynamic look
+                    this.ctx.save();
+                    this.ctx.rotate(-0.3);
+                    this.ctx.fillRect(-15, -10, 10, 25);
+                    this.ctx.restore();
+                    this.ctx.save();
+                    this.ctx.rotate(0.3);
+                    this.ctx.fillRect(5, -10, 10, 25);
+                    this.ctx.restore();
+                } else if (player.state === 'walking') {
+                    const legOffset = Math.sin(Date.now() / 100) * 8;
+                    this.ctx.fillRect(-12, -5, 10, 35);
+                    this.ctx.fillRect(2 + legOffset, -5, 10, 35);
+                } else if (player.state === 'attacking' && player.attackType === 'kick') {
+                    this.ctx.fillRect(-12, -5, 10, 35);
+                    // Extended kick leg
+                    this.ctx.save();
+                    this.ctx.rotate(-0.8);
+                    this.ctx.fillRect(5, -20, 10, 40);
+                    this.ctx.restore();
+                } else {
+                    this.ctx.fillRect(-12, -5, 10, 35);
+                    this.ctx.fillRect(2, -5, 10, 35);
+                }
+                
+                // Body
+                this.ctx.fillStyle = player.color;
+                this.ctx.fillRect(-15, -45, 30, 45);
+                
+                // Belt
+                this.ctx.fillStyle = '#FFD700';
+                this.ctx.fillRect(-15, -15, 30, 5);
+                
+                // Arms
+                if (player.state === 'jumping') {
+                    // Arms raised during jump for dynamic pose
+                    this.ctx.fillStyle = player.darkColor;
+                    this.ctx.save();
+                    this.ctx.rotate(-0.5);
+                    this.ctx.fillRect(-22, -55, 10, 22);
+                    this.ctx.restore();
+                    this.ctx.save();
+                    this.ctx.rotate(0.5);
+                    this.ctx.fillRect(12, -55, 10, 22);
+                    this.ctx.restore();
+                } else if (player.state === 'attacking' && player.attackType === 'punch') {
+                    // Punching arm
+                    this.ctx.fillStyle = player.darkColor;
+                    this.ctx.fillRect(-18, -40, 10, 25);
+                    this.ctx.fillRect(15, -40, 35, 12);
+                } else {
+                    this.ctx.fillStyle = player.darkColor;
+                    this.ctx.fillRect(-18, -40, 10, 25);
+                    this.ctx.fillRect(8, -40, 10, 25);
+                }
+                
+                // Head
+                this.ctx.fillStyle = '#F5CBA7';
+                this.ctx.beginPath();
+                this.ctx.arc(0, -55, 15, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Hair
+                this.ctx.fillStyle = '#333';
+                this.ctx.beginPath();
+                this.ctx.arc(0, -60, 12, Math.PI, 0);
+                this.ctx.fill();
+                
+                // Headband
+                this.ctx.fillStyle = player.color;
+                this.ctx.fillRect(-15, -62, 30, 5);
+                
+                this.ctx.restore();
+                
+                // Player name
+                this.ctx.fillStyle = player.color;
+                this.ctx.font = 'bold 12px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(player.name, screenX + player.width/2, screenY - 75);
+            }
+            
+            renderEnemy(enemy) {
+                const screenX = enemy.x - this.worldX;
+                const screenY = enemy.y;
+                
+                if (screenX < -50 || screenX > this.width + 50) return;
+                
+                this.ctx.save();
+                this.ctx.translate(screenX + enemy.width/2, screenY);
+                this.ctx.scale(enemy.facing, 1);
+                
+                // Flash when hurt
+                if (enemy.state === 'hurt') {
+                    this.ctx.globalAlpha = 0.7;
+                }
+                
+                // Shadow
+                this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                this.ctx.beginPath();
+                this.ctx.ellipse(0, 25, enemy.isBoss ? 35 : 20, 6, 0, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                const scale = enemy.isBoss ? 1.3 : 1;
+                this.ctx.scale(scale, scale);
+                
+                // Legs
+                this.ctx.fillStyle = '#222';
+                this.ctx.fillRect(-10, -5, 8, 30);
+                this.ctx.fillRect(2, -5, 8, 30);
+                
+                // Body
+                this.ctx.fillStyle = enemy.color;
+                this.ctx.fillRect(-12, -40, 24, 40);
+                
+                // Arms
+                if (enemy.state === 'attacking') {
+                    this.ctx.fillRect(10, -35, 30, 10);
+                } else {
+                    this.ctx.fillRect(-15, -35, 8, 20);
+                    this.ctx.fillRect(7, -35, 8, 20);
+                }
+                
+                // Head
+                this.ctx.fillStyle = '#D4A574';
+                this.ctx.beginPath();
+                this.ctx.arc(0, -50, 12, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Type-specific features
+                if (enemy.type === 'punk') {
+                    // Mohawk
+                    this.ctx.fillStyle = '#e74c3c';
+                    this.ctx.fillRect(-3, -70, 6, 20);
+                } else if (enemy.type === 'thug') {
+                    // Bandana
+                    this.ctx.fillStyle = '#27ae60';
+                    this.ctx.fillRect(-12, -58, 24, 6);
+                } else if (enemy.type === 'biker') {
+                    // Helmet
+                    this.ctx.fillStyle = '#222';
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, -52, 14, Math.PI, 0);
+                    this.ctx.fill();
+                    // Visor
+                    this.ctx.fillStyle = '#444';
+                    this.ctx.fillRect(-10, -52, 20, 5);
+                } else if (enemy.type === 'ninja') {
+                    // Full face mask
+                    this.ctx.fillStyle = '#222';
+                    this.ctx.fillRect(-12, -58, 24, 15);
+                    // Eyes only
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.fillRect(-8, -52, 5, 3);
+                    this.ctx.fillRect(3, -52, 5, 3);
+                } else if (enemy.type === 'monk') {
+                    // Bald head sheen
+                    this.ctx.fillStyle = '#F5D6A0';
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, -52, 12, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    // Prayer beads
+                    this.ctx.strokeStyle = '#8B4513';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, -35, 15, 0.3, Math.PI - 0.3);
+                    this.ctx.stroke();
+                } else if (enemy.type === 'shadow') {
+                    // Ghostly appearance
+                    this.ctx.fillStyle = 'rgba(30, 30, 50, 0.8)';
+                    this.ctx.fillRect(-12, -40, 24, 40);
+                    // Glowing eyes
+                    this.ctx.fillStyle = '#e74c3c';
+                    this.ctx.fillRect(-7, -52, 4, 3);
+                    this.ctx.fillRect(3, -52, 4, 3);
+                } else if (enemy.type === 'elite') {
+                    // Armored
+                    this.ctx.fillStyle = '#8B0000';
+                    this.ctx.fillRect(-14, -42, 28, 44);
+                    // Shoulder pads
+                    this.ctx.fillRect(-18, -38, 8, 8);
+                    this.ctx.fillRect(10, -38, 8, 8);
+                    // Helmet
+                    this.ctx.fillStyle = '#4a4a4a';
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, -52, 14, Math.PI, 0);
+                    this.ctx.fill();
+                } else if (enemy.isBoss) {
+                    // Boss-specific features based on type
+                    if (enemy.type === 'vince') {
+                        // Slicked back hair
+                        this.ctx.fillStyle = '#222';
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(-12, -55);
+                        this.ctx.lineTo(0, -68);
+                        this.ctx.lineTo(12, -55);
+                        this.ctx.closePath();
+                        this.ctx.fill();
+                        // Gold chain
+                        this.ctx.strokeStyle = '#FFD700';
+                        this.ctx.lineWidth = 3;
+                        this.ctx.beginPath();
+                        this.ctx.arc(0, -30, 12, 0.5, Math.PI - 0.5);
+                        this.ctx.stroke();
+                    } else if (enemy.type === 'chain') {
+                        // Biker helmet with spikes
+                        this.ctx.fillStyle = '#222';
+                        this.ctx.beginPath();
+                        this.ctx.arc(0, -52, 15, Math.PI, 0);
+                        this.ctx.fill();
+                        // Spikes
+                        this.ctx.fillStyle = '#888';
+                        for (let i = -2; i <= 2; i++) {
+                            this.ctx.fillRect(i * 5 - 2, -70, 4, 10);
+                        }
+                    } else if (enemy.type === 'iron') {
+                        // Dock worker cap
+                        this.ctx.fillStyle = '#1a3a5a';
+                        this.ctx.fillRect(-14, -62, 28, 8);
+                        // Anchor tattoo
+                        this.ctx.strokeStyle = '#2980b9';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(0, -35);
+                        this.ctx.lineTo(0, -20);
+                        this.ctx.stroke();
+                    } else if (enemy.type === 'sensei') {
+                        // Shadow hood
+                        this.ctx.fillStyle = '#0a0a0a';
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(-15, -45);
+                        this.ctx.lineTo(0, -72);
+                        this.ctx.lineTo(15, -45);
+                        this.ctx.closePath();
+                        this.ctx.fill();
+                        // Red eyes
+                        this.ctx.fillStyle = '#e74c3c';
+                        this.ctx.fillRect(-6, -52, 4, 3);
+                        this.ctx.fillRect(2, -52, 4, 3);
+                    } else if (enemy.type === 'kang') {
+                        // Dragon helmet
+                        this.ctx.fillStyle = '#8B0000';
+                        this.ctx.beginPath();
+                        this.ctx.arc(0, -52, 16, Math.PI, 0);
+                        this.ctx.fill();
+                        // Dragon horns
+                        this.ctx.fillStyle = '#FFD700';
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(-12, -58);
+                        this.ctx.lineTo(-18, -78);
+                        this.ctx.lineTo(-8, -62);
+                        this.ctx.closePath();
+                        this.ctx.fill();
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(12, -58);
+                        this.ctx.lineTo(18, -78);
+                        this.ctx.lineTo(8, -62);
+                        this.ctx.closePath();
+                        this.ctx.fill();
+                        // Glowing eyes
+                        this.ctx.fillStyle = '#FF4500';
+                        this.ctx.fillRect(-7, -52, 5, 4);
+                        this.ctx.fillRect(2, -52, 5, 4);
+                    } else {
+                        // Default boss - sunglasses and scar
+                        this.ctx.fillStyle = '#000';
+                        this.ctx.fillRect(-10, -52, 20, 6);
+                        this.ctx.strokeStyle = '#a93226';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(-8, -45);
+                        this.ctx.lineTo(8, -55);
+                        this.ctx.stroke();
+                    }
+                }
+                
+                this.ctx.restore();
+                
+                // Health bar for boss
+                if (enemy.isBoss) {
+                    const barWidth = 80;
+                    const healthPercent = enemy.health / enemy.maxHealth;
+                    this.ctx.fillStyle = '#333';
+                    this.ctx.fillRect(screenX - barWidth/2 + enemy.width/2, screenY - 95, barWidth, 8);
+                    this.ctx.fillStyle = '#e74c3c';
+                    this.ctx.fillRect(screenX - barWidth/2 + enemy.width/2, screenY - 95, barWidth * healthPercent, 8);
+                    
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = 'bold 10px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('BOSS', screenX + enemy.width/2, screenY - 100);
+                }
+            }
+            
+            renderEffects() {
+                this.effects.forEach(effect => {
+                    if (effect.type === 'hit') {
+                        const screenX = effect.x - this.worldX;
+                        this.ctx.fillStyle = effect.color;
+                        this.ctx.font = 'bold 18px Arial';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.globalAlpha = effect.life * 2;
+                        this.ctx.fillText(effect.text, screenX, effect.y - (0.5 - effect.life) * 40);
+                        this.ctx.globalAlpha = 1;
+                    }
+                    
+                    if (effect.type === 'levelup') {
+                        const screenX = effect.x - this.worldX;
+                        const scale = 1 + (1.5 - effect.life) * 0.3;
+                        this.ctx.save();
+                        this.ctx.translate(screenX, effect.y - (1.5 - effect.life) * 30);
+                        this.ctx.scale(scale, scale);
+                        this.ctx.fillStyle = '#FFD700';
+                        this.ctx.font = 'bold 24px Arial';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.globalAlpha = Math.min(1, effect.life);
+                        this.ctx.fillText(effect.text, 0, 0);
+                        this.ctx.globalAlpha = 1;
+                        this.ctx.restore();
+                    }
+                    
+                    if (effect.type === 'bossEntrance') {
+                        this.ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                        this.ctx.fillRect(0, this.height / 2 - 50, this.width, 100);
+                        
+                        this.ctx.fillStyle = '#e74c3c';
+                        this.ctx.font = 'bold 20px Arial';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.globalAlpha = Math.min(1, effect.life);
+                        this.ctx.fillText('⚠️ BOSS APPROACHING ⚠️', this.width / 2, this.height / 2 - 15);
+                        this.ctx.fillStyle = '#FFD700';
+                        this.ctx.font = 'bold 28px Arial';
+                        this.ctx.fillText(effect.text, this.width / 2, this.height / 2 + 25);
+                        this.ctx.globalAlpha = 1;
+                    }
+                    
+                    if (effect.type === 'explosion' && effect.particles) {
+                        effect.particles.forEach(p => {
+                            const screenX = p.x - this.worldX;
+                            this.ctx.fillStyle = p.color;
+                            this.ctx.globalAlpha = effect.life;
+                            this.ctx.beginPath();
+                            this.ctx.arc(screenX, p.y, p.size, 0, Math.PI * 2);
+                            this.ctx.fill();
+                        });
+                        this.ctx.globalAlpha = 1;
+                    }
+                    
+                    if (effect.type === 'shockwave') {
+                        const screenX = effect.x - this.worldX;
+                        this.ctx.strokeStyle = effect.color;
+                        this.ctx.lineWidth = 4;
+                        this.ctx.globalAlpha = effect.life;
+                        this.ctx.beginPath();
+                        this.ctx.arc(screenX, effect.y, effect.radius, 0, Math.PI * 2);
+                        this.ctx.stroke();
+                        this.ctx.globalAlpha = 1;
+                    }
+                });
+            }
+            
+            renderUI() {
+                const stageInfo = this.stageData[this.stage];
+                
+                // Player HUDs
+                this.players.forEach((player, index) => {
+                    const hudX = index === 0 ? 20 : this.width - 220;
+                    
+                    // Name and Level
+                    this.ctx.fillStyle = player.color;
+                    this.ctx.font = 'bold 14px Arial';
+                    this.ctx.textAlign = 'left';
+                    this.ctx.fillText(`${player.name} Lv.${player.level}`, hudX, 22);
+                    
+                    // Health bar
+                    this.ctx.fillStyle = '#333';
+                    this.ctx.fillRect(hudX, 28, 150, 12);
+                    this.ctx.fillStyle = player.health > 30 ? '#4CAF50' : '#e74c3c';
+                    this.ctx.fillRect(hudX, 28, 150 * (player.health / player.maxHealth), 12);
+                    this.ctx.strokeStyle = '#FFF';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.strokeRect(hudX, 28, 150, 12);
+                    
+                    // HP text
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = '10px Arial';
+                    this.ctx.fillText(`${player.health}/${player.maxHealth}`, hudX + 55, 38);
+                    
+                    // XP bar
+                    this.ctx.fillStyle = '#222';
+                    this.ctx.fillRect(hudX, 43, 150, 6);
+                    this.ctx.fillStyle = '#9b59b6';
+                    this.ctx.fillRect(hudX, 43, 150 * (player.xp / player.xpToNext), 6);
+                    
+                    // Special meter
+                    this.ctx.fillStyle = '#333';
+                    this.ctx.fillRect(hudX, 52, 150, 8);
+                    this.ctx.fillStyle = '#FFD700';
+                    this.ctx.fillRect(hudX, 52, 150 * (player.specialMeter / 100), 8);
+                    
+                    // Lives and Score
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = '12px Arial';
+                    this.ctx.fillText(`❤️${player.lives}`, hudX, 75);
+                    this.ctx.fillText(`Score: ${Math.floor(player.score)}`, hudX + 40, 75);
+                    
+                    // Combo
+                    if (player.combo > 1) {
+                        this.ctx.fillStyle = '#FFD700';
+                        this.ctx.font = 'bold 16px Arial';
+                        this.ctx.fillText(`${player.combo} COMBO!`, hudX, 95);
+                    }
+                });
+                
+                // Stage and Wave indicator (center top)
+                this.ctx.fillStyle = '#FFF';
+                this.ctx.font = 'bold 14px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(`STAGE ${this.stage}: ${stageInfo.name.toUpperCase()}`, this.width / 2, 20);
+                
+                this.ctx.font = 'bold 18px Arial';
+                this.ctx.fillText(`WAVE ${this.wave}/${this.maxWavesPerStage}`, this.width / 2, 42);
+                
+                // Enemies remaining
+                this.ctx.font = '12px Arial';
+                this.ctx.fillStyle = '#888';
+                this.ctx.fillText(`Enemies: ${this.enemies.length}`, this.width / 2, 58);
+            }
+            
+            renderStateScreens() {
+                if (this.state === 'menu') {
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.9)';
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    
+                    // Title with glow
+                    this.ctx.shadowColor = '#e74c3c';
+                    this.ctx.shadowBlur = 20;
+                    this.ctx.fillStyle = '#e74c3c';
+                    this.ctx.font = 'bold 56px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('DRAGON FIST', this.width / 2, 100);
+                    this.ctx.shadowBlur = 0;
+                    
+                    this.ctx.fillStyle = '#FFD700';
+                    this.ctx.font = 'bold 20px Arial';
+                    this.ctx.fillText('5 Stages • Unique Bosses • Level Up System', this.width / 2, 140);
+                    
+                    this.ctx.fillStyle = '#888';
+                    this.ctx.font = '14px Arial';
+                    this.ctx.fillText('P1: WASD + J/K/L | P2: Arrows + 1/2/3', this.width / 2, 180);
+                    this.ctx.fillText('Punch + Kick together = SPECIAL ATTACK', this.width / 2, 200);
+                    
+                    // Stage preview
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = 'bold 16px Arial';
+                    this.ctx.fillText('JOURNEY:', this.width / 2, 240);
+                    
+                    const stageNames = ['Streets', 'Warehouse', 'Docks', 'Temple', 'Dragon Lair'];
+                    this.ctx.font = '12px Arial';
+                    this.ctx.fillStyle = '#888';
+                    this.ctx.fillText(stageNames.join(' → '), this.width / 2, 260);
+                    
+                    // Characters
+                    this.ctx.fillStyle = '#4a90e2';
+                    this.ctx.font = 'bold 18px Arial';
+                    this.ctx.fillText('🥋 BILLY', this.width / 2 - 100, 310);
+                    this.ctx.fillStyle = '#e74c3c';
+                    this.ctx.fillText('🥋 JIMMY', this.width / 2 + 100, 310);
+                    
+                    this.ctx.fillStyle = '#4a90e2';
+                    this.ctx.font = '24px Arial';
+                    this.ctx.fillText('Select players to start!', this.width / 2, 360);
+                }
+                
+                if (this.state === 'gameover') {
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.85)';
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    
+                    this.ctx.fillStyle = '#e74c3c';
+                    this.ctx.font = 'bold 48px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('GAME OVER', this.width / 2, 100);
+                    
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = '24px Arial';
+                    this.ctx.fillText(`Stage ${this.stage}: ${this.stageData[this.stage].name}`, this.width / 2, 150);
+                    this.ctx.fillText(`Wave: ${this.wave}/${this.maxWavesPerStage}`, this.width / 2, 180);
+                    this.ctx.fillText(`Enemies Defeated: ${this.enemiesDefeated}`, this.width / 2, 210);
+                    
+                    // Player stats
+                    this.players.forEach((player, i) => {
+                        const y = 260 + i * 50;
+                        this.ctx.fillStyle = player.color;
+                        this.ctx.font = 'bold 20px Arial';
+                        this.ctx.fillText(`${player.name} - Level ${player.level}`, this.width / 2, y);
+                        this.ctx.fillStyle = '#888';
+                        this.ctx.font = '16px Arial';
+                        this.ctx.fillText(`Score: ${Math.floor(player.score)}`, this.width / 2, y + 22);
+                    });
+                    
+                    this.ctx.fillStyle = '#4a90e2';
+                    this.ctx.font = '20px Arial';
+                    this.ctx.fillText('Select players to try again!', this.width / 2, 370);
+                }
+                
+                if (this.state === 'victory') {
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.85)';
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    
+                    this.ctx.shadowColor = '#FFD700';
+                    this.ctx.shadowBlur = 20;
+                    this.ctx.fillStyle = '#FFD700';
+                    this.ctx.font = 'bold 48px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('🏆 VICTORY! 🏆', this.width / 2, 80);
+                    this.ctx.shadowBlur = 0;
+                    
+                    // Get the last boss name from stage data
+                    const lastBossName = this.stageData[this.maxStages]?.boss?.name || 'the Final Boss';
+                    
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = '24px Arial';
+                    this.ctx.fillText(`You defeated ${lastBossName}!`, this.width / 2, 130);
+                    this.ctx.fillText(`Total Enemies Defeated: ${this.enemiesDefeated}`, this.width / 2, 165);
+                    
+                    // Final player stats
+                    this.players.forEach((player, i) => {
+                        const y = 210 + i * 70;
+                        this.ctx.fillStyle = player.color;
+                        this.ctx.font = 'bold 22px Arial';
+                        this.ctx.fillText(`${player.name} - LEVEL ${player.level}`, this.width / 2, y);
+                        this.ctx.fillStyle = '#FFF';
+                        this.ctx.font = '16px Arial';
+                        this.ctx.fillText(`Final Score: ${Math.floor(player.score)}`, this.width / 2, y + 22);
+                        this.ctx.fillStyle = '#888';
+                        this.ctx.fillText(`ATK: ${(player.attackPower * 100).toFixed(0)}% | DEF: ${(player.defense * 100).toFixed(0)}% | Max HP: ${player.maxHealth}`, this.width / 2, y + 42);
+                    });
+                    
+                    this.ctx.fillStyle = '#4a90e2';
+                    this.ctx.font = '20px Arial';
+                    this.ctx.fillText('Select players to play again!', this.width / 2, 370);
+                }
+            }
+        }
+        
+        let game;
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize unified auth UI for login across all pages
+            if (window.GameUI) {
+                window.gameUI = new GameUI();
+                window.gameUI.init();
+            }
+
+            game = new DragonFist('game-canvas');
+            if (window.GamepadWidget) new GamepadWidget('gamepad-status');
+        });
+    </script>
+</body>
+</html>

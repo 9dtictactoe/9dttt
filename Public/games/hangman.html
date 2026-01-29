@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- Primary Meta Tags -->
+    <title>Hangman Online - Free Multiplayer Word Game | 9DTTT</title>
+    <meta name="title" content="Hangman Online - Free Multiplayer Word Game | 9DTTT">
+    <meta name="description" content="Play Hangman online free! Classic word guessing game. Guess the word before running out of tries. Real-time multiplayer, accessible gameplay.">
+    <meta name="keywords" content="hangman, hangman game, online hangman, word game, guessing game, multiplayer hangman, free word games">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.d9ttt.com/games/hangman.html">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.d9ttt.com/games/hangman.html">
+    <meta property="og:title" content="Hangman Online - Free Multiplayer Word Game">
+    <meta property="og:description" content="Play Hangman online free! Guess the word before running out of tries.">
+    <meta property="og:image" content="https://www.d9ttt.com/icon.jpg">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://www.d9ttt.com/games/hangman.html">
+    <meta property="twitter:title" content="Hangman Online - Free Multiplayer Word Game">
+    <meta property="twitter:description" content="Play Hangman online free! Guess the word before running out of tries.">
+    <meta property="twitter:image" content="https://www.d9ttt.com/icon.jpg">
+    
+    <!-- Mobile App -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0e27">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="../icon.jpg">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/hangman.css">
+    <link rel="stylesheet" href="../css/game-ui.css">
+    <link rel="stylesheet" href="../css/game-chat.css">
+    <link rel="stylesheet" href="../css/retro-arcade.css">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Game",
+        "name": "Hangman",
+        "alternateName": "Word Guessing Game",
+        "description": "Classic word guessing game where players try to guess letters to reveal a hidden word before running out of attempts",
+        "gamePlatform": "Web Browser",
+        "numberOfPlayers": "2",
+        "playMode": "MultiPlayer",
+        "url": "https://www.d9ttt.com/games/hangman.html",
+        "genre": "Word Game",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        }
+    }
+    </script>
+</head>
+<body>
+    <!-- Skip to main content link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="container">
+        <!-- Header -->
+        <header role="banner">
+            <h1>🎯 Hangman</h1>
+            <p class="subtitle">Guess the Word!</p>
+        </header>
+
+        <!-- Game Info -->
+        <div class="game-info" role="status" aria-live="polite">
+            <div class="category-display">
+                <span>Category: <span id="category">General</span></span>
+            </div>
+            <div class="tries-display">
+                <span>Tries Left: <span id="tries-left">6</span></span>
+            </div>
+            <div class="streak-display">
+                <span>🔥 Streak: <span id="streak">0</span></span>
+            </div>
+        </div>
+
+        <!-- Main Game Area -->
+        <main id="main-content" role="main">
+            <!-- Hangman Drawing -->
+            <div class="hangman-container">
+                <svg class="hangman-svg" viewBox="0 0 200 250" id="hangman-svg">
+                    <!-- Gallows -->
+                    <line x1="20" y1="230" x2="100" y2="230" stroke="#4a90e2" stroke-width="4"/>
+                    <line x1="60" y1="230" x2="60" y2="20" stroke="#4a90e2" stroke-width="4"/>
+                    <line x1="60" y1="20" x2="140" y2="20" stroke="#4a90e2" stroke-width="4"/>
+                    <line x1="140" y1="20" x2="140" y2="50" stroke="#4a90e2" stroke-width="4"/>
+                    
+                    <!-- Body parts (hidden initially) -->
+                    <circle id="head" cx="140" cy="70" r="20" stroke="#e74c3c" stroke-width="3" fill="none" style="display:none"/>
+                    <line id="body" x1="140" y1="90" x2="140" y2="150" stroke="#e74c3c" stroke-width="3" style="display:none"/>
+                    <line id="left-arm" x1="140" y1="110" x2="110" y2="130" stroke="#e74c3c" stroke-width="3" style="display:none"/>
+                    <line id="right-arm" x1="140" y1="110" x2="170" y2="130" stroke="#e74c3c" stroke-width="3" style="display:none"/>
+                    <line id="left-leg" x1="140" y1="150" x2="110" y2="190" stroke="#e74c3c" stroke-width="3" style="display:none"/>
+                    <line id="right-leg" x1="140" y1="150" x2="170" y2="190" stroke="#e74c3c" stroke-width="3" style="display:none"/>
+                </svg>
+            </div>
+
+            <!-- Word Display -->
+            <div class="word-display" id="word-display" aria-label="Word to guess">
+                <!-- Letters will be generated here -->
+            </div>
+
+            <!-- Used Letters -->
+            <div class="used-letters">
+                <span class="used-label">Used: </span>
+                <span id="used-letters"></span>
+            </div>
+
+            <!-- Keyboard -->
+            <div class="keyboard" id="keyboard" role="group" aria-label="Letter keyboard">
+                <!-- Generated by JS -->
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button id="new-game-btn" aria-label="Start a new game">New Word</button>
+                <button id="hint-btn" class="secondary" aria-label="Get a hint">💡 Hint</button>
+                <button id="toggle-instructions-btn" class="secondary" aria-label="Toggle game instructions">How to Play</button>
+            </div>
+
+            <!-- Instructions (collapsible) -->
+            <div class="instructions" id="instructions" style="display: none;">
+                <h2>How to Play Hangman</h2>
+                <ul>
+                    <li><strong>Objective:</strong> Guess the hidden word before the hangman is complete!</li>
+                    <li><strong>Guessing:</strong> Click letters on the keyboard to guess them.</li>
+                    <li><strong>Correct Guess:</strong> The letter appears in the word!</li>
+                    <li><strong>Wrong Guess:</strong> A body part is added to the hangman (6 total).</li>
+                    <li><strong>Hints:</strong> Use the hint button if you're stuck (costs 1 try).</li>
+                    <li><strong>Winning:</strong> Reveal the complete word to win!</li>
+                    <li><strong>Losing:</strong> If the hangman is complete before you guess the word, you lose.</li>
+                    <li><strong>Streak:</strong> Build a winning streak for bragging rights!</li>
+                </ul>
+            </div>
+        </main>
+
+        <!-- Game Over Modal -->
+        <div class="modal" id="game-over-modal" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+            <div class="modal-content">
+                <h2 id="modal-title">Game Over!</h2>
+                <p id="modal-message"></p>
+                <button id="modal-new-game-btn" aria-label="Start a new game">Play Again</button>
+            </div>
+        </div>
+
+        <!-- In-Game Chat -->
+        <div id="game-chat"></div>
+
+        <!-- Footer -->
+        <footer role="contentinfo">
+            <p>&copy; 2026 Hangman | Accessible Gaming</p>
+            <p><a href="../index.html" style="color: #4a90e2; text-decoration: none;">← Back to Game Library</a></p>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="../js/gamepad-manager.js"></script>
+    <script src="../js/accessibility-manager.js"></script>
+    <script src="../js/retro-arcade.js"></script>
+    <script src="../js/game-engine.js"></script>
+    <!-- Browser Native Authentication (Credential Management API) -->
+    <script src="../js/browser-auth-init.js"></script>
+    <script src="../js/auth-client.js"></script>
+    <script src="../js/game-ui.js"></script>
+    <script src="../js/game-chat.js"></script>
+    <script src="../js/hangman.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize unified auth UI for login across all pages
+            if (window.GameUI) {
+                window.gameUI = new GameUI();
+                window.gameUI.init();
+            }
+
+            new GameChat({
+                containerId: 'game-chat',
+                playerName: 'Player',
+                isMultiplayer: false
+            });
+        });
+    </script>
+</body>
+</html>

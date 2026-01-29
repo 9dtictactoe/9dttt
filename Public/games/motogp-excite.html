@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0e27">
+    <meta name="description" content="MotoGP Excite - Excite Bike style MotoGP road racing">
+    <title>MotoGP Excite - Road Racing</title>
+    
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/arcade-games.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="container">
+        <header role="banner">
+            <h1>🏁 MotoGP Excite</h1>
+            <p class="subtitle">Excite Bike Style Road Racing!</p>
+        </header>
+
+        <div id="gamepad-status"></div>
+
+        <main id="main-content" role="main">
+            <div class="game-container">
+                <canvas id="game-canvas" width="800" height="400"></canvas>
+                
+                <div class="controls">
+                    <button onclick="game.startGame('cup')" style="background: linear-gradient(135deg, #FFD700, #FFA500);">🏆 Championship</button>
+                    <button onclick="game.startGame('race')">Quick Race</button>
+                    <button onclick="game.startGame('time')">Time Trial</button>
+                </div>
+                
+                <div class="control-hint">
+                    <div>
+                        <h4>⌨️ Keyboard</h4>
+                        <p><kbd>↑</kbd>/<kbd>↓</kbd> - Change Lane</p>
+                        <p><kbd>←</kbd>/<kbd>→</kbd> - Adjust Angle</p>
+                        <p><kbd>A</kbd> - Accelerate</p>
+                        <p><kbd>B</kbd> - Turbo (watch temp!)</p>
+                        <p><kbd>R</kbd> - Reset Position</p>
+                    </div>
+                    <div>
+                        <h4>🎮 Gamepad</h4>
+                        <p>D-Pad Up/Down - Change Lane</p>
+                        <p>Left Stick - Angle</p>
+                        <p>A - Accelerate</p>
+                        <p>B - Turbo</p>
+                        <p>Select/Back - Reset Position</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer role="contentinfo">
+            <p>&copy; 2026 MotoGP Excite | 9DTTT Game Library</p>
+            <p><a href="../index.html" style="color: #4a90e2;">← Back to Game Library</a></p>
+        </footer>
+    </div>
+
+    <script src="../js/gamepad-manager.js"></script>
+    <script src="../js/accessibility-manager.js"></script>
+    <script src="../js/game-engine.js"></script>
+    <!-- Browser Native Authentication (Credential Management API) -->
+    <script src="../js/browser-auth-init.js"></script>
+    <script src="../js/auth-client.js"></script>
+    <script src="../js/game-ui.js"></script>
+    <script>
+        class MotoGPExcite {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.width = this.canvas.width;
+                this.height = this.canvas.height;
+                
+                this.state = 'menu';
+                this.mode = 'race';
+                
+                // Track parameters
+                this.trackLength = 5000;
+                this.numLanes = 4;
+                this.laneHeight = 50;
+                this.trackTop = 120;
+                
+                // Player
+                this.player = null;
+                
+                // Track obstacles
+                this.obstacles = [];
+                this.ramps = [];
+                this.boostPads = [];
+                
+                // Racing
+                this.scroll = 0;
+                this.lap = 0;
+                this.totalLaps = 3;
+                this.raceTime = 0;
+                this.bestTime = Infinity;
+                
+                // CPU racers
+                this.cpuRacers = [];
+                
+                // Cup/Championship System
+                this.cups = {
+                    rookie: {
+                        name: '🏆 Rookie Cup',
+                        color: '#27ae60',
+                        unlocked: true,
+                        tracks: [
+                            { name: 'Sunny Speedway', difficulty: 1, obstacles: 8, ramps: 4, boosts: 10, bgColor: '#4a90e2' },
+                            { name: 'Beach Circuit', difficulty: 1, obstacles: 10, ramps: 5, boosts: 8, bgColor: '#3498db' },
+                            { name: 'Valley Run', difficulty: 2, obstacles: 12, ramps: 6, boosts: 8, bgColor: '#27ae60' }
+                        ],
+                        bestTimes: {}
+                    },
+                    amateur: {
+                        name: '🥈 Amateur Cup',
+                        color: '#f39c12',
+                        unlocked: false,
+                        tracks: [
+                            { name: 'Industrial Zone', difficulty: 2, obstacles: 14, ramps: 7, boosts: 7, bgColor: '#7f8c8d' },
+                            { name: 'Mountain Pass', difficulty: 3, obstacles: 16, ramps: 8, boosts: 6, bgColor: '#2c3e50' },
+                            { name: 'Night City', difficulty: 3, obstacles: 18, ramps: 8, boosts: 6, bgColor: '#1a1a4e' }
+                        ],
+                        bestTimes: {}
+                    },
+                    pro: {
+                        name: '🥇 Pro Cup',
+                        color: '#e74c3c',
+                        unlocked: false,
+                        tracks: [
+                            { name: 'Storm Circuit', difficulty: 4, obstacles: 20, ramps: 9, boosts: 5, bgColor: '#34495e' },
+                            { name: 'Desert Dash', difficulty: 4, obstacles: 22, ramps: 10, boosts: 5, bgColor: '#d35400' },
+                            { name: 'Thunder Road', difficulty: 5, obstacles: 24, ramps: 10, boosts: 4, bgColor: '#8e44ad' }
+                        ],
+                        bestTimes: {}
+                    },
+                    champion: {
+                        name: '👑 Champion Cup',
+                        color: '#9b59b6',
+                        unlocked: false,
+                        tracks: [
+                            { name: 'Inferno Track', difficulty: 5, obstacles: 26, ramps: 11, boosts: 4, bgColor: '#c0392b' },
+                            { name: 'Ice Canyon', difficulty: 6, obstacles: 28, ramps: 12, boosts: 3, bgColor: '#2980b9' },
+                            { name: 'Dragon\'s Spine', difficulty: 6, obstacles: 30, ramps: 12, boosts: 3, bgColor: '#1a0a2e' }
+                        ],
+                        bestTimes: {}
+                    }
+                };
+                
+                this.currentCup = 'rookie';
+                this.currentTrackIndex = 0;
+                this.cupPoints = 0;
+                this.cupRaceNumber = 0;
+                this.cupResults = [];
+                
+                // Load saved progress
+                this.loadProgress();
+                
+                this.keys = {};
+                this.setupInput();
+                this.gameLoop();
+            }
+            
+            loadProgress() {
+                try {
+                    const saved = localStorage.getItem('motogp_progress');
+                    if (saved) {
+                        const data = JSON.parse(saved);
+                        if (data.unlockedCups) {
+                            data.unlockedCups.forEach(cup => {
+                                if (this.cups[cup]) this.cups[cup].unlocked = true;
+                            });
+                        }
+                        if (data.bestTimes) {
+                            Object.keys(data.bestTimes).forEach(cup => {
+                                if (this.cups[cup]) {
+                                    this.cups[cup].bestTimes = data.bestTimes[cup];
+                                }
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.log('Could not load progress');
+                }
+                
+                // Set up persistent click handler
+                this.canvas.onclick = (e) => this.handleCanvasClick(e);
+            }
+            
+            handleCanvasClick(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const y = e.clientY - rect.top;
+                
+                if (this.state === 'cupSelect') {
+                    const cupNames = ['rookie', 'amateur', 'pro', 'champion'];
+                    cupNames.forEach((cupName, i) => {
+                        const cupY = 110 + i * 70;
+                        if (y > cupY - 25 && y < cupY + 30 && this.cups[cupName].unlocked) {
+                            this.startCup(cupName);
+                        }
+                    });
+                } else if (this.state === 'cupIntro') {
+                    this.startCupRace();
+                } else if (this.state === 'cupRaceResult') {
+                    this.nextCupRace();
+                } else if (this.state === 'cupComplete') {
+                    this.state = 'menu';
+                }
+            }
+            
+            getOrdinalSuffix(n) {
+                const s = ['th', 'st', 'nd', 'rd'];
+                const v = n % 100;
+                return s[(v - 20) % 10] || s[v] || s[0];
+            }
+            
+            saveProgress() {
+                try {
+                    const data = {
+                        unlockedCups: Object.keys(this.cups).filter(c => this.cups[c].unlocked),
+                        bestTimes: {}
+                    };
+                    Object.keys(this.cups).forEach(cup => {
+                        data.bestTimes[cup] = this.cups[cup].bestTimes;
+                    });
+                    localStorage.setItem('motogp_progress', JSON.stringify(data));
+                } catch (e) {
+                    console.log('Could not save progress');
+                }
+            }
+            
+            setupInput() {
+                window.addEventListener('keydown', e => {
+                    this.keys[e.code] = true;
+                    e.preventDefault();
+                });
+                window.addEventListener('keyup', e => this.keys[e.code] = false);
+            }
+            
+            startCup(cupName) {
+                if (!this.cups[cupName] || !this.cups[cupName].unlocked) return;
+                
+                this.currentCup = cupName;
+                this.cupRaceNumber = 0;
+                this.cupPoints = 0;
+                this.cupResults = [];
+                this.state = 'cupIntro';
+            }
+            
+            startCupRace() {
+                const cup = this.cups[this.currentCup];
+                const track = cup.tracks[this.cupRaceNumber];
+                
+                this.mode = 'cup';
+                this.state = 'playing';
+                this.scroll = 0;
+                this.lap = 1;
+                this.raceTime = 0;
+                this.currentTrack = track;
+                
+                this.player = {
+                    x: 100,
+                    lane: 1,
+                    y: this.getLaneY(1),
+                    targetY: this.getLaneY(1),
+                    speed: 0,
+                    maxSpeed: 10,
+                    turboSpeed: 15,
+                    angle: 0,
+                    wheelie: 0,
+                    airborne: false,
+                    airTime: 0,
+                    temp: 0,
+                    crashed: false,
+                    crashTime: 0
+                };
+                
+                this.generateTrackFromConfig(track);
+                this.generateCPU(track.difficulty);
+            }
+            
+            startGame(mode) {
+                if (mode === 'cup') {
+                    this.state = 'cupSelect';
+                    return;
+                }
+                
+                this.mode = mode;
+                this.state = 'playing';
+                this.scroll = 0;
+                this.lap = 1;
+                this.raceTime = 0;
+                
+                this.player = {
+                    x: 100,
+                    lane: 1,
+                    y: this.getLaneY(1),
+                    targetY: this.getLaneY(1),
+                    speed: 0,
+                    maxSpeed: 10,
+                    turboSpeed: 15,
+                    angle: 0,
+                    wheelie: 0,
+                    airborne: false,
+                    airTime: 0,
+                    temp: 0,
+                    crashed: false,
+                    crashTime: 0
+                };
+                
+                // Quick race uses default settings
+                this.currentTrack = { name: 'Quick Race', obstacles: 12, ramps: 6, boosts: 8, difficulty: 2, bgColor: '#4a90e2' };
+                this.generateTrackFromConfig(this.currentTrack);
+                this.generateCPU(2);
+            }
+            
+            getLaneY(lane) {
+                return this.trackTop + lane * this.laneHeight + this.laneHeight / 2;
+            }
+            
+            generateTrackFromConfig(config) {
+                this.obstacles = [];
+                this.ramps = [];
+                this.boostPads = [];
+                
+                // Generate obstacles with better visibility
+                for (let i = 0; i < config.obstacles; i++) {
+                    const x = 400 + Math.random() * (this.trackLength - 600);
+                    const lane = Math.floor(Math.random() * this.numLanes);
+                    const types = ['oil', 'barrier', 'tires'];
+                    const type = types[Math.floor(Math.random() * types.length)];
+                    
+                    this.obstacles.push({
+                        x, lane, type,
+                        width: type === 'oil' ? 50 : type === 'barrier' ? 20 : 35,
+                        y: this.getLaneY(lane)
+                    });
+                }
+                
+                // Generate ramps based on difficulty
+                const rampAngleBase = 15 + config.difficulty * 2;
+                for (let i = 0; i < config.ramps; i++) {
+                    const x = 300 + Math.random() * (this.trackLength - 400);
+                    const lane = Math.floor(Math.random() * this.numLanes);
+                    const size = Math.random() < 0.2 ? 'big' : 'small';
+                    
+                    this.ramps.push({
+                        x, lane,
+                        y: this.getLaneY(lane),
+                        size,
+                        angle: size === 'big' ? rampAngleBase + 10 : rampAngleBase,
+                        width: size === 'big' ? 40 : 25,
+                        height: size === 'big' ? 15 : 8
+                    });
+                }
+                
+                // Generate boost pads
+                for (let i = 0; i < config.boosts; i++) {
+                    const x = 500 + Math.random() * (this.trackLength - 700);
+                    const lane = Math.floor(Math.random() * this.numLanes);
+                    
+                    this.boostPads.push({
+                        x, lane,
+                        y: this.getLaneY(lane),
+                        width: 60
+                    });
+                }
+            }
+            
+            generateTrack() {
+                // Legacy method - redirects to config-based generation
+                this.generateTrackFromConfig({ obstacles: 12, ramps: 6, boosts: 8, difficulty: 2 });
+            }
+            
+            generateCPU(difficulty = 2) {
+                this.cpuRacers = [];
+                if (this.mode === 'time') return;
+                
+                const colors = ['#e74c3c', '#3498db', '#f39c12', '#9b59b6', '#1abc9c'];
+                const baseSpeed = 4.5 + difficulty * 0.4;
+                const speedVariance = 1.5 + difficulty * 0.2;
+                
+                for (let i = 0; i < 5; i++) {
+                    this.cpuRacers.push({
+                        x: 50 + Math.random() * 50,
+                        lane: i % this.numLanes,
+                        y: this.getLaneY(i % this.numLanes),
+                        speed: baseSpeed + Math.random() * speedVariance,
+                        angle: 0,
+                        color: colors[i],
+                        airborne: false,
+                        number: i + 2,
+                        lap: 1  // Track CPU lap count
+                    });
+                }
+            }
+            
+            gameLoop() {
+                this.update();
+                this.render();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+            
+            update() {
+                if (this.state !== 'playing') return;
+                
+                const dt = 1/60;
+                this.raceTime += dt;
+                
+                this.updatePlayer(dt);
+                this.updateCPU(dt);
+                this.checkCollisions();
+                this.updateScroll();
+            }
+            
+            updatePlayer(dt) {
+                if (!this.player) return;
+                
+                const gp = window.gamepadManager?.getState(0);
+                
+                // Handle position reset (R key or gamepad Back/Select button)
+                // Use lastReset flag to prevent repeated resets while key is held
+                const resetPressed = this.keys['KeyR'] || gp?.buttons.back;
+                if (resetPressed && !this.lastReset) {
+                    this.resetPosition();
+                    this.lastReset = true;
+                    return;
+                }
+                if (!resetPressed) {
+                    this.lastReset = false;
+                }
+                
+                // Handle crash recovery
+                if (this.player.crashed) {
+                    this.player.crashTime -= dt;
+                    if (this.player.crashTime <= 0) {
+                        this.player.crashed = false;
+                        this.player.speed = 0;
+                        this.player.angle = 0;
+                    }
+                    return;
+                }
+                
+                // Lane change - keyboard or D-pad
+                if ((this.keys['ArrowUp'] || gp?.buttons.up) && !this.player.airborne) {
+                    if (this.player.lane > 0 && !this.lastUp) {
+                        this.player.lane--;
+                        this.player.targetY = this.getLaneY(this.player.lane);
+                    }
+                    this.lastUp = true;
+                } else {
+                    this.lastUp = false;
+                }
+                
+                if ((this.keys['ArrowDown'] || gp?.buttons.down) && !this.player.airborne) {
+                    if (this.player.lane < this.numLanes - 1 && !this.lastDown) {
+                        this.player.lane++;
+                        this.player.targetY = this.getLaneY(this.player.lane);
+                    }
+                    this.lastDown = true;
+                } else {
+                    this.lastDown = false;
+                }
+                
+                // Smooth lane transition
+                const yDiff = this.player.targetY - this.player.y;
+                this.player.y += yDiff * 0.15;
+                
+                // Angle control (for landing) - keyboard, analog stick, or D-pad
+                if (this.keys['ArrowLeft'] || (gp?.axes.leftX < -0.3) || gp?.buttons.left) {
+                    this.player.angle = Math.max(-45, this.player.angle - 3);
+                } else if (this.keys['ArrowRight'] || (gp?.axes.leftX > 0.3) || gp?.buttons.right) {
+                    this.player.angle = Math.min(45, this.player.angle + 3);
+                } else {
+                    // Return to neutral
+                    this.player.angle *= 0.9;
+                }
+                
+                // Acceleration
+                const accel = this.keys['KeyA'] || gp?.buttons.a;
+                const turbo = this.keys['KeyB'] || gp?.buttons.b;
+                
+                if (accel && !turbo) {
+                    this.player.speed = Math.min(this.player.maxSpeed, this.player.speed + 0.35);
+                    this.player.temp = Math.max(0, this.player.temp - 0.5);
+                } else if (turbo) {
+                    this.player.speed = Math.min(this.player.turboSpeed, this.player.speed + 0.45);
+                    this.player.temp = Math.min(100, this.player.temp + 1.0);
+                    
+                    if (this.player.temp >= 100) {
+                        this.crash();
+                    }
+                } else {
+                    this.player.speed = Math.max(0, this.player.speed - 0.06);
+                    this.player.temp = Math.max(0, this.player.temp - 2.0);
+                }
+                
+                // Update position
+                this.player.x += this.player.speed;
+                
+                // Airborne physics
+                if (this.player.airborne) {
+                    this.player.airTime += dt;
+                    if (this.player.airTime > 0.6) {
+                        this.player.airborne = false;
+                        this.player.airTime = 0;
+                        
+                        // Check landing angle - more forgiving threshold
+                        if (Math.abs(this.player.angle) > 40) {
+                            this.crash();
+                        }
+                    }
+                }
+                
+                // Check lap completion
+                if (this.player.x >= this.trackLength) {
+                    this.player.x = 0;
+                    this.lap++;
+                    
+                    if (this.lap > this.totalLaps) {
+                        this.finishRace();
+                    }
+                }
+            }
+            
+            updateCPU(dt) {
+                this.cpuRacers.forEach(cpu => {
+                    // AI - maintain speed with variation
+                    cpu.speed += (Math.random() - 0.5) * 0.5;
+                    cpu.speed = Math.max(5, Math.min(11, cpu.speed));
+                    cpu.x += cpu.speed;
+                    
+                    // Lane changes occasionally
+                    if (Math.random() < 0.008) {
+                        const newLane = Math.floor(Math.random() * this.numLanes);
+                        cpu.lane = newLane;
+                    }
+                    
+                    cpu.y += (this.getLaneY(cpu.lane) - cpu.y) * 0.1;
+                    
+                    // Wrap around track and increment lap
+                    if (cpu.x >= this.trackLength) {
+                        cpu.x = 0;
+                        cpu.lap = (cpu.lap || 1) + 1;
+                    }
+                });
+            }
+            
+            checkCollisions() {
+                if (!this.player || this.player.crashed || this.player.airborne) return;
+                
+                const playerBox = {
+                    x: this.player.x - 20,
+                    x2: this.player.x + 50,
+                    lane: this.player.lane
+                };
+                
+                // Check ramps (kerbs/speed bumps)
+                this.ramps.forEach(ramp => {
+                    if (ramp.lane === playerBox.lane &&
+                        playerBox.x2 > ramp.x && playerBox.x < ramp.x + ramp.width) {
+                        this.player.airborne = true;
+                        this.player.airTime = 0;
+                        this.player.angle = -ramp.angle / 2;
+                    }
+                });
+                
+                // Check boost pads
+                this.boostPads.forEach(pad => {
+                    if (pad.lane === playerBox.lane &&
+                        playerBox.x2 > pad.x && playerBox.x < pad.x + pad.width) {
+                        this.player.speed = Math.min(this.player.turboSpeed, this.player.speed + 3);
+                    }
+                });
+                
+                // Check obstacles
+                this.obstacles.forEach(obs => {
+                    if (obs.lane === playerBox.lane &&
+                        playerBox.x2 > obs.x && playerBox.x < obs.x + obs.width) {
+                        if (obs.type === 'oil') {
+                            this.player.speed *= 0.92;
+                            // Slight random swerve on oil
+                            if (Math.random() < 0.1) {
+                                this.player.angle += (Math.random() - 0.5) * 20;
+                            }
+                        } else if (obs.type === 'barrier' || obs.type === 'tires') {
+                            this.crash();
+                        }
+                    }
+                });
+                
+                // Check CPU collisions
+                this.cpuRacers.forEach(cpu => {
+                    if (Math.abs(cpu.lane - this.player.lane) < 1) {
+                        const dist = Math.abs(cpu.x - this.player.x);
+                        if (dist < 50) {
+                            if (this.player.speed > cpu.speed) {
+                                cpu.speed -= 2;
+                            } else {
+                                this.player.speed = Math.max(0, this.player.speed - 1);
+                            }
+                        }
+                    }
+                });
+            }
+            
+            crash() {
+                this.player.crashed = true;
+                this.player.crashTime = 1.2;
+                this.player.angle = 90;
+                this.player.speed = 0;
+            }
+            
+            resetPosition() {
+                if (!this.player) return;
+                
+                // Reset player to a safe position - move back slightly on the track
+                // and center in the current lane
+                this.player.crashed = false;
+                this.player.crashTime = 0;
+                this.player.x = Math.max(100, this.player.x - 150); // Move back 150 units, minimum 100
+                this.player.y = this.getLaneY(this.player.lane);
+                this.player.targetY = this.player.y;
+                this.player.speed = 0;
+                this.player.angle = 0;
+                this.player.wheelie = 0;
+                this.player.airborne = false;
+                this.player.airTime = 0;
+                this.player.temp = Math.max(0, this.player.temp - 30); // Cool down engine a bit
+            }
+            
+            /**
+             * Calculate race position considering both lap count and track position
+             * Returns 1 for 1st place, 2 for 2nd, etc.
+             */
+            calculatePosition() {
+                if (!this.player) return 1;
+                
+                // Calculate total distance for player (lap * trackLength + position)
+                const playerDistance = (this.lap - 1) * this.trackLength + this.player.x;
+                
+                // Count how many CPU racers are ahead of the player
+                const cpuAhead = this.cpuRacers.filter(cpu => {
+                    const cpuDistance = ((cpu.lap || 1) - 1) * this.trackLength + cpu.x;
+                    return cpuDistance > playerDistance;
+                }).length;
+                
+                return cpuAhead + 1;
+            }
+            
+            finishRace() {
+                const position = this.calculatePosition();
+                
+                if (this.mode === 'cup') {
+                    // Cup race finished
+                    const points = [15, 12, 10, 8, 6, 4][position - 1] || 2;
+                    this.cupPoints += points;
+                    this.cupResults.push({
+                        track: this.currentTrack.name,
+                        position: position,
+                        time: this.raceTime,
+                        points: points
+                    });
+                    
+                    // Save best time for this track
+                    const cup = this.cups[this.currentCup];
+                    const trackKey = this.cupRaceNumber;
+                    if (!cup.bestTimes[trackKey] || this.raceTime < cup.bestTimes[trackKey]) {
+                        cup.bestTimes[trackKey] = this.raceTime;
+                    }
+                    
+                    this.state = 'cupRaceResult';
+                } else {
+                    this.state = 'finished';
+                    if (this.raceTime < this.bestTime) {
+                        this.bestTime = this.raceTime;
+                    }
+                }
+            }
+            
+            nextCupRace() {
+                this.cupRaceNumber++;
+                const cup = this.cups[this.currentCup];
+                
+                if (this.cupRaceNumber >= cup.tracks.length) {
+                    // Cup complete!
+                    this.finishCup();
+                } else {
+                    this.startCupRace();
+                }
+            }
+            
+            finishCup() {
+                const cupOrder = ['rookie', 'amateur', 'pro', 'champion'];
+                const currentIndex = cupOrder.indexOf(this.currentCup);
+                
+                // Check if player won (most points or 1st in final standings)
+                const avgPosition = this.cupResults.reduce((s, r) => s + r.position, 0) / this.cupResults.length;
+                
+                if (avgPosition <= 2 && currentIndex < cupOrder.length - 1) {
+                    // Unlock next cup
+                    const nextCup = cupOrder[currentIndex + 1];
+                    this.cups[nextCup].unlocked = true;
+                    this.saveProgress();
+                }
+                
+                this.state = 'cupComplete';
+            }
+            
+            updateScroll() {
+                // Camera follows player
+                const targetScroll = this.player.x - 150;
+                this.scroll += (targetScroll - this.scroll) * 0.1;
+                this.scroll = Math.max(0, this.scroll);
+            }
+            
+            render() {
+                const trackBgColor = this.currentTrack?.bgColor || '#1a1a4e';
+                
+                // Sky gradient using track-specific color
+                const gradient = this.ctx.createLinearGradient(0, 0, 0, this.trackTop);
+                gradient.addColorStop(0, this.darkenColor(trackBgColor, 0.3));
+                gradient.addColorStop(0.5, trackBgColor);
+                gradient.addColorStop(1, this.lightenColor(trackBgColor, 0.2));
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.width, this.trackTop);
+                
+                // Distant buildings/grandstand silhouette
+                this.ctx.fillStyle = this.darkenColor(trackBgColor, 0.5);
+                for (let x = 0; x < this.width; x += 80) {
+                    const buildingX = (x - (this.scroll * 0.05) % 160 + 160) % (this.width + 160) - 80;
+                    const height = 20 + Math.sin(x * 0.1) * 15;
+                    this.ctx.fillRect(buildingX, this.trackTop - height, 60, height);
+                }
+                
+                // Stadium lights
+                this.ctx.fillStyle = '#FFD700';
+                for (let i = 0; i < 5; i++) {
+                    const lightX = (i * 180 - (this.scroll * 0.1) % 180 + 180) % (this.width + 180) - 90;
+                    this.ctx.beginPath();
+                    this.ctx.arc(lightX, 30, 8, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Light glow
+                    this.ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
+                    this.ctx.beginPath();
+                    this.ctx.arc(lightX, 30, 20, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.fillStyle = '#FFD700';
+                }
+                
+                // Track background (asphalt)
+                this.ctx.fillStyle = '#2c2c2c';
+                this.ctx.fillRect(0, this.trackTop, this.width, this.numLanes * this.laneHeight + 30);
+                
+                // Track edges (red and white stripes)
+                this.ctx.fillStyle = '#e74c3c';
+                this.ctx.fillRect(0, this.trackTop - 8, this.width, 8);
+                this.ctx.fillRect(0, this.trackTop + this.numLanes * this.laneHeight + 22, this.width, 8);
+                
+                // Lane lines (white dashed)
+                this.ctx.strokeStyle = '#FFF';
+                this.ctx.setLineDash([30, 30]);
+                this.ctx.lineWidth = 2;
+                for (let i = 1; i < this.numLanes; i++) {
+                    const y = this.trackTop + i * this.laneHeight;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.width, y);
+                    this.ctx.stroke();
+                }
+                this.ctx.setLineDash([]);
+                
+                // Track markings (distance markers)
+                this.ctx.fillStyle = '#888';
+                this.ctx.font = 'bold 14px Arial';
+                for (let i = 0; i < this.trackLength; i += 500) {
+                    const screenX = i - this.scroll;
+                    if (screenX > -50 && screenX < this.width + 50) {
+                        this.ctx.fillText(`${Math.floor(i/100)}m`, screenX, this.trackTop - 15);
+                    }
+                }
+                
+                // Start/Finish line (checkered)
+                const finishX = -this.scroll;
+                if (finishX > -50 && finishX < this.width + 50) {
+                    for (let y = this.trackTop; y < this.trackTop + this.numLanes * this.laneHeight; y += 15) {
+                        for (let x = 0; x < 45; x += 15) {
+                            this.ctx.fillStyle = ((x + y) / 15) % 2 === 0 ? '#000' : '#FFF';
+                            this.ctx.fillRect(finishX + x, y, 15, 15);
+                        }
+                    }
+                }
+                
+                // Boost pads (bright blue with glow - highly visible)
+                this.boostPads.forEach(pad => {
+                    const screenX = pad.x - this.scroll;
+                    if (screenX > -100 && screenX < this.width + 100) {
+                        // Glow effect
+                        this.ctx.fillStyle = 'rgba(52, 152, 219, 0.4)';
+                        this.ctx.fillRect(screenX - 5, pad.y - 17, pad.width + 10, 34);
+                        
+                        // Main pad
+                        this.ctx.fillStyle = '#3498db';
+                        this.ctx.fillRect(screenX, pad.y - 12, pad.width, 24);
+                        
+                        // Border
+                        this.ctx.strokeStyle = '#FFF';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.strokeRect(screenX, pad.y - 12, pad.width, 24);
+                        
+                        // Arrow symbols
+                        this.ctx.fillStyle = '#FFF';
+                        this.ctx.font = 'bold 18px Arial';
+                        this.ctx.fillText('>>>', screenX + 10, pad.y + 6);
+                    }
+                });
+                
+                // Ramps/Kerbs (red and white striped)
+                this.ramps.forEach(ramp => {
+                    const screenX = ramp.x - this.scroll;
+                    if (screenX > -100 && screenX < this.width + 100) {
+                        // Kerb stripes
+                        for (let i = 0; i < ramp.width; i += 10) {
+                            this.ctx.fillStyle = i % 20 === 0 ? '#e74c3c' : '#FFF';
+                            this.ctx.fillRect(screenX + i, ramp.y - 8, 10, 16);
+                        }
+                        
+                        // Ramp edge
+                        this.ctx.fillStyle = '#FFD700';
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(screenX + ramp.width - 5, ramp.y + 8);
+                        this.ctx.lineTo(screenX + ramp.width + 5, ramp.y + 8);
+                        this.ctx.lineTo(screenX + ramp.width + 5, ramp.y - ramp.height);
+                        this.ctx.closePath();
+                        this.ctx.fill();
+                    }
+                });
+                
+                // Obstacles - HIGHLY VISIBLE with warning indicators
+                this.obstacles.forEach(obs => {
+                    const screenX = obs.x - this.scroll;
+                    if (screenX > -100 && screenX < this.width + 100) {
+                        if (obs.type === 'oil') {
+                            // Oil slick - yellow warning border
+                            this.ctx.fillStyle = '#FFD700';
+                            this.ctx.beginPath();
+                            this.ctx.ellipse(screenX + obs.width/2, obs.y, obs.width/2 + 4, 16, 0, 0, Math.PI * 2);
+                            this.ctx.fill();
+                            
+                            // Oil puddle
+                            this.ctx.fillStyle = '#2c1810';
+                            this.ctx.beginPath();
+                            this.ctx.ellipse(screenX + obs.width/2, obs.y, obs.width/2, 12, 0, 0, Math.PI * 2);
+                            this.ctx.fill();
+                            
+                            // Rainbow shimmer effect
+                            const shimmer = Math.sin(Date.now() / 200) * 0.3 + 0.5;
+                            this.ctx.fillStyle = `rgba(150, 100, 200, ${shimmer})`;
+                            this.ctx.beginPath();
+                            this.ctx.ellipse(screenX + obs.width/2 - 8, obs.y - 2, 12, 5, 0.3, 0, Math.PI * 2);
+                            this.ctx.fill();
+                            
+                            // Warning icon
+                            this.ctx.fillStyle = '#FFD700';
+                            this.ctx.font = 'bold 14px Arial';
+                            this.ctx.textAlign = 'center';
+                            this.ctx.fillText('⚠️', screenX + obs.width/2, obs.y - 18);
+                        } else if (obs.type === 'barrier') {
+                            // Barrier - red/white striped, more visible
+                            this.ctx.fillStyle = '#FF0000';
+                            this.ctx.fillRect(screenX - 2, obs.y - 18, obs.width + 4, 36);
+                            
+                            // Red and white stripes
+                            for (let i = 0; i < obs.width; i += 8) {
+                                this.ctx.fillStyle = i % 16 === 0 ? '#FF0000' : '#FFFFFF';
+                                this.ctx.fillRect(screenX + i, obs.y - 15, 8, 30);
+                            }
+                            
+                            // Warning border
+                            this.ctx.strokeStyle = '#FFD700';
+                            this.ctx.lineWidth = 3;
+                            this.ctx.strokeRect(screenX - 2, obs.y - 18, obs.width + 4, 36);
+                            
+                            // Danger sign
+                            this.ctx.fillStyle = '#FF0000';
+                            this.ctx.font = 'bold 12px Arial';
+                            this.ctx.textAlign = 'center';
+                            this.ctx.fillText('❌', screenX + obs.width/2, obs.y - 22);
+                        } else if (obs.type === 'tires') {
+                            // Tire stack - with warning colors
+                            // Yellow warning background
+                            this.ctx.fillStyle = '#FFD700';
+                            this.ctx.fillRect(screenX - 3, obs.y - 18, 42, 36);
+                            
+                            // Tires
+                            this.ctx.fillStyle = '#1a1a1a';
+                            for (let i = 0; i < 3; i++) {
+                                this.ctx.beginPath();
+                                this.ctx.arc(screenX + 12 + i * 12, obs.y, 12, 0, Math.PI * 2);
+                                this.ctx.fill();
+                            }
+                            
+                            // Tire rims (white for visibility)
+                            this.ctx.strokeStyle = '#FFF';
+                            this.ctx.lineWidth = 2;
+                            for (let i = 0; i < 3; i++) {
+                                this.ctx.beginPath();
+                                this.ctx.arc(screenX + 12 + i * 12, obs.y, 8, 0, Math.PI * 2);
+                                this.ctx.stroke();
+                            }
+                            
+                            // Warning icon
+                            this.ctx.fillStyle = '#FF0000';
+                            this.ctx.font = 'bold 12px Arial';
+                            this.ctx.textAlign = 'center';
+                            this.ctx.fillText('🛞', screenX + 18, obs.y - 18);
+                        }
+                    }
+                });
+                
+                // CPU Racers
+                this.cpuRacers.forEach(cpu => {
+                    const screenX = cpu.x - this.scroll;
+                    if (screenX > -50 && screenX < this.width + 50) {
+                        this.drawMotoGPBike(screenX, cpu.y, cpu.angle, cpu.color, cpu.airborne, cpu.number);
+                    }
+                });
+                
+                // Player
+                if (this.player) {
+                    const screenX = this.player.x - this.scroll;
+                    const yOffset = this.player.airborne ? -15 - Math.sin(this.player.airTime * Math.PI) * 25 : 0;
+                    this.drawMotoGPBike(screenX, this.player.y + yOffset, this.player.angle, '#4a90e2', this.player.airborne, 1);
+                    
+                    if (this.player.crashed) {
+                        this.ctx.fillStyle = '#e74c3c';
+                        this.ctx.font = 'bold 24px Arial';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.fillText('CRASHED!', screenX, this.player.y - 50);
+                    }
+                }
+                
+                // Grass areas
+                this.ctx.fillStyle = '#228B22';
+                this.ctx.fillRect(0, this.trackTop + this.numLanes * this.laneHeight + 30, this.width, this.height);
+                
+                // UI
+                this.renderUI();
+                
+                // State screens
+                this.renderStateScreens();
+            }
+            
+            drawMotoGPBike(x, y, angle, color, airborne, number) {
+                this.ctx.save();
+                this.ctx.translate(x, y);
+                this.ctx.rotate(angle * Math.PI / 180);
+                
+                // Shadow when airborne
+                if (airborne) {
+                    this.ctx.restore();
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                    this.ctx.beginPath();
+                    this.ctx.ellipse(x, this.getLaneY(this.player?.lane || 0) + 12, 35, 8, 0, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.save();
+                    this.ctx.translate(x, y);
+                    this.ctx.rotate(angle * Math.PI / 180);
+                }
+                
+                // Wheels
+                this.ctx.fillStyle = '#1a1a1a';
+                this.ctx.beginPath();
+                this.ctx.arc(-18, 8, 12, 0, Math.PI * 2);
+                this.ctx.arc(22, 8, 12, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Wheel rims
+                this.ctx.strokeStyle = '#666';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.arc(-18, 8, 7, 0, Math.PI * 2);
+                this.ctx.arc(22, 8, 7, 0, Math.PI * 2);
+                this.ctx.stroke();
+                
+                // Bike fairing (main body)
+                this.ctx.fillStyle = color;
+                this.ctx.beginPath();
+                this.ctx.moveTo(-15, 5);
+                this.ctx.lineTo(30, 5);
+                this.ctx.lineTo(35, -5);
+                this.ctx.lineTo(25, -15);
+                this.ctx.lineTo(5, -18);
+                this.ctx.lineTo(-10, -12);
+                this.ctx.lineTo(-20, -5);
+                this.ctx.closePath();
+                this.ctx.fill();
+                
+                // Fairing details (white stripe)
+                this.ctx.fillStyle = '#FFF';
+                this.ctx.beginPath();
+                this.ctx.moveTo(10, -15);
+                this.ctx.lineTo(25, -12);
+                this.ctx.lineTo(28, -5);
+                this.ctx.lineTo(10, -5);
+                this.ctx.closePath();
+                this.ctx.fill();
+                
+                // Number
+                this.ctx.fillStyle = '#000';
+                this.ctx.font = 'bold 10px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(number, 18, -7);
+                
+                // Windscreen
+                this.ctx.fillStyle = 'rgba(200, 220, 255, 0.6)';
+                this.ctx.beginPath();
+                this.ctx.moveTo(5, -18);
+                this.ctx.lineTo(15, -20);
+                this.ctx.lineTo(18, -15);
+                this.ctx.lineTo(5, -15);
+                this.ctx.closePath();
+                this.ctx.fill();
+                
+                // Rider helmet
+                this.ctx.fillStyle = color;
+                this.ctx.beginPath();
+                this.ctx.arc(-2, -25, 8, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Helmet visor
+                this.ctx.fillStyle = '#222';
+                this.ctx.fillRect(-1, -28, 10, 5);
+                
+                // Rider body (leathers)
+                this.ctx.fillStyle = color;
+                this.ctx.fillRect(-8, -18, 12, 12);
+                
+                // Rider arms
+                this.ctx.fillStyle = '#222';
+                this.ctx.fillRect(2, -16, 15, 4);
+                
+                this.ctx.restore();
+            }
+            
+            renderUI() {
+                // Track name (for cup mode)
+                if (this.currentTrack && this.mode === 'cup') {
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = 'bold 14px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(`${this.cups[this.currentCup].name} - ${this.currentTrack.name}`, this.width / 2, 15);
+                }
+                
+                // Temperature gauge
+                this.ctx.fillStyle = '#333';
+                this.ctx.fillRect(20, 20, 150, 20);
+                const tempColor = this.player?.temp > 80 ? '#e74c3c' : this.player?.temp > 50 ? '#f39c12' : '#4CAF50';
+                this.ctx.fillStyle = tempColor;
+                this.ctx.fillRect(20, 20, 150 * ((this.player?.temp || 0) / 100), 20);
+                this.ctx.strokeStyle = '#FFF';
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeRect(20, 20, 150, 20);
+                this.ctx.fillStyle = '#FFF';
+                this.ctx.font = 'bold 12px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('ENGINE TEMP', 95, 35);
+                
+                // Speed
+                this.ctx.fillStyle = '#FFF';
+                this.ctx.font = 'bold 24px Arial';
+                this.ctx.textAlign = 'left';
+                this.ctx.fillText(`${Math.floor((this.player?.speed || 0) * 18)} km/h`, 20, 70);
+                
+                // Lap counter
+                this.ctx.textAlign = 'right';
+                this.ctx.fillText(`Lap: ${this.lap}/${this.totalLaps}`, this.width - 20, 35);
+                
+                // Time
+                const mins = Math.floor(this.raceTime / 60);
+                const secs = Math.floor(this.raceTime % 60);
+                const ms = Math.floor((this.raceTime % 1) * 100);
+                this.ctx.fillText(`${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`, this.width - 20, 65);
+                
+                // Position (in race/cup mode)
+                if ((this.mode === 'race' || this.mode === 'cup') && this.player) {
+                    const position = this.calculatePosition();
+                    this.ctx.fillStyle = position === 1 ? '#FFD700' : '#FFF';
+                    this.ctx.font = 'bold 36px Arial';
+                    this.ctx.fillText(`${position}${this.getOrdinalSuffix(position)}`, this.width - 20, 105);
+                }
+                
+                // Cup race number
+                if (this.mode === 'cup') {
+                    this.ctx.fillStyle = '#FFD700';
+                    this.ctx.font = 'bold 16px Arial';
+                    this.ctx.textAlign = 'left';
+                    this.ctx.fillText(`Race ${this.cupRaceNumber + 1}/${this.cups[this.currentCup].tracks.length}`, 20, 95);
+                }
+            }
+            
+            // Color helper methods
+            darkenColor(hex, amount) {
+                const num = parseInt(hex.slice(1), 16);
+                const r = Math.max(0, (num >> 16) - Math.floor(255 * amount));
+                const g = Math.max(0, ((num >> 8) & 0x00FF) - Math.floor(255 * amount));
+                const b = Math.max(0, (num & 0x0000FF) - Math.floor(255 * amount));
+                return `rgb(${r}, ${g}, ${b})`;
+            }
+            
+            lightenColor(hex, amount) {
+                const num = parseInt(hex.slice(1), 16);
+                const r = Math.min(255, (num >> 16) + Math.floor(255 * amount));
+                const g = Math.min(255, ((num >> 8) & 0x00FF) + Math.floor(255 * amount));
+                const b = Math.min(255, (num & 0x0000FF) + Math.floor(255 * amount));
+                return `rgb(${r}, ${g}, ${b})`;
+            }
+            
+            renderStateScreens() {
+                if (this.state === 'menu') {
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.9)';
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    
+                    this.ctx.fillStyle = '#e74c3c';
+                    this.ctx.font = 'bold 52px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('MOTOGP EXCITE', this.width / 2, 100);
+                    
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = '22px Arial';
+                    this.ctx.fillText('Excite Bike Style Road Racing!', this.width / 2, 145);
+                    
+                    this.ctx.font = '16px Arial';
+                    this.ctx.fillStyle = '#888';
+                    this.ctx.fillText('↑/↓ - Change Lane | ←/→ - Angle Control (for landings)', this.width / 2, 200);
+                    this.ctx.fillText('A - Accelerate | B - Turbo Boost (watch engine temp!)', this.width / 2, 225);
+                    
+                    this.ctx.fillStyle = '#3498db';
+                    this.ctx.font = '18px Arial';
+                    this.ctx.fillText('🔵 Hit blue boost pads for speed!', this.width / 2, 265);
+                    this.ctx.fillStyle = '#e74c3c';
+                    this.ctx.fillText('🔴 Avoid barriers and tire stacks!', this.width / 2, 288);
+                    this.ctx.fillStyle = '#FFD700';
+                    this.ctx.fillText('⚠️ Oil slicks slow you down!', this.width / 2, 311);
+                    
+                    this.ctx.fillStyle = '#4a90e2';
+                    this.ctx.font = '24px Arial';
+                    this.ctx.fillText('Select mode to start', this.width / 2, 365);
+                }
+                
+                // Cup Selection Screen
+                if (this.state === 'cupSelect') {
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.95)';
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    
+                    this.ctx.fillStyle = '#FFD700';
+                    this.ctx.font = 'bold 40px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('🏆 SELECT CUP 🏆', this.width / 2, 60);
+                    
+                    const cupNames = ['rookie', 'amateur', 'pro', 'champion'];
+                    cupNames.forEach((cupName, i) => {
+                        const cup = this.cups[cupName];
+                        const y = 110 + i * 70;
+                        const x = this.width / 2;
+                        
+                        // Cup background
+                        this.ctx.fillStyle = cup.unlocked ? cup.color : '#333';
+                        this.ctx.globalAlpha = cup.unlocked ? 1 : 0.5;
+                        this.ctx.fillRect(x - 180, y - 25, 360, 55);
+                        this.ctx.globalAlpha = 1;
+                        
+                        // Cup name
+                        this.ctx.fillStyle = cup.unlocked ? '#FFF' : '#666';
+                        this.ctx.font = 'bold 22px Arial';
+                        this.ctx.fillText(cup.name, x, y + 5);
+                        
+                        // Track count
+                        this.ctx.font = '14px Arial';
+                        this.ctx.fillText(`${cup.tracks.length} tracks`, x, y + 25);
+                        
+                        if (!cup.unlocked) {
+                            this.ctx.fillStyle = '#888';
+                            this.ctx.font = '12px Arial';
+                            this.ctx.fillText('🔒 Win previous cup to unlock', x, y + 42);
+                        }
+                    });
+                    
+                    this.ctx.fillStyle = '#888';
+                    this.ctx.font = '16px Arial';
+                    this.ctx.fillText('Click a cup to start championship!', this.width / 2, 380);
+                }
+                
+                // Cup Intro Screen
+                if (this.state === 'cupIntro') {
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.95)';
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    
+                    const cup = this.cups[this.currentCup];
+                    
+                    this.ctx.fillStyle = cup.color;
+                    this.ctx.font = 'bold 44px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(cup.name, this.width / 2, 80);
+                    
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = '20px Arial';
+                    this.ctx.fillText('Championship Tracks:', this.width / 2, 130);
+                    
+                    cup.tracks.forEach((track, i) => {
+                        const y = 170 + i * 50;
+                        this.ctx.fillStyle = '#FFD700';
+                        this.ctx.font = 'bold 18px Arial';
+                        this.ctx.fillText(`${i + 1}. ${track.name}`, this.width / 2, y);
+                        this.ctx.fillStyle = '#888';
+                        this.ctx.font = '14px Arial';
+                        this.ctx.fillText(`Difficulty: ${'⭐'.repeat(track.difficulty)}`, this.width / 2, y + 20);
+                    });
+                    
+                    this.ctx.fillStyle = '#4CAF50';
+                    this.ctx.font = 'bold 24px Arial';
+                    this.ctx.fillText('Click to Start Racing!', this.width / 2, 360);
+                }
+                
+                // Cup Race Result Screen
+                if (this.state === 'cupRaceResult') {
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.95)';
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    
+                    const lastResult = this.cupResults[this.cupResults.length - 1];
+                    
+                    this.ctx.fillStyle = lastResult.position === 1 ? '#FFD700' : '#FFF';
+                    this.ctx.font = 'bold 40px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(`${lastResult.position}${this.getOrdinalSuffix(lastResult.position)} Place!`, this.width / 2, 80);
+                    
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = '24px Arial';
+                    this.ctx.fillText(lastResult.track, this.width / 2, 130);
+                    
+                    const mins = Math.floor(lastResult.time / 60);
+                    const secs = Math.floor(lastResult.time % 60);
+                    const ms = Math.floor((lastResult.time % 1) * 100);
+                    this.ctx.fillText(`Time: ${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`, this.width / 2, 170);
+                    
+                    this.ctx.fillStyle = '#FFD700';
+                    this.ctx.fillText(`+${lastResult.points} points`, this.width / 2, 210);
+                    
+                    // Cup standings
+                    this.ctx.fillStyle = '#888';
+                    this.ctx.font = '18px Arial';
+                    this.ctx.fillText(`Cup Points: ${this.cupPoints}`, this.width / 2, 260);
+                    this.ctx.fillText(`Race ${this.cupRaceNumber + 1}/${this.cups[this.currentCup].tracks.length}`, this.width / 2, 290);
+                    
+                    this.ctx.fillStyle = '#4CAF50';
+                    this.ctx.font = 'bold 24px Arial';
+                    this.ctx.fillText('Click for Next Race!', this.width / 2, 360);
+                }
+                
+                // Cup Complete Screen
+                if (this.state === 'cupComplete') {
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.95)';
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    
+                    const cup = this.cups[this.currentCup];
+                    const avgPosition = this.cupResults.reduce((s, r) => s + r.position, 0) / this.cupResults.length;
+                    const won = avgPosition <= 2;
+                    
+                    if (won) {
+                        this.ctx.fillStyle = '#FFD700';
+                        this.ctx.font = 'bold 44px Arial';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.fillText('🏆 CHAMPIONSHIP WON! 🏆', this.width / 2, 70);
+                    } else {
+                        this.ctx.fillStyle = '#888';
+                        this.ctx.font = 'bold 36px Arial';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.fillText('Championship Complete', this.width / 2, 70);
+                    }
+                    
+                    this.ctx.fillStyle = cup.color;
+                    this.ctx.font = 'bold 28px Arial';
+                    this.ctx.fillText(cup.name, this.width / 2, 115);
+                    
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = '20px Arial';
+                    this.ctx.fillText(`Total Points: ${this.cupPoints}`, this.width / 2, 160);
+                    
+                    // Results summary
+                    this.ctx.font = '16px Arial';
+                    this.cupResults.forEach((result, i) => {
+                        const y = 200 + i * 35;
+                        const posColor = result.position === 1 ? '#FFD700' : result.position <= 3 ? '#C0C0C0' : '#FFF';
+                        this.ctx.fillStyle = posColor;
+                        this.ctx.fillText(`${result.track}: ${result.position}${this.getOrdinalSuffix(result.position)} (+${result.points}pts)`, this.width / 2, y);
+                    });
+                    
+                    // Unlock message
+                    const cupOrder = ['rookie', 'amateur', 'pro', 'champion'];
+                    const currentIndex = cupOrder.indexOf(this.currentCup);
+                    if (won && currentIndex < cupOrder.length - 1) {
+                        const nextCup = this.cups[cupOrder[currentIndex + 1]];
+                        this.ctx.fillStyle = '#4CAF50';
+                        this.ctx.font = 'bold 20px Arial';
+                        this.ctx.fillText(`🔓 ${nextCup.name} UNLOCKED!`, this.width / 2, 330);
+                    }
+                    
+                    this.ctx.fillStyle = '#4a90e2';
+                    this.ctx.font = '20px Arial';
+                    this.ctx.fillText('Click to return to menu', this.width / 2, 375);
+                }
+                
+                if (this.state === 'finished') {
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.9)';
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    
+                    this.ctx.fillStyle = '#4CAF50';
+                    this.ctx.font = 'bold 48px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('🏁 RACE COMPLETE! 🏁', this.width / 2, 100);
+                    
+                    const mins = Math.floor(this.raceTime / 60);
+                    const secs = Math.floor(this.raceTime % 60);
+                    const ms = Math.floor((this.raceTime % 1) * 100);
+                    
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = '32px Arial';
+                    this.ctx.fillText(`Time: ${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`, this.width / 2, 160);
+                    
+                    if (this.raceTime === this.bestTime) {
+                        this.ctx.fillStyle = '#FFD700';
+                        this.ctx.fillText('⭐ NEW BEST TIME! ⭐', this.width / 2, 210);
+                    }
+                    
+                    if (this.mode === 'race') {
+                        const position = this.calculatePosition();
+                        this.ctx.fillStyle = position === 1 ? '#FFD700' : '#FFF';
+                        this.ctx.font = 'bold 56px Arial';
+                        this.ctx.fillText(`${position}${this.getOrdinalSuffix(position)} Place!`, this.width / 2, 280);
+                    }
+                    
+                    this.ctx.fillStyle = '#4a90e2';
+                    this.ctx.font = '24px Arial';
+                    this.ctx.fillText('Select mode to race again', this.width / 2, 350);
+                }
+            }
+        }
+        
+        let game;
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize unified auth UI for login across all pages
+            if (window.GameUI) {
+                window.gameUI = new GameUI();
+                window.gameUI.init();
+            }
+
+            game = new MotoGPExcite('game-canvas');
+            if (window.GamepadWidget) new GamepadWidget('gamepad-status');
+        });
+    </script>
+</body>
+</html>

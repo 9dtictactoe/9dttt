@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Primary Meta Tags -->
+    <title>Pong Online - Classic 2-Player Arcade Game | 9DTTT</title>
+    <meta name="title" content="Pong Online - Classic 2-Player Arcade Game | 9DTTT">
+    <meta name="description" content="Play Pong online free! Classic 2-player arcade game. Real-time multiplayer, no download required. Relive the arcade classic!">
+    <meta name="keywords" content="pong, pong game, online pong, multiplayer pong, classic arcade, retro games, paddle game">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.d9ttt.com/games/pong.html">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.d9ttt.com/games/pong.html">
+    <meta property="og:title" content="Pong Online - Classic 2-Player Arcade Game">
+    <meta property="og:description" content="Play Pong online free! Classic 2-player arcade game.">
+    <meta property="og:image" content="https://www.d9ttt.com/icon.jpg">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://www.d9ttt.com/games/pong.html">
+    <meta property="twitter:title" content="Pong Online - Classic 2-Player Arcade Game">
+    <meta property="twitter:description" content="Play Pong online free! Classic 2-player arcade game.">
+    <meta property="twitter:image" content="https://www.d9ttt.com/icon.jpg">
+    
+    <!-- Mobile App -->
+    <meta name="theme-color" content="#0a0e27">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="../icon.jpg">
+    
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/arcade-games.css">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Game",
+        "name": "Pong",
+        "description": "Classic arcade paddle game where two players control paddles to bounce a ball back and forth",
+        "gamePlatform": "Web Browser",
+        "numberOfPlayers": "2",
+        "playMode": "MultiPlayer",
+        "url": "https://www.d9ttt.com/games/pong.html",
+        "genre": "Arcade Game",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        }
+    }
+    </script>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="container">
+        <header role="banner">
+            <h1>🏓 Pong</h1>
+            <p class="subtitle">Classic 2-Player Arcade!</p>
+        </header>
+
+        <div id="gamepad-status"></div>
+
+        <main id="main-content" role="main">
+            <div class="game-container">
+                <canvas id="game-canvas" width="800" height="500"></canvas>
+                
+                <div class="controls">
+                    <button onclick="pong.startGame('ai')">vs Computer</button>
+                    <button onclick="pong.startGame('local')">2 Players</button>
+                </div>
+                
+                <div class="control-hint">
+                    <div>
+                        <h4>Player 1 (Left)</h4>
+                        <p><kbd>W</kbd> / <kbd>S</kbd> - Move</p>
+                        <p>Gamepad: Left Stick or D-Pad</p>
+                    </div>
+                    <div>
+                        <h4>Player 2 (Right)</h4>
+                        <p><kbd>↑</kbd> / <kbd>↓</kbd> - Move</p>
+                        <p>Gamepad: Left Stick or D-Pad</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer role="contentinfo">
+            <p>&copy; 2026 Pong | 9DTTT Game Library</p>
+            <p><a href="../index.html" style="color: #4a90e2;">← Back to Game Library</a></p>
+        </footer>
+    </div>
+
+    <script src="../js/gamepad-manager.js"></script>
+    <script src="../js/accessibility-manager.js"></script>
+    <script src="../js/game-engine.js"></script>
+    <!-- Browser Native Authentication (Credential Management API) -->
+    <script src="../js/browser-auth-init.js"></script>
+    <script src="../js/auth-client.js"></script>
+    <script src="../js/game-ui.js"></script>
+    <script>
+        class PongGame {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.width = this.canvas.width;
+                this.height = this.canvas.height;
+                
+                this.paddleHeight = 100;
+                this.paddleWidth = 15;
+                this.ballSize = 15;
+                this.paddleSpeed = 8;
+                this.maxBallSpeed = 15;
+                
+                this.state = 'menu';
+                this.mode = 'ai';
+                this.scores = [0, 0];
+                this.winScore = 11;
+                
+                this.reset();
+                this.gameLoop();
+            }
+            
+            reset() {
+                this.ball = {
+                    x: this.width / 2,
+                    y: this.height / 2,
+                    vx: (Math.random() > 0.5 ? 1 : -1) * 5,
+                    vy: (Math.random() - 0.5) * 6
+                };
+                
+                this.paddles = [
+                    { y: this.height / 2 - this.paddleHeight / 2 },
+                    { y: this.height / 2 - this.paddleHeight / 2 }
+                ];
+            }
+            
+            startGame(mode) {
+                this.mode = mode;
+                this.scores = [0, 0];
+                this.state = 'playing';
+                this.reset();
+            }
+            
+            gameLoop() {
+                this.update();
+                this.render();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+            
+            update() {
+                if (this.state !== 'playing') return;
+                
+                this.handleInput();
+                this.updateBall();
+                this.checkCollisions();
+                this.checkScore();
+                
+                if (this.mode === 'ai') {
+                    this.updateAI();
+                }
+            }
+            
+            handleInput() {
+                const keys = {};
+                document.onkeydown = (e) => keys[e.code] = true;
+                document.onkeyup = (e) => keys[e.code] = false;
+                
+                // Player 1 - Keyboard + Analog stick + D-pad
+                if (keys['KeyW'] || 
+                    (window.gamepadManager?.getAxis(0, 'leftY') < -0.3) ||
+                    window.gamepadManager?.isPressed(0, 'up')) {
+                    this.paddles[0].y -= this.paddleSpeed;
+                }
+                if (keys['KeyS'] || 
+                    (window.gamepadManager?.getAxis(0, 'leftY') > 0.3) ||
+                    window.gamepadManager?.isPressed(0, 'down')) {
+                    this.paddles[0].y += this.paddleSpeed;
+                }
+                
+                // Player 2 (if not AI) - Keyboard + Analog stick + D-pad
+                if (this.mode === 'local') {
+                    if (keys['ArrowUp'] || 
+                        (window.gamepadManager?.getAxis(1, 'leftY') < -0.3) ||
+                        window.gamepadManager?.isPressed(1, 'up')) {
+                        this.paddles[1].y -= this.paddleSpeed;
+                    }
+                    if (keys['ArrowDown'] || 
+                        (window.gamepadManager?.getAxis(1, 'leftY') > 0.3) ||
+                        window.gamepadManager?.isPressed(1, 'down')) {
+                        this.paddles[1].y += this.paddleSpeed;
+                    }
+                }
+                
+                // Clamp paddles
+                this.paddles.forEach(p => {
+                    p.y = Math.max(0, Math.min(this.height - this.paddleHeight, p.y));
+                });
+            }
+            
+            updateBall() {
+                this.ball.x += this.ball.vx;
+                this.ball.y += this.ball.vy;
+                
+                // Top/bottom bounce
+                if (this.ball.y <= 0 || this.ball.y >= this.height - this.ballSize) {
+                    this.ball.vy *= -1;
+                    this.ball.y = Math.max(0, Math.min(this.height - this.ballSize, this.ball.y));
+                }
+            }
+            
+            checkCollisions() {
+                // Left paddle
+                if (this.ball.x <= this.paddleWidth + 30 &&
+                    this.ball.y + this.ballSize >= this.paddles[0].y &&
+                    this.ball.y <= this.paddles[0].y + this.paddleHeight &&
+                    this.ball.vx < 0) {
+                    
+                    this.ball.vx = Math.min(this.maxBallSpeed, Math.abs(this.ball.vx) * 1.1);
+                    const hitPos = (this.ball.y - this.paddles[0].y) / this.paddleHeight;
+                    this.ball.vy = (hitPos - 0.5) * 10;
+                }
+                
+                // Right paddle
+                if (this.ball.x >= this.width - this.paddleWidth - 30 - this.ballSize &&
+                    this.ball.y + this.ballSize >= this.paddles[1].y &&
+                    this.ball.y <= this.paddles[1].y + this.paddleHeight &&
+                    this.ball.vx > 0) {
+                    
+                    this.ball.vx = -Math.min(this.maxBallSpeed, Math.abs(this.ball.vx) * 1.1);
+                    const hitPos = (this.ball.y - this.paddles[1].y) / this.paddleHeight;
+                    this.ball.vy = (hitPos - 0.5) * 10;
+                }
+            }
+            
+            checkScore() {
+                if (this.ball.x < 0) {
+                    this.scores[1]++;
+                    this.reset();
+                } else if (this.ball.x > this.width) {
+                    this.scores[0]++;
+                    this.reset();
+                }
+                
+                if (this.scores[0] >= this.winScore || this.scores[1] >= this.winScore) {
+                    this.state = 'gameover';
+                }
+            }
+            
+            updateAI() {
+                const paddle = this.paddles[1];
+                const target = this.ball.y - this.paddleHeight / 2;
+                const diff = target - paddle.y;
+                
+                paddle.y += Math.sign(diff) * Math.min(Math.abs(diff), this.paddleSpeed * 0.7);
+                paddle.y = Math.max(0, Math.min(this.height - this.paddleHeight, paddle.y));
+            }
+            
+            render() {
+                // Background
+                this.ctx.fillStyle = '#0a0e27';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                // Center line
+                this.ctx.setLineDash([10, 10]);
+                this.ctx.strokeStyle = '#333';
+                this.ctx.lineWidth = 4;
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.width / 2, 0);
+                this.ctx.lineTo(this.width / 2, this.height);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+                
+                // Scores
+                this.ctx.fillStyle = '#FFF';
+                this.ctx.font = 'bold 64px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(this.scores[0], this.width / 4, 80);
+                this.ctx.fillText(this.scores[1], this.width * 3 / 4, 80);
+                
+                // Paddles
+                this.ctx.fillStyle = '#4a90e2';
+                this.ctx.fillRect(30, this.paddles[0].y, this.paddleWidth, this.paddleHeight);
+                this.ctx.fillStyle = '#e74c3c';
+                this.ctx.fillRect(this.width - 30 - this.paddleWidth, this.paddles[1].y, this.paddleWidth, this.paddleHeight);
+                
+                // Ball
+                this.ctx.fillStyle = '#FFF';
+                this.ctx.beginPath();
+                this.ctx.arc(this.ball.x + this.ballSize/2, this.ball.y + this.ballSize/2, this.ballSize/2, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // State overlays
+                if (this.state === 'menu') {
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = 'bold 48px Arial';
+                    this.ctx.fillText('PONG', this.width / 2, 200);
+                    this.ctx.font = '24px Arial';
+                    this.ctx.fillText('Select mode to play', this.width / 2, 280);
+                }
+                
+                if (this.state === 'gameover') {
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    this.ctx.fillStyle = '#FFF';
+                    this.ctx.font = 'bold 48px Arial';
+                    const winner = this.scores[0] >= this.winScore ? 'Player 1' : (this.mode === 'ai' ? 'Computer' : 'Player 2');
+                    this.ctx.fillText(`${winner} Wins!`, this.width / 2, 200);
+                    this.ctx.font = '24px Arial';
+                    this.ctx.fillText('Click a button to play again', this.width / 2, 280);
+                }
+            }
+        }
+        
+        let pong;
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize unified auth UI for login across all pages
+            if (window.GameUI) {
+                window.gameUI = new GameUI();
+                window.gameUI.init();
+            }
+
+            pong = new PongGame('game-canvas');
+            if (window.GamepadWidget) new GamepadWidget('gamepad-status');
+        });
+    </script>
+</body>
+</html>

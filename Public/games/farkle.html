@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0e27">
+    <title>Farkle - Free Online Dice Game | Play Farkle at 9DTTT</title>
+    <meta name="title" content="Farkle - Free Online Dice Game | Play Farkle at 9DTTT">
+    <meta name="description" content="Play Farkle online for free! Classic dice game with 1000-to-start rule. Roll dice, score points, push your luck. No download required. Multiplayer ready.">
+    <meta name="keywords" content="farkle, dice game, free farkle, online farkle, 9dttt, roll dice, multiplayer dice game, score points">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.d9ttt.com/games/farkle.html">
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.d9ttt.com/games/farkle.html">
+    <meta property="og:title" content="Farkle - Free Online Dice Game">
+    <meta property="og:description" content="Play Farkle online for free! Classic dice game with 1000-to-start rule. No download required.">
+    <meta property="og:image" content="https://www.d9ttt.com/icon.jpg">
+    <meta property="og:site_name" content="9DTTT Game Library">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Farkle - Free Online Dice Game">
+    <meta name="twitter:description" content="Play Farkle online for free! Classic dice game with 1000-to-start rule.">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "Farkle",
+        "alternateName": "Farkle Dice Game",
+        "description": "Classic dice game with the 1000-to-start rule. Roll dice, score points, but don't farkle!",
+        "url": "https://www.d9ttt.com/games/farkle.html",
+        "genre": ["Dice Game", "Strategy", "Multiplayer"],
+        "gamePlatform": "Web Browser",
+        "applicationCategory": "Game",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "9DTTT"
+        }
+    }
+    </script>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/farkle.css">
+    <link rel="stylesheet" href="../css/game-ui.css">
+</head>
+<body>
+    <!-- Skip to main content link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="container">
+        <!-- Header -->
+        <header role="banner">
+            <h1>🎲 Farkle</h1>
+            <p class="subtitle">Roll the Dice, Push Your Luck!</p>
+        </header>
+
+        <!-- Game Info -->
+        <div class="game-info" role="status" aria-live="polite">
+            <div class="current-player">
+                <span id="turn-indicator">Current Player: <span class="player-1">Player 1</span></span>
+            </div>
+            <div class="score-board">
+                <div class="score-item">
+                    <span class="player-1">P1:</span>
+                    <span class="score-value player-1" id="score-1">0</span>
+                    <span class="on-board" id="onboard-1"></span>
+                </div>
+                <div class="score-item">
+                    <span class="player-2">P2:</span>
+                    <span class="score-value player-2" id="score-2">0</span>
+                    <span class="on-board" id="onboard-2"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1000-to-Start Status -->
+        <div class="start-status" id="start-status">
+            <div class="start-indicator" id="p1-start">
+                <span class="player-1">P1</span>
+                <span class="status-icon" id="p1-status">❌</span>
+                <span class="status-text">Need 1000</span>
+            </div>
+            <div class="start-indicator" id="p2-start">
+                <span class="player-2">P2</span>
+                <span class="status-icon" id="p2-status">❌</span>
+                <span class="status-text">Need 1000</span>
+            </div>
+        </div>
+
+        <!-- Main Game Area -->
+        <main id="main-content" role="main">
+            <!-- Turn Score Display -->
+            <div class="turn-score-display">
+                <div class="turn-score">
+                    <span>Turn Score:</span>
+                    <span class="turn-value" id="turn-score">0</span>
+                </div>
+                <div class="roll-score">
+                    <span>This Roll:</span>
+                    <span class="roll-value" id="roll-score">0</span>
+                </div>
+            </div>
+
+            <!-- Dice Area -->
+            <div class="dice-area">
+                <div class="dice-container" id="dice-container">
+                    <div class="farkle-dice" id="dice-0" data-value="1" data-held="false">
+                        <div class="dice-face">⚀</div>
+                    </div>
+                    <div class="farkle-dice" id="dice-1" data-value="2" data-held="false">
+                        <div class="dice-face">⚁</div>
+                    </div>
+                    <div class="farkle-dice" id="dice-2" data-value="3" data-held="false">
+                        <div class="dice-face">⚂</div>
+                    </div>
+                    <div class="farkle-dice" id="dice-3" data-value="4" data-held="false">
+                        <div class="dice-face">⚃</div>
+                    </div>
+                    <div class="farkle-dice" id="dice-4" data-value="5" data-held="false">
+                        <div class="dice-face">⚄</div>
+                    </div>
+                    <div class="farkle-dice" id="dice-5" data-value="6" data-held="false">
+                        <div class="dice-face">⚅</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Farkle Alert -->
+            <div class="farkle-alert" id="farkle-alert" style="display: none;">
+                <span class="farkle-text">FARKLE!</span>
+                <span class="farkle-subtext">No scoring dice - turn lost!</span>
+            </div>
+
+            <!-- Scoring Selection Info -->
+            <div class="selection-info" id="selection-info">
+                <span>Select scoring dice to keep, then roll again or bank your points!</span>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button id="roll-btn" aria-label="Roll the dice">🎲 Roll Dice</button>
+                <button id="bank-btn" class="secondary" aria-label="Bank points" disabled>💰 Bank Points</button>
+            </div>
+
+            <!-- Scoring Reference -->
+            <div class="scoring-reference">
+                <h3>Scoring</h3>
+                <div class="scoring-grid">
+                    <div class="scoring-item">
+                        <span class="combo">Single 1</span>
+                        <span class="points">100</span>
+                    </div>
+                    <div class="scoring-item">
+                        <span class="combo">Single 5</span>
+                        <span class="points">50</span>
+                    </div>
+                    <div class="scoring-item">
+                        <span class="combo">Three 1s</span>
+                        <span class="points">1000</span>
+                    </div>
+                    <div class="scoring-item">
+                        <span class="combo">Three 2s</span>
+                        <span class="points">200</span>
+                    </div>
+                    <div class="scoring-item">
+                        <span class="combo">Three 3s</span>
+                        <span class="points">300</span>
+                    </div>
+                    <div class="scoring-item">
+                        <span class="combo">Three 4s</span>
+                        <span class="points">400</span>
+                    </div>
+                    <div class="scoring-item">
+                        <span class="combo">Three 5s</span>
+                        <span class="points">500</span>
+                    </div>
+                    <div class="scoring-item">
+                        <span class="combo">Three 6s</span>
+                        <span class="points">600</span>
+                    </div>
+                    <div class="scoring-item">
+                        <span class="combo">Four of a Kind</span>
+                        <span class="points">2× Three</span>
+                    </div>
+                    <div class="scoring-item">
+                        <span class="combo">Five of a Kind</span>
+                        <span class="points">3× Three</span>
+                    </div>
+                    <div class="scoring-item">
+                        <span class="combo">Six of a Kind</span>
+                        <span class="points">4× Three</span>
+                    </div>
+                    <div class="scoring-item">
+                        <span class="combo">1-2-3-4-5-6</span>
+                        <span class="points">1500</span>
+                    </div>
+                    <div class="scoring-item">
+                        <span class="combo">Three Pairs</span>
+                        <span class="points">1500</span>
+                    </div>
+                    <div class="scoring-item">
+                        <span class="combo">Two Triplets</span>
+                        <span class="points">2500</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Controls -->
+            <div class="game-controls">
+                <button id="new-game-btn" class="secondary" aria-label="Start a new game">New Game</button>
+                <button id="toggle-instructions-btn" class="secondary" aria-label="Toggle game instructions">How to Play</button>
+            </div>
+
+            <!-- Instructions (collapsible) -->
+            <div class="instructions" id="instructions" style="display: none;">
+                <h2>How to Play Farkle</h2>
+                <ul>
+                    <li><strong>Objective:</strong> Be the first player to reach 10,000 points!</li>
+                    <li><strong>🎯 1000 to Start:</strong> You must score at least 1000 points in a SINGLE TURN before you can start banking points. Until then, any points you score are lost at the end of your turn!</li>
+                    <li><strong>Rolling:</strong> Roll all 6 dice. You MUST set aside at least one scoring die each roll.</li>
+                    <li><strong>Scoring Dice:</strong> Click on dice to select them for scoring. Only valid scoring combinations count!</li>
+                    <li><strong>Continue or Bank:</strong> After selecting scoring dice, you can roll the remaining dice for more points, or bank your turn score.</li>
+                    <li><strong>Hot Dice:</strong> If all 6 dice score, you get "hot dice" and can roll all 6 again!</li>
+                    <li><strong>Farkle:</strong> If you roll and NO dice score, you "Farkle" and lose ALL points from that turn!</li>
+                    <li><strong>Strategy:</strong> The more you push your luck, the more you can score... but risk losing it all!</li>
+                    <li><strong>Winning:</strong> First player to 10,000 points wins! (Other players get one more turn to try to beat the score.)</li>
+                </ul>
+            </div>
+        </main>
+
+        <!-- Game Over Modal -->
+        <div class="modal" id="game-over-modal" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+            <div class="modal-content">
+                <h2 id="modal-title">Game Over!</h2>
+                <p id="modal-message"></p>
+                <button id="modal-new-game-btn" aria-label="Start a new game">Play Again</button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer role="contentinfo">
+            <p>&copy; 2026 Farkle | Accessible Gaming</p>
+            <p><a href="../index.html" style="color: #4a90e2; text-decoration: none;">← Back to Game Library</a></p>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="../js/gamepad-manager.js"></script>
+    <script src="../js/accessibility-manager.js"></script>
+    <script src="../js/game-engine.js"></script>
+    <!-- Browser Native Authentication (Credential Management API) -->
+    <script src="../js/browser-auth-init.js"></script>
+    <script src="../js/auth-client.js"></script>
+    <script src="../js/game-ui.js"></script>
+    <script src="../js/farkle.js"></script>
+    <script>
+        // Initialize unified auth UI for login across all pages
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.GameUI) {
+                window.gameUI = new GameUI();
+                window.gameUI.init();
+            }
+        });
+    </script>
+</body>
+</html>

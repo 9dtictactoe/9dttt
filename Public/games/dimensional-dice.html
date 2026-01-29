@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0e27">
+    <title>Dimensional Dice - Free Online Dice Game | Play at 9DTTT</title>
+    <meta name="title" content="Dimensional Dice - Free Online Dice Game | Play at 9DTTT">
+    <meta name="description" content="Play Dimensional Dice online for free! Roll dice across multiple dimensions in this strategic dice game. No download required. Multiplayer ready.">
+    <meta name="keywords" content="dimensional dice, dice game, free dice game, online dice game, 9dttt, strategic dice, multiplayer dice">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.d9ttt.com/games/dimensional-dice.html">
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.d9ttt.com/games/dimensional-dice.html">
+    <meta property="og:title" content="Dimensional Dice - Free Online Dice Game">
+    <meta property="og:description" content="Play Dimensional Dice online for free! Roll dice across multiple dimensions. No download required.">
+    <meta property="og:image" content="https://www.d9ttt.com/icon.jpg">
+    <meta property="og:site_name" content="9DTTT Game Library">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Dimensional Dice - Free Online Dice Game">
+    <meta name="twitter:description" content="Play Dimensional Dice online for free! Roll dice across multiple dimensions.">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "Dimensional Dice",
+        "alternateName": "Multi-Dimensional Dice Game",
+        "description": "Roll dice across multiple dimensions in this strategic dice game!",
+        "url": "https://www.d9ttt.com/games/dimensional-dice.html",
+        "genre": ["Dice Game", "Strategy", "Multiplayer"],
+        "gamePlatform": "Web Browser",
+        "applicationCategory": "Game",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "9DTTT"
+        }
+    }
+    </script>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/dimensional-dice.css">
+    <link rel="stylesheet" href="../css/game-ui.css">
+</head>
+<body>
+    <!-- Skip to main content link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="container">
+        <!-- Header -->
+        <header role="banner">
+            <h1>🎲 Dimensional Dice</h1>
+            <p class="subtitle">Roll Across Dimensions</p>
+        </header>
+
+        <!-- Game Info -->
+        <div class="game-info" role="status" aria-live="polite">
+            <div class="current-player">
+                <span id="turn-indicator">Current Player: <span class="player-1">Player 1</span></span>
+            </div>
+            <div class="score-board">
+                <div class="score-item">
+                    <span class="player-1">P1:</span>
+                    <span class="score-value player-1" id="score-1">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="player-2">P2:</span>
+                    <span class="score-value player-2" id="score-2">0</span>
+                </div>
+            </div>
+            <div class="round-display">
+                <span>Round: <span id="current-round">1</span> / <span id="total-rounds">5</span></span>
+            </div>
+        </div>
+
+        <!-- Main Game Area -->
+        <main id="main-content" role="main">
+            <!-- Dimension Selector -->
+            <div class="dimension-selector" role="tablist" aria-label="Dimension selection">
+                <button class="dim-btn active" data-dim="1" role="tab" aria-selected="true">
+                    🔴 Dimension 1
+                </button>
+                <button class="dim-btn" data-dim="2" role="tab" aria-selected="false">
+                    🔵 Dimension 2
+                </button>
+                <button class="dim-btn" data-dim="3" role="tab" aria-selected="false">
+                    🟢 Dimension 3
+                </button>
+            </div>
+
+            <!-- Dice Area -->
+            <div class="dice-area">
+                <div class="dice-container" id="dice-container">
+                    <div class="dice" id="dice-1" data-value="1">
+                        <div class="dice-face">⚀</div>
+                    </div>
+                    <div class="dice" id="dice-2" data-value="1">
+                        <div class="dice-face">⚀</div>
+                    </div>
+                    <div class="dice" id="dice-3" data-value="1">
+                        <div class="dice-face">⚀</div>
+                    </div>
+                </div>
+                <div class="roll-result" id="roll-result">
+                    <span>Roll total: <strong id="roll-total">0</strong></span>
+                </div>
+            </div>
+
+            <!-- Dimension Boards -->
+            <div class="dimension-boards">
+                <div class="dim-board" id="dim-board-1" data-dim="1">
+                    <h3>🔴 Dimension 1</h3>
+                    <div class="dim-grid" role="grid" aria-label="Dimension 1 scoring grid"></div>
+                    <div class="dim-score">Score: <span id="dim-1-score">0</span></div>
+                </div>
+                <div class="dim-board" id="dim-board-2" data-dim="2">
+                    <h3>🔵 Dimension 2</h3>
+                    <div class="dim-grid" role="grid" aria-label="Dimension 2 scoring grid"></div>
+                    <div class="dim-score">Score: <span id="dim-2-score">0</span></div>
+                </div>
+                <div class="dim-board" id="dim-board-3" data-dim="3">
+                    <h3>🟢 Dimension 3</h3>
+                    <div class="dim-grid" role="grid" aria-label="Dimension 3 scoring grid"></div>
+                    <div class="dim-score">Score: <span id="dim-3-score">0</span></div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button id="roll-btn" aria-label="Roll the dice">🎲 Roll Dice</button>
+                <button id="new-game-btn" class="secondary" aria-label="Start a new game">New Game</button>
+                <button id="toggle-instructions-btn" class="secondary" aria-label="Toggle game instructions">How to Play</button>
+            </div>
+
+            <!-- Instructions (collapsible) -->
+            <div class="instructions" id="instructions" style="display: none;">
+                <h2>How to Play Dimensional Dice</h2>
+                <ul>
+                    <li><strong>Objective:</strong> Score the most points across three dimensions over 5 rounds!</li>
+                    <li><strong>Rolling:</strong> Click "Roll Dice" to roll 3 dice. You can reroll up to 2 times per turn.</li>
+                    <li><strong>Dimensions:</strong> Choose which dimension to place your dice roll in. Each dimension has different scoring bonuses.</li>
+                    <li><strong>Dimension 1 (🔴):</strong> Bonus for runs (consecutive numbers).</li>
+                    <li><strong>Dimension 2 (🔵):</strong> Bonus for pairs and triples.</li>
+                    <li><strong>Dimension 3 (🟢):</strong> Bonus for high rolls (15+).</li>
+                    <li><strong>Strategy:</strong> Plan where to place your rolls to maximize bonuses!</li>
+                    <li><strong>Winning:</strong> The player with the highest total score wins!</li>
+                    <li><strong>Keyboard:</strong> Press R to roll, 1-3 to select dimension.</li>
+                </ul>
+            </div>
+        </main>
+
+        <!-- Game Over Modal -->
+        <div class="modal" id="game-over-modal" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+            <div class="modal-content">
+                <h2 id="modal-title">Game Over!</h2>
+                <p id="modal-message"></p>
+                <button id="modal-new-game-btn" aria-label="Start a new game">Play Again</button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer role="contentinfo">
+            <p>&copy; 2026 Dimensional Dice | Accessible Gaming</p>
+            <p><a href="../index.html" style="color: #4a90e2; text-decoration: none;">← Back to Game Library</a></p>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="../js/gamepad-manager.js"></script>
+    <script src="../js/accessibility-manager.js"></script>
+    <script src="../js/game-engine.js"></script>
+    <!-- Browser Native Authentication (Credential Management API) -->
+    <script src="../js/browser-auth-init.js"></script>
+    <script src="../js/auth-client.js"></script>
+    <script src="../js/game-ui.js"></script>
+    <script src="../js/dimensional-dice.js"></script>
+    <script>
+        // Initialize unified auth UI for login across all pages
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.GameUI) {
+                window.gameUI = new GameUI();
+                window.gameUI.init();
+            }
+        });
+    </script>
+</body>
+</html>

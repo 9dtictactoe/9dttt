@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- Primary Meta Tags -->
+    <title>4D Chess - Multi-Timeline Chess Game | 9DTTT</title>
+    <meta name="title" content="4D Chess - Multi-Timeline Chess Game | 9DTTT">
+    <meta name="description" content="Play 4D Chess online! Chess across multiple timelines where moves affect multiple boards simultaneously. Strategic multiplayer chess variant, free to play.">
+    <meta name="keywords" content="4d chess, multi-timeline chess, chess variant, strategic chess, online chess, multiplayer chess, dimensional chess">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.d9ttt.com/games/4d-chess.html">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.d9ttt.com/games/4d-chess.html">
+    <meta property="og:title" content="4D Chess - Multi-Timeline Chess Game">
+    <meta property="og:description" content="Play 4D Chess online! Chess across multiple timelines where moves affect multiple boards simultaneously.">
+    <meta property="og:image" content="https://www.d9ttt.com/icon.jpg">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://www.d9ttt.com/games/4d-chess.html">
+    <meta property="twitter:title" content="4D Chess - Multi-Timeline Chess Game">
+    <meta property="twitter:description" content="Play 4D Chess online! Chess across multiple timelines where moves affect multiple boards simultaneously.">
+    <meta property="twitter:image" content="https://www.d9ttt.com/icon.jpg">
+    
+    <!-- Mobile App -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0e27">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="../icon.jpg">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/4d-chess.css">
+    <link rel="stylesheet" href="../css/game-ui.css">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Game",
+        "name": "4D Chess",
+        "alternateName": "Multi-Timeline Chess",
+        "description": "Chess variant played across multiple timelines where strategic moves affect multiple boards simultaneously",
+        "gamePlatform": "Web Browser",
+        "numberOfPlayers": "2",
+        "playMode": "MultiPlayer",
+        "url": "https://www.d9ttt.com/games/4d-chess.html",
+        "genre": "Strategy Game",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        }
+    }
+    </script>
+</head>
+<body>
+    <!-- Skip to main content link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="container">
+        <!-- Header -->
+        <header role="banner">
+            <h1>♟️ 4D Chess</h1>
+            <p class="subtitle">Multi-Timeline Chess</p>
+        </header>
+
+        <!-- Game Info -->
+        <div class="game-info" role="status" aria-live="polite">
+            <div class="current-player">
+                <span id="turn-indicator">Current Player: <span class="player-white">White</span></span>
+            </div>
+            <div class="timeline-info">
+                <span>Timeline: <span id="current-timeline">1</span> of <span id="total-timelines">2</span></span>
+            </div>
+            <div class="captured-pieces">
+                <div class="captured-item">
+                    <span class="player-white">White captured:</span>
+                    <span id="captured-white" class="captured-display"></span>
+                </div>
+                <div class="captured-item">
+                    <span class="player-black">Black captured:</span>
+                    <span id="captured-black" class="captured-display"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Game Area -->
+        <main id="main-content" role="main">
+            <!-- Timeline Navigation -->
+            <div class="timeline-nav" role="tablist" aria-label="Timeline navigation">
+                <button class="timeline-btn active" data-timeline="0" role="tab" aria-selected="true" aria-controls="board-0">
+                    Timeline 1 (Present)
+                </button>
+                <button class="timeline-btn" data-timeline="1" role="tab" aria-selected="false" aria-controls="board-1">
+                    Timeline 2 (Alternate)
+                </button>
+            </div>
+
+            <!-- Chess Boards Container -->
+            <div class="boards-container">
+                <div class="chess-board-wrapper" id="board-0" role="tabpanel" aria-labelledby="timeline-0">
+                    <h2 class="board-title">Timeline 1 - Present</h2>
+                    <div class="chess-board" id="chess-board-0" role="grid" aria-label="Chess board Timeline 1">
+                        <!-- Board will be generated by JavaScript -->
+                    </div>
+                </div>
+                <div class="chess-board-wrapper hidden" id="board-1" role="tabpanel" aria-labelledby="timeline-1">
+                    <h2 class="board-title">Timeline 2 - Alternate</h2>
+                    <div class="chess-board" id="chess-board-1" role="grid" aria-label="Chess board Timeline 2">
+                        <!-- Board will be generated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Move History -->
+            <div class="move-history-panel">
+                <h3>Move History</h3>
+                <div id="move-history" class="move-history" role="log" aria-live="polite"></div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button id="new-game-btn" aria-label="Start a new game">New Game</button>
+                <button id="undo-btn" class="secondary" aria-label="Undo last move">Undo</button>
+                <button id="toggle-instructions-btn" class="secondary" aria-label="Toggle game instructions">How to Play</button>
+            </div>
+
+            <!-- Instructions (collapsible) -->
+            <div class="instructions" id="instructions" style="display: none;">
+                <h2>How to Play 4D Chess</h2>
+                <ul>
+                    <li><strong>Objective:</strong> Checkmate your opponent's king on ANY timeline to win!</li>
+                    <li><strong>Timelines:</strong> The game features 2 parallel timelines. Actions in one can affect the other.</li>
+                    <li><strong>Moving Pieces:</strong> Click a piece to select it, then click a valid destination to move.</li>
+                    <li><strong>Timeline Jumps:</strong> Special moves allow pieces to jump between timelines! When a piece captures another, a copy appears on the alternate timeline.</li>
+                    <li><strong>Branching:</strong> Certain moves create branches in time, affecting both boards simultaneously.</li>
+                    <li><strong>Valid Moves:</strong> Green highlights show valid moves for the selected piece.</li>
+                    <li><strong>Check:</strong> When a king is in check, you must resolve it on that timeline.</li>
+                    <li><strong>Winning:</strong> Checkmate a king on any timeline, or capture both kings across timelines!</li>
+                    <li><strong>Keyboard:</strong> Use Tab to navigate squares, Enter/Space to select/move.</li>
+                </ul>
+            </div>
+        </main>
+
+        <!-- Game Over Modal -->
+        <div class="modal" id="game-over-modal" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+            <div class="modal-content">
+                <h2 id="modal-title">Game Over!</h2>
+                <p id="modal-message"></p>
+                <button id="modal-new-game-btn" aria-label="Start a new game">Play Again</button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer role="contentinfo">
+            <p>&copy; 2026 4D Chess | Accessible Gaming</p>
+            <p><a href="../index.html" style="color: #4a90e2; text-decoration: none;">← Back to Game Library</a></p>
+        </footer>
+    </div>
+
+    <!-- Firebase SDK (for social login - Google, Apple) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="../js/firebase-init.js"></script>
+    
+    <!-- Browser Native Authentication (Credential Management API) -->
+    <script src="../js/browser-auth-init.js"></script>
+    
+    <!-- JavaScript -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="../js/gamepad-manager.js"></script>
+    <script src="../js/accessibility-manager.js"></script>
+    <script src="../js/game-engine.js"></script>
+    <script src="../js/auth-client.js"></script>
+    <script src="../js/multiplayer-client.js"></script>
+    <script src="../js/game-ui.js"></script>
+    <script src="../js/4d-chess.js"></script>
+    <script>
+        // Initialize unified auth UI for login across all pages
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.GameUI) {
+                window.gameUI = new GameUI();
+                window.gameUI.init();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,431 @@
+/**
+ * Farkle Styles
+ * Classic dice game with 1000-to-start rule
+ */
+
+/* Game Info */
+.game-info {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--secondary-bg);
+    border-radius: var(--radius-md);
+}
+
+.score-board {
+    display: flex;
+    gap: var(--spacing-xl);
+}
+
+.score-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 1.1rem;
+}
+
+.score-value {
+    font-weight: bold;
+    font-size: 1.4rem;
+}
+
+.on-board {
+    font-size: 0.85rem;
+    color: var(--accent-color);
+    opacity: 0.8;
+}
+
+.player-1 { color: #e74c3c; }
+.player-2 { color: #3498db; }
+
+/* 1000-to-Start Status */
+.start-status {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--tertiary-bg);
+    border-radius: var(--radius-md);
+}
+
+.start-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 0.9rem;
+}
+
+.status-icon {
+    font-size: 1.2rem;
+}
+
+.status-text {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.start-indicator.achieved .status-icon {
+    color: var(--win-color);
+}
+
+.start-indicator.achieved .status-text {
+    color: var(--win-color);
+}
+
+/* Turn Score Display */
+.turn-score-display {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: linear-gradient(135deg, var(--secondary-bg) 0%, var(--tertiary-bg) 100%);
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--primary-color);
+}
+
+.turn-score,
+.roll-score {
+    text-align: center;
+}
+
+.turn-score span,
+.roll-score span {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.turn-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+.roll-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--win-color);
+}
+
+/* Dice Area */
+.dice-area {
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-xl);
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--primary-color);
+}
+
+.dice-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+}
+
+.farkle-dice {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(145deg, #ffffff 0%, #e0e0e0 100%);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 3px solid transparent;
+}
+
+.farkle-dice:hover:not(.locked):not(.used) {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.farkle-dice.rolling {
+    animation: rollDice 0.5s ease-in-out;
+}
+
+@keyframes rollDice {
+    0% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(90deg) scale(1.1); }
+    50% { transform: rotate(180deg) scale(1); }
+    75% { transform: rotate(270deg) scale(1.1); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+.farkle-dice.selected {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px var(--accent-color);
+    transform: scale(1.1);
+}
+
+.farkle-dice.held {
+    background: linear-gradient(145deg, #2ecc71 0%, #27ae60 100%);
+    border-color: var(--win-color);
+}
+
+.farkle-dice.held .dice-face {
+    color: white;
+}
+
+.farkle-dice.used {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: scale(0.9);
+}
+
+.farkle-dice.scoring {
+    border-color: var(--win-color);
+    animation: scoringPulse 0.5s ease-in-out;
+}
+
+@keyframes scoringPulse {
+    0%, 100% { box-shadow: 0 0 5px var(--win-color); }
+    50% { box-shadow: 0 0 20px var(--win-color); }
+}
+
+.farkle-dice.non-scoring {
+    border-color: var(--loss-color);
+    opacity: 0.7;
+}
+
+.dice-face {
+    font-size: 4.375rem;
+    line-height: 1;
+    color: #333;
+    user-select: none;
+}
+
+/* Farkle Alert */
+.farkle-alert {
+    text-align: center;
+    padding: var(--spacing-lg);
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-lg);
+    animation: farkleShake 0.5s ease-in-out;
+}
+
+@keyframes farkleShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+.farkle-text {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.farkle-subtext {
+    display: block;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-top: var(--spacing-xs);
+}
+
+/* Selection Info */
+.selection-info {
+    text-align: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--tertiary-bg);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-lg);
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-lg);
+}
+
+#roll-btn {
+    font-size: 1.2rem;
+    padding: 15px 40px;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+}
+
+#roll-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+}
+
+#roll-btn:disabled {
+    background: var(--tertiary-bg);
+    cursor: not-allowed;
+    transform: none;
+}
+
+#bank-btn {
+    font-size: 1.1rem;
+    padding: 15px 30px;
+    background: linear-gradient(135deg, #f39c12 0%, #d68910 100%);
+}
+
+#bank-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #d68910 0%, #f39c12 100%);
+}
+
+#bank-btn:disabled {
+    background: var(--tertiary-bg);
+    cursor: not-allowed;
+    transform: none;
+    opacity: 0.5;
+}
+
+/* Scoring Reference */
+.scoring-reference {
+    background: var(--secondary-bg);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-lg);
+    border: 1px solid var(--tertiary-bg);
+}
+
+.scoring-reference h3 {
+    text-align: center;
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-md);
+    font-size: 1rem;
+}
+
+.scoring-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--spacing-xs);
+}
+
+.scoring-item {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--primary-bg);
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+}
+
+.scoring-item .combo {
+    color: var(--text-secondary);
+}
+
+.scoring-item .points {
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+/* Game Controls */
+.game-controls {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Instructions */
+.instructions {
+    background: var(--secondary-bg);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    margin-top: var(--spacing-lg);
+    border: 2px solid var(--primary-color);
+}
+
+.instructions h2 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-md);
+}
+
+.instructions ul {
+    list-style-position: inside;
+    color: var(--text-secondary);
+}
+
+.instructions li {
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.6;
+}
+
+/* Hot Dice Animation */
+.hot-dice-alert {
+    text-align: center;
+    padding: var(--spacing-md);
+    background: linear-gradient(135deg, #f39c12 0%, #e74c3c 100%);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-md);
+    animation: hotDicePulse 1s infinite;
+}
+
+@keyframes hotDicePulse {
+    0%, 100% { box-shadow: 0 0 10px #f39c12; }
+    50% { box-shadow: 0 0 30px #e74c3c; }
+}
+
+.hot-dice-text {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .farkle-dice {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .dice-face {
+        font-size: 3.75rem;
+    }
+    
+    .turn-value {
+        font-size: 1.8rem;
+    }
+    
+    .roll-value {
+        font-size: 1.4rem;
+    }
+    
+    .scoring-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .start-status {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+    
+    .score-value {
+        font-size: 1.6rem;
+    }
+    
+    .score-item {
+        font-size: 1.1rem;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 380px) {
+    .farkle-dice {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .dice-face {
+        font-size: 3.125rem;
+    }
+}

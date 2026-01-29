@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0a0e27">
+    <meta name="description" content="9DTTT Game Library - Under Maintenance">
+    <title>🔧 Maintenance | 9DTTT Game Library</title>
+    
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/maintenance.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="container">
+        <header role="banner">
+            <h1>🔧 Under Maintenance</h1>
+            <p class="subtitle">We'll be back soon!</p>
+        </header>
+
+        <main id="main-content" role="main">
+            <div class="maintenance-message">
+                <div class="status-icon">⚙️</div>
+                <h2>We're Working On Something Awesome</h2>
+                <p>The 9DTTT Game Library is currently undergoing maintenance to bring you new features and improvements.</p>
+                <p class="estimated-time">Estimated time: <span id="countdown">Coming back soon!</span></p>
+            </div>
+
+            <!-- Classic Tic-Tac-Toe Game -->
+            <section class="mini-game-section" aria-labelledby="mini-game-title">
+                <h2 id="mini-game-title">🎮 While You Wait...</h2>
+                <p class="mini-game-intro">Enjoy a classic game of Tic-Tac-Toe!</p>
+                
+                <div class="game-wrapper">
+                    <div class="game-status" role="status" aria-live="polite">
+                        <span id="current-player">Player X's turn</span>
+                    </div>
+
+                    <div class="ttt-board" role="grid" aria-label="Tic-Tac-Toe board">
+                        <button class="ttt-cell" data-index="0" role="gridcell" aria-label="Cell 1, empty"></button>
+                        <button class="ttt-cell" data-index="1" role="gridcell" aria-label="Cell 2, empty"></button>
+                        <button class="ttt-cell" data-index="2" role="gridcell" aria-label="Cell 3, empty"></button>
+                        <button class="ttt-cell" data-index="3" role="gridcell" aria-label="Cell 4, empty"></button>
+                        <button class="ttt-cell" data-index="4" role="gridcell" aria-label="Cell 5, empty"></button>
+                        <button class="ttt-cell" data-index="5" role="gridcell" aria-label="Cell 6, empty"></button>
+                        <button class="ttt-cell" data-index="6" role="gridcell" aria-label="Cell 7, empty"></button>
+                        <button class="ttt-cell" data-index="7" role="gridcell" aria-label="Cell 8, empty"></button>
+                        <button class="ttt-cell" data-index="8" role="gridcell" aria-label="Cell 9, empty"></button>
+                    </div>
+
+                    <div class="game-controls">
+                        <button id="reset-btn" class="secondary">🔄 New Game</button>
+                        <button id="ai-toggle" class="secondary">🤖 Play vs AI</button>
+                    </div>
+
+                    <div class="scoreboard">
+                        <div class="score player-x">
+                            <span class="score-label">Player X</span>
+                            <span class="score-value" id="score-x">0</span>
+                        </div>
+                        <div class="score draws">
+                            <span class="score-label">Draws</span>
+                            <span class="score-value" id="score-draw">0</span>
+                        </div>
+                        <div class="score player-o">
+                            <span class="score-label">Player O</span>
+                            <span class="score-value" id="score-o">0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Maintenance Info -->
+            <section class="info-section">
+                <h3>🛠️ What's Happening?</h3>
+                <ul>
+                    <li>✨ Adding new games to the library</li>
+                    <li>🚀 Improving performance</li>
+                    <li>🎨 Updating the user interface</li>
+                    <li>🐛 Squashing bugs</li>
+                </ul>
+            </section>
+
+            <!-- Coming Soon - Mobile Apps -->
+            <section class="info-section app-section">
+                <h3>📱 Coming Soon to Mobile!</h3>
+                <p>9DTTT will be available as a mobile app for download:</p>
+                <div class="app-stores">
+                    <div class="app-badge" aria-label="Coming soon to Google Play">
+                        <span class="store-icon">▶️</span>
+                        <div class="store-text">
+                            <span class="coming-soon-label">COMING SOON</span>
+                            <span class="store-name">Google Play</span>
+                        </div>
+                    </div>
+                    <div class="app-badge" aria-label="Coming soon to App Store">
+                        <span class="store-icon">🍎</span>
+                        <div class="store-text">
+                            <span class="coming-soon-label">COMING SOON</span>
+                            <span class="store-name">App Store</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="app-note">Stay tuned for native mobile apps with offline play!</p>
+            </section>
+        </main>
+
+        <footer role="contentinfo">
+            <p>&copy; 2026 9DTTT Game Library | We'll be back soon!</p>
+            <p>Thanks for your patience 💙</p>
+        </footer>
+    </div>
+
+    <script src="js/gamepad-manager.js"></script>
+    <script src="js/accessibility-manager.js"></script>
+    <script src="js/maintenance.js"></script>
+</body>
+</html>

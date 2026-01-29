@@ -1,0 +1,268 @@
+/**
+ * Quantum Sudoku Styles
+ * Sudoku with quantum superposition mechanics
+ */
+
+/* Quantum State Indicator */
+.quantum-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 2px solid #9b59b6;
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.quantum-icon {
+    font-size: 1.5rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+#quantum-message {
+    color: #bb86fc;
+    font-size: 0.95rem;
+}
+
+/* Sudoku Board */
+.sudoku-board {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 2px;
+    background: var(--tertiary-bg);
+    padding: 4px;
+    border-radius: var(--radius-lg);
+    border: 3px solid var(--primary-color);
+    max-width: 450px;
+    margin: 0 auto var(--spacing-lg);
+    aspect-ratio: 1;
+}
+
+.sudoku-cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--secondary-bg);
+    font-size: clamp(1rem, 4vw, 1.5rem);
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid var(--tertiary-bg);
+    color: var(--text-primary);
+    position: relative;
+}
+
+/* 3x3 Box Borders */
+.sudoku-cell:nth-child(3n) {
+    border-right: 2px solid var(--primary-color);
+}
+
+.sudoku-cell:nth-child(n+19):nth-child(-n+27),
+.sudoku-cell:nth-child(n+46):nth-child(-n+54) {
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.sudoku-cell:hover {
+    background: var(--tertiary-bg);
+}
+
+.sudoku-cell:focus {
+    outline: 3px solid var(--accent-color);
+    outline-offset: -3px;
+    z-index: 1;
+}
+
+.sudoku-cell.selected {
+    background: rgba(74, 144, 226, 0.3);
+    border-color: var(--primary-color);
+}
+
+.sudoku-cell.fixed {
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+.sudoku-cell.error {
+    background: rgba(231, 76, 60, 0.3);
+    color: var(--loss-color);
+}
+
+.sudoku-cell.highlight {
+    background: rgba(74, 144, 226, 0.15);
+}
+
+.sudoku-cell.correct {
+    background: rgba(46, 204, 113, 0.2);
+}
+
+/* Quantum Cell Effect */
+.sudoku-cell.quantum {
+    background: linear-gradient(45deg, #9b59b6, #3498db);
+    animation: quantumGlow 2s ease-in-out infinite;
+}
+
+.sudoku-cell.quantum::before {
+    content: '?';
+    position: absolute;
+    font-size: 0.8rem;
+    color: white;
+    opacity: 0.7;
+}
+
+.sudoku-cell.quantum .superposition {
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1px;
+}
+
+@keyframes quantumGlow {
+    0%, 100% { box-shadow: 0 0 5px #9b59b6; }
+    50% { box-shadow: 0 0 15px #3498db; }
+}
+
+/* Number Pad */
+.number-pad {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--spacing-xs);
+    max-width: 300px;
+    margin: 0 auto var(--spacing-lg);
+}
+
+.num-btn {
+    aspect-ratio: 1;
+    font-size: 1.3rem;
+    padding: var(--spacing-sm);
+    background: var(--tertiary-bg);
+    border: 2px solid var(--tertiary-bg);
+    color: var(--text-primary);
+}
+
+.num-btn:hover,
+.num-btn:focus {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.num-btn.active {
+    background: var(--primary-color);
+    border-color: var(--accent-color);
+}
+
+.erase-btn {
+    background: var(--loss-color);
+    border-color: var(--loss-color);
+}
+
+.erase-btn:hover {
+    background: #c0392b;
+}
+
+/* Difficulty Selection */
+.difficulty-select {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.difficulty-select label {
+    display: block;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.diff-buttons {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+}
+
+.diff-btn {
+    padding: 8px 20px;
+    font-size: 0.9rem;
+    background: var(--tertiary-bg);
+}
+
+.diff-btn.active {
+    background: var(--primary-color);
+}
+
+/* Timer and Stats */
+.game-info {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--secondary-bg);
+    border-radius: var(--radius-md);
+}
+
+.game-info > div {
+    padding: var(--spacing-xs) var(--spacing-md);
+}
+
+#timer {
+    font-family: monospace;
+    font-size: 1.2rem;
+    color: var(--accent-color);
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Instructions */
+.instructions {
+    background: var(--secondary-bg);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    margin-top: var(--spacing-lg);
+    border: 2px solid var(--primary-color);
+}
+
+.instructions h2 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-md);
+}
+
+.instructions ul {
+    list-style-position: inside;
+    color: var(--text-secondary);
+}
+
+.instructions li {
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.6;
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+    .sudoku-board {
+        max-width: 95vw;
+    }
+    
+    .number-pad {
+        max-width: 95%;
+    }
+    
+    .num-btn {
+        font-size: 1.1rem;
+    }
+}

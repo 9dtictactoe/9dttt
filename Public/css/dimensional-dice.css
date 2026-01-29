@@ -1,0 +1,286 @@
+/**
+ * Dimensional Dice Styles
+ * Strategic dice game across multiple dimensions
+ */
+
+/* Game Info */
+.game-info {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: var(--secondary-bg);
+    border-radius: var(--radius-md);
+}
+
+.score-board {
+    display: flex;
+    gap: var(--spacing-lg);
+}
+
+.score-item {
+    font-size: 1.1rem;
+}
+
+.score-value {
+    font-weight: bold;
+    font-size: 1.3rem;
+}
+
+.player-1 { color: #e74c3c; }
+.player-2 { color: #3498db; }
+
+/* Dimension Selector */
+.dimension-selector {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.dim-btn {
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    background: var(--tertiary-bg);
+    border: 2px solid var(--tertiary-bg);
+    border-radius: var(--radius-md);
+    transition: all 0.3s;
+}
+
+.dim-btn:hover {
+    border-color: var(--primary-color);
+}
+
+.dim-btn.active {
+    background: var(--primary-color);
+    border-color: var(--accent-color);
+}
+
+.dim-btn[data-dim="1"].active { background: #e74c3c; }
+.dim-btn[data-dim="2"].active { background: #3498db; }
+.dim-btn[data-dim="3"].active { background: #2ecc71; }
+
+/* Dice Area */
+.dice-area {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-xl);
+    background: linear-gradient(135deg, var(--secondary-bg) 0%, var(--tertiary-bg) 100%);
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--primary-color);
+}
+
+.dice-container {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.dice {
+    width: 70px;
+    height: 70px;
+    background: white;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s;
+    cursor: pointer;
+}
+
+.dice:hover {
+    transform: scale(1.05);
+}
+
+.dice.rolling {
+    animation: rollDice 0.5s ease-in-out;
+}
+
+@keyframes rollDice {
+    0% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(90deg) scale(1.1); }
+    50% { transform: rotate(180deg) scale(1); }
+    75% { transform: rotate(270deg) scale(1.1); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+.dice.held {
+    box-shadow: 0 0 0 4px var(--accent-color);
+}
+
+.dice-face {
+    font-size: 3.75rem;
+    line-height: 1;
+    color: #333;
+}
+
+.roll-result {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+
+#roll-total {
+    font-size: 1.5rem;
+    color: var(--accent-color);
+}
+
+/* Dimension Boards */
+.dimension-boards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.dim-board {
+    background: var(--secondary-bg);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    border: 2px solid var(--tertiary-bg);
+    transition: all 0.3s;
+}
+
+.dim-board h3 {
+    text-align: center;
+    margin-bottom: var(--spacing-sm);
+    font-size: 1rem;
+}
+
+.dim-board[data-dim="1"] { border-color: #e74c3c; }
+.dim-board[data-dim="2"] { border-color: #3498db; }
+.dim-board[data-dim="3"] { border-color: #2ecc71; }
+
+.dim-board.selected {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(74, 144, 226, 0.3);
+}
+
+.dim-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+}
+
+.dim-cell {
+    aspect-ratio: 1;
+    background: var(--primary-bg);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border: 2px solid var(--tertiary-bg);
+}
+
+.dim-cell.filled {
+    background: var(--tertiary-bg);
+}
+
+.dim-cell.p1 { color: #e74c3c; border-color: #e74c3c; }
+.dim-cell.p2 { color: #3498db; border-color: #3498db; }
+
+.dim-score {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-lg);
+}
+
+#roll-btn {
+    font-size: 1.2rem;
+    padding: 15px 40px;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+}
+
+#roll-btn:hover {
+    background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+}
+
+#roll-btn:disabled {
+    background: var(--tertiary-bg);
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Instructions */
+.instructions {
+    background: var(--secondary-bg);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    margin-top: var(--spacing-lg);
+    border: 2px solid var(--primary-color);
+}
+
+.instructions h2 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-md);
+}
+
+.instructions ul {
+    list-style-position: inside;
+    color: var(--text-secondary);
+}
+
+.instructions li {
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.6;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .dice {
+        width: 65px;
+        height: 65px;
+    }
+    
+    .dice-face {
+        font-size: 3.4375rem;
+    }
+    
+    .dimension-boards {
+        grid-template-columns: 1fr;
+    }
+    
+    .dim-cell {
+        font-size: 1.4rem;
+    }
+    
+    .score-value {
+        font-size: 1.5rem;
+    }
+    
+    #roll-total {
+        font-size: 1.8rem;
+    }
+    
+    .roll-result {
+        font-size: 1.3rem;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 380px) {
+    .dice {
+        width: 55px;
+        height: 55px;
+    }
+    
+    .dice-face {
+        font-size: 2.8125rem;
+    }
+}
