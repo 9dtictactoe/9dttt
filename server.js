@@ -222,7 +222,11 @@ app.get('/api/auth/firebase/status', (req, res) => {
         success: true, 
         available: firebaseAuth.isAvailable(),
         providers: firebaseAuth.getAvailableProviders(),
-        // Client-side config (safe to expose)
+        // ✅ SAFE TO EXPOSE: Firebase client config is PUBLIC by design
+        // These values are meant to be in client-side code and OAuth URLs
+        // Security comes from Firebase Security Rules and authorized domains
+        // See: https://firebase.google.com/docs/projects/api-keys
+        // See also: /OAUTH_SECURITY.md for detailed explanation
         config: config.FIREBASE_API_KEY ? {
             apiKey: config.FIREBASE_API_KEY,
             authDomain: config.FIREBASE_AUTH_DOMAIN || `${config.FIREBASE_PROJECT_ID}.firebaseapp.com`,

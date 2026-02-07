@@ -1,8 +1,17 @@
 /**
  * Universal Authentication System
+ * 
+ * ⚠️ DEPRECATED: This file is kept for backward compatibility only.
+ * New code should use unified-auth.js and firebase-init.js instead.
+ * 
  * Uses browser-based OAuth (Google, Microsoft, Apple) + Web3 wallets
  * No Firebase needed - uses IndexedDB for local storage and your backend API
  * Cross-browser compatible with fallbacks for older browsers
+ * 
+ * Current Status:
+ * - Some legacy games still reference window.universalAuth
+ * - Gradually being replaced by unified-auth.js
+ * - Google/Apple login now handled by Firebase (more reliable)
  */
 
 class UniversalAuth {
@@ -101,16 +110,38 @@ class UniversalAuth {
     // Browser-based OAuth Login with fallbacks
     async loginWithGoogle() {
         try {
+            // NOTE: This auth system is deprecated in favor of Firebase-based auth in unified-auth.js
+            // For Google Sign-In, use the Firebase method which properly handles OAuth flow
+            console.warn('⚠️ universal-auth.js Google login is deprecated. Use Firebase auth instead.');
+            
             // Check if Google Identity Services is available
             if (window.google && window.google.accounts && window.google.accounts.id) {
-                window.google.accounts.id.initialize({
-                    client_id: 'YOUR_GOOGLE_CLIENT_ID', // Replace with your actual client ID
-                    callback: (response) => this.handleGoogleCallback(response),
-                    auto_select: false,
-                    cancel_on_tap_outside: true
-                });
-                
-                window.google.accounts.id.prompt();
+                try {
+                    // Fetch Google Client ID from backend (never hardcode credentials)
+                    const response = await fetch('/api/auth/google/config');
+                    
+                    if (!response.ok) {
+                        throw new Error('Google Sign-In configuration endpoint not available');
+                    }
+                    
+                    const config = await response.json();
+                    
+                    if (!config.available || !config.clientId) {
+                        throw new Error('Google Sign-In not configured on server');
+                    }
+                    
+                    window.google.accounts.id.initialize({
+                        client_id: config.clientId, // Client ID from server (safe to be public)
+                        callback: (response) => this.handleGoogleCallback(response),
+                        auto_select: false,
+                        cancel_on_tap_outside: true
+                    });
+                    
+                    window.google.accounts.id.prompt();
+                } catch (fetchError) {
+                    console.error('Failed to initialize Google Sign-In:', fetchError);
+                    throw new Error('Google Sign-In not available. Please use Firebase auth instead.');
+                }
             } else if (navigator.credentials && navigator.credentials.get) {
                 // Fallback: Use Credential Management API (Chrome, Edge, Opera)
                 try {

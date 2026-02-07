@@ -1,5 +1,23 @@
 # Firebase Google Sign-In Setup
 
+## ⚠️ Important: Your API Key is Safe!
+
+**If you're seeing this because you're worried about your Google Client ID being visible in OAuth URLs:**
+
+✅ **This is completely normal and safe!**
+
+The client ID you see in the OAuth URL (like `501352720889-5cdqd4qoftqpugdcbmnp82aki6bd4l4o.apps.googleusercontent.com`) is:
+- **A PUBLIC identifier** - designed to be visible
+- **NOT a secret** - it's like a username, not a password
+- **Required in URLs** - OAuth spec requires it to be visible
+- **Safe to expose** - Google's security model expects this
+
+**The real secrets (Client Secret, Private Keys) stay on your server and are never sent to browsers.**
+
+📖 **For detailed explanation, see [OAUTH_SECURITY.md](/OAUTH_SECURITY.md)**
+
+---
+
 ## Current Issue
 ❌ **Error**: `auth/configuration-not-found`  
 📝 **Cause**: Google Sign-In provider not enabled in Firebase Console

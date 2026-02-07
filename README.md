@@ -182,12 +182,15 @@ Firebase Authentication provides secure social login with **no extra fees**. It'
 5. Copy the config values to your `.env`:
 
 ```bash
+# ✅ SAFE TO EXPOSE: These values are public by design
 FIREBASE_API_KEY=AIzaSyD...
 FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
 FIREBASE_PROJECT_ID=your-project-id
 ```
 
 That's it! Players can now sign in with their Google or Apple accounts.
+
+**Note:** Firebase API keys are meant to be public - see [OAUTH_SECURITY.md](./OAUTH_SECURITY.md) for explanation.
 
 ---
 
@@ -336,6 +339,16 @@ The platform includes comprehensive moderation tools:
 - Spam / Flooding
 - Inappropriate Content
 - Other
+
+---
+
+## 📚 Documentation
+
+- **[OAUTH_SECURITY.md](./OAUTH_SECURITY.md)** - Understanding OAuth security and why API keys in URLs are safe
+- **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Fixing common issues with Google/Apple login
+- **[FIREBASE_SETUP.md](./FIREBASE_SETUP.md)** - Setting up Firebase authentication
+- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Deploying to production
+- **[README_DEPLOYMENT.md](./README_DEPLOYMENT.md)** - Additional deployment information
 
 ---
 
