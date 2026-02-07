@@ -372,7 +372,8 @@ class AuthUI {
     }
     
     async loginWithWallet() {
-     
+        alert('Web3 wallet integration coming soon! Use email/password or social login for now.');
+    }
     
     showEmailLogin() {
         const content = this.modal.querySelector('#authContent');
@@ -452,8 +453,6 @@ class AuthUI {
             errorEl.textContent = result.error || 'Registration failed';
             errorEl.style.display = 'block';
         }
-    }
-       alert('Web3 wallet integration coming soon! Use email/password or social login for now.');
     }
     
     async loginAsGuest() {
