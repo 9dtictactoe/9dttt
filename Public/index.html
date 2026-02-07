@@ -1072,10 +1072,6 @@
     <script src="js/retro-arcade.js"></script>
     <script src="js/game-launcher.js"></script>
     
-    <!-- Firebase SDK for Google/Apple Sign-In (Optional) -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    
     <!-- API Configuration (Must load first) -->
     <script src="js/api-config.js"></script>
     
@@ -1089,20 +1085,6 @@
     <script>
         // Initialize unified auth on page load
         (async function() {
-            try {
-                // Try to initialize Firebase if configured
-                if (typeof firebase !== 'undefined') {
-                    const response = await fetch('/api/auth/firebase/status');
-                    const data = await response.json();
-                    if (data.available && data.config && !firebase.apps.length) {
-                        firebase.initializeApp(data.config);
-                        console.log('✅ Firebase initialized');
-                    }
-                }
-            } catch (error) {
-                // Silent fail - Firebase is optional
-            }
-            
             // Initialize unified auth
             await window.unifiedAuth.init();
             console.log('✅ Unified auth initialized');

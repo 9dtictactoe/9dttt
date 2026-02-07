@@ -162,35 +162,27 @@ npm start
 | `REDIS_URL` | Redis connection URL for persistence | No |
 | `RENDER_EXTERNAL_URL` | Your Render app URL (for keep-alive) | No |
 
-### Firebase Authentication (FREE - Up to 50,000 users)
+### Authentication Methods
 
-Firebase Authentication provides secure social login with **no extra fees**. It's completely free for up to 50,000 monthly active users.
+The platform supports multiple authentication methods **without requiring any external services**:
 
-**Supported Sign-In Methods:**
-- 🔍 Google Sign-In
-- 🍎 Apple Sign-In
-- 📧 Email/Password
+1. **📧 Email & Password** - Traditional registration and login
+   - Stored securely with bcrypt hashing
+   - No setup required
 
-#### Quick Setup (5 minutes)
+2. **🦊 Web3 Wallet Authentication** - Perfect for crypto gaming!
+   - MetaMask (Ethereum)
+   - Phantom (Solana) 
+   - XUMM/Crossmark (XRP)
+   - No API keys or setup required
 
-1. Go to [Firebase Console](https://console.firebase.google.com)
-2. Create a new project (or select existing)
-3. Go to **Authentication** → **Sign-in method**
-   - Enable **Google** (click, enable, save)
-   - Enable **Apple** (optional - requires Apple Developer account)
-4. Go to **Project Settings** → **General** → **Your apps** → Click **Add app** → Select **Web**
-5. Copy the config values to your `.env`:
+3. **👤 Guest Mode** - Instant access without registration
+   - Perfect for trying games
+   - Progress saved locally
 
-```bash
-# ✅ SAFE TO EXPOSE: These values are public by design
-FIREBASE_API_KEY=AIzaSyD...
-FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-FIREBASE_PROJECT_ID=your-project-id
-```
+All authentication methods work out of the box. Just install dependencies and start the server!
 
-That's it! Players can now sign in with their Google or Apple accounts.
-
-**Note:** Firebase API keys are meant to be public - see [OAUTH_SECURITY.md](./OAUTH_SECURITY.md) for explanation.
+**See [QUICK_START_NO_FIREBASE.md](QUICK_START_NO_FIREBASE.md) for a simple setup guide.**
 
 ---
 

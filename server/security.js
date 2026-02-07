@@ -329,7 +329,7 @@ class Security {
                 "img-src 'self' data: https:; " +
                 "connect-src 'self' wss: ws: https:; " +
                 "font-src 'self'; " +
-                "frame-src 'self' https://*.firebaseapp.com https://accounts.google.com; " +
+                "frame-src 'self'; " +
                 "frame-ancestors 'self'; " +
                 "base-uri 'self'; " +
                 "form-action 'self';"

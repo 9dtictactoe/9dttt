@@ -174,15 +174,9 @@ class GameUI {
                     <button class="oauth-btn browser-credential-btn" data-provider="browser" title="Use saved password from your browser">
                         <span class="oauth-icon">🔐</span> Saved Password
                     </button>
-                    <button class="oauth-btn firebase-btn" data-provider="google" title="Login with Google">
-                        <span class="oauth-icon">🔍</span> Google
-                    </button>
-                    <button class="oauth-btn firebase-btn" data-provider="apple" title="Login with Apple">
-                        <span class="oauth-icon">🍎</span> Apple
-                    </button>
                 </div>
                 <p class="oauth-note" style="font-size: 0.8rem; color: var(--text-secondary); text-align: center; margin-top: 8px;">
-                    Use your browser's saved passwords or sign in with Google/Apple
+                    Use your browser's saved passwords for quick sign-in
                 </p>
             </div>
         `;
@@ -207,11 +201,6 @@ class GameUI {
         
         // Browser credential button
         modal.querySelector('.browser-credential-btn')?.addEventListener('click', () => this.handleBrowserCredentialAuth());
-        
-        // Firebase auth buttons
-        modal.querySelectorAll('.firebase-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.handleFirebaseAuth(btn.dataset.provider));
-        });
     }
 
     /**
@@ -594,14 +583,13 @@ class GameUI {
     }
 
     /**
-     * Update OAuth buttons based on Firebase and browser auth availability
+     * Update OAuth buttons based on browser auth availability
      */
     async updateOAuthButtons() {
         const oauthButtons = this.authModal.querySelector('#oauth-buttons');
         const oauthNote = this.authModal.querySelector('.oauth-note');
         const divider = this.authModal.querySelector('.auth-divider');
         const browserCredBtn = this.authModal.querySelector('.browser-credential-btn');
-        const firebaseBtns = this.authModal.querySelectorAll('.firebase-btn');
         
         // Check browser credential API support
         const browserAuthSupported = window.browserAuth && window.browserAuth.isSupported();
@@ -611,60 +599,20 @@ class GameUI {
             browserCredBtn.style.display = browserAuthSupported ? 'flex' : 'none';
         }
         
-        try {
-            const response = await fetch('/api/auth/firebase/status');
-            const data = await response.json();
+        if (browserAuthSupported) {
+            // Show OAuth section
+            if (oauthButtons) oauthButtons.style.display = 'flex';
+            if (divider) divider.style.display = 'flex';
             
-            const firebaseAvailable = data.available && data.providers && data.providers.length > 0;
-            
-            // Show/hide Firebase buttons
-            firebaseBtns.forEach(btn => {
-                btn.style.display = firebaseAvailable ? 'flex' : 'none';
-            });
-            
-            // Determine if any OAuth option is available
-            const anyOAuthAvailable = browserAuthSupported || firebaseAvailable;
-            
-            if (anyOAuthAvailable) {
-                // Show OAuth section
-                if (oauthButtons) oauthButtons.style.display = 'flex';
-                if (divider) divider.style.display = 'flex';
-                
-                // Update note based on what's available
-                if (oauthNote) {
-                    if (browserAuthSupported && firebaseAvailable) {
-                        oauthNote.textContent = 'Use saved passwords or sign in with Google/Apple';
-                    } else if (browserAuthSupported) {
-                        oauthNote.textContent = '🔐 Use passwords saved in your browser (Chrome, Edge, Safari)';
-                    } else {
-                        oauthNote.textContent = 'Powered by Firebase - Free & Secure';
-                    }
-                    oauthNote.style.display = 'block';
-                }
-            } else {
-                // No OAuth options available
-                if (oauthButtons) oauthButtons.style.display = 'none';
-                if (divider) divider.style.display = 'none';
-                if (oauthNote) {
-                    oauthNote.textContent = '💡 Social login can be enabled by the admin.';
-                    oauthNote.style.color = 'var(--text-secondary)';
-                    oauthNote.style.display = 'block';
-                }
+            // Update note
+            if (oauthNote) {
+                oauthNote.textContent = '🔐 Use passwords saved in your browser (Chrome, Edge, Safari)';
+                oauthNote.style.display = 'block';
             }
-        } catch (error) {
-            // On error, only show browser credential if supported
-            if (browserAuthSupported) {
-                if (oauthButtons) oauthButtons.style.display = 'flex';
-                if (divider) divider.style.display = 'flex';
-                firebaseBtns.forEach(btn => { btn.style.display = 'none'; });
-                if (oauthNote) {
-                    oauthNote.textContent = '🔐 Use passwords saved in your browser';
-                    oauthNote.style.display = 'block';
-                }
-            } else {
-                if (oauthButtons) oauthButtons.style.display = 'none';
-                if (divider) divider.style.display = 'none';
-            }
+        } else {
+            // No OAuth options available
+            if (oauthButtons) oauthButtons.style.display = 'none';
+            if (divider) divider.style.display = 'none';
         }
     }
 
@@ -787,78 +735,6 @@ class GameUI {
             this.showNotification('Failed to retrieve saved credentials', 'error');
         }
     }
-
-    /**
-     * Handle Firebase authentication (Google, Apple)
-     */
-    async handleFirebaseAuth(provider) {
-        // Check if Firebase is initialized
-        const firebaseSdk = window.firebase;
-        if (!firebaseSdk || typeof firebaseSdk.auth !== 'function') {
-            this.showNotification('Social login requires Firebase configuration. Please use email/password or contact the admin to enable Google/Apple login.', 'error');
-            return;
-        }
-
-        try {
-            const auth = firebaseSdk.auth();
-            if (!auth) {
-                this.showNotification('Firebase auth not initialized. Please check Firebase configuration.', 'error');
-                return;
-            }
-
-            let authProvider;
-            if (provider === 'google') {
-                authProvider = new firebaseSdk.auth.GoogleAuthProvider();
-            } else if (provider === 'apple') {
-                authProvider = new firebaseSdk.auth.OAuthProvider('apple.com');
-                authProvider.addScope('email');
-                authProvider.addScope('name');
-            } else {
-                this.showNotification('Unknown provider', 'error');
-                return;
-            }
-
-            // Sign in with popup
-            const result = await auth.signInWithPopup(authProvider);
-            const idToken = await result.user.getIdToken();
-
-            // Send token to our backend for verification
-            const response = await fetch('/api/auth/firebase/verify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                window.authClient.token = data.token;
-                window.authClient.user = data.user;
-                localStorage.setItem('auth_token', data.token);
-                window.authClient.notifyListeners();
-                this.hideAuthModal();
-                
-                const message = data.isNewUser 
-                    ? `Welcome, ${data.user.displayName || data.user.username}! 🎉`
-                    : `Welcome back, ${data.user.displayName || data.user.username}!`;
-                this.showNotification(message, 'success');
-            } else {
-                this.showNotification(data.error || 'Authentication failed', 'error');
-            }
-        } catch (error) {
-            console.error('Firebase auth error:', error);
-            if (error.code === 'auth/popup-closed-by-user') {
-                // User closed popup, no need to show error
-                return;
-            }
-            if (error.code === 'auth/operation-not-allowed') {
-                this.showNotification('This sign-in method is not enabled. Contact admin.', 'error');
-                return;
-            }
-            this.showNotification(error.message || 'Authentication failed', 'error');
-        }
-    }
-
     /**
      * Handle OAuth login (Legacy - kept for backwards compatibility)
      */
@@ -870,15 +746,6 @@ class GameUI {
      * Handle logout
      */
     async handleLogout() {
-        // Sign out from Firebase if available
-        if (window.firebase && window.firebase.auth) {
-            try {
-                await window.firebase.auth().signOut();
-            } catch (e) {
-                // Ignore Firebase signout errors
-            }
-        }
-        
         window.authClient.logout();
         if (window.multiplayerClient.isConnected) {
             window.multiplayerClient.disconnect();

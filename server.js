@@ -19,7 +19,6 @@ const moderation = require('./server/moderation');
 const security = require('./server/security');
 const keepAlive = require('./server/keepAlive');
 const boot = require('./server/boot');
-const firebaseAuth = require('./server/firebase');
 const browserAuth = require('./server/browser-auth');
 const monetization = require('./server/monetization');
 const { REPORT_CATEGORIES, DISCIPLINE_LEVELS } = require('./server/moderation');
@@ -200,76 +199,6 @@ app.get('/api/auth/verify', async (req, res) => {
         }
     } catch (error) {
         res.json({ valid: false });
-    }
-});
-
-// ============================================
-// Firebase Authentication (Google, Apple Sign-In)
-// FREE for up to 50,000 monthly active users
-// ============================================
-
-// Get available auth providers
-app.get('/api/auth/providers', (req, res) => {
-    res.json({ 
-        success: true, 
-        providers: firebaseAuth.getAvailableProviders()
-    });
-});
-
-// Check if Firebase is available and get client config
-app.get('/api/auth/firebase/status', (req, res) => {
-    res.json({ 
-        success: true, 
-        available: firebaseAuth.isAvailable(),
-        providers: firebaseAuth.getAvailableProviders(),
-        // ✅ SAFE TO EXPOSE: Firebase client config is PUBLIC by design
-        // These values are meant to be in client-side code and OAuth URLs
-        // Security comes from Firebase Security Rules and authorized domains
-        // See: https://firebase.google.com/docs/projects/api-keys
-        // See also: /OAUTH_SECURITY.md for detailed explanation
-        config: config.FIREBASE_API_KEY ? {
-            apiKey: config.FIREBASE_API_KEY,
-            authDomain: config.FIREBASE_AUTH_DOMAIN || `${config.FIREBASE_PROJECT_ID}.firebaseapp.com`,
-            projectId: config.FIREBASE_PROJECT_ID,
-            storageBucket: config.FIREBASE_STORAGE_BUCKET || null,
-            messagingSenderId: config.FIREBASE_MESSAGING_SENDER_ID || null,
-            appId: config.FIREBASE_APP_ID || null,
-            measurementId: config.FIREBASE_MEASUREMENT_ID || null
-        } : null
-    });
-});
-
-// Verify Firebase token and login/register user
-app.post('/api/auth/firebase/verify', security.rateLimitMiddleware('api_auth'), async (req, res) => {
-    try {
-        const { idToken } = req.body;
-        
-        if (!idToken) {
-            return res.status(400).json({ success: false, error: 'ID token required' });
-        }
-        
-        const result = await firebaseAuth.verifyAndGetUser(idToken);
-        
-        // Check if user is banned (for existing users)
-        if (result.success && result.user && !result.isNewUser) {
-            const restrictions = await moderation.checkRestrictions(result.user.username);
-            if (restrictions.isBanned) {
-                const banInfo = restrictions.restrictions.find(r => r.type.includes('ban'));
-                return res.json({ 
-                    success: false, 
-                    error: 'Account is banned',
-                    banInfo: {
-                        type: banInfo.type,
-                        expiresAt: banInfo.expiresAt
-                    }
-                });
-            }
-        }
-        
-        res.json(result);
-    } catch (error) {
-        console.error('Firebase verify error:', error);
-        res.status(500).json({ success: false, error: 'Authentication failed' });
     }
 });
 
@@ -1085,9 +1014,6 @@ async function startServer() {
     
     // Initialize storage
     await storage.initialize();
-    
-    // Initialize Firebase Authentication
-    firebaseAuth.init();
     
     server.listen(config.PORT, () => {
         // Start keep-alive service for Render (prevents free tier from sleeping)

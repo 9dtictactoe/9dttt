@@ -3,7 +3,7 @@
  * Single auth solution combining all login methods:
  * - Email/Password (stored in browser)
  * - Browser Credential Management API (auto sign-in)
- * - Optional Firebase (Google/Apple) if configured
+ * - Web3 Wallet Authentication (MetaMask, Phantom, XUMM)
  * - Seamless guest mode fallback
  */
 
@@ -13,7 +13,6 @@ class UnifiedAuth {
         this.token = null;
         this.listeners = new Set();
         this.isInitialized = false;
-        this.hasFirebase = false;
         this.hasBrowserAuth = false;
         this.initPromise = null;
     }
@@ -28,7 +27,6 @@ class UnifiedAuth {
             try {
                 // Check browser capabilities
                 this.hasBrowserAuth = !!window.PasswordCredential;
-                this.hasFirebase = typeof firebase !== 'undefined';
                 
                 // Load existing token
                 this.token = localStorage.getItem('auth_token');
@@ -55,11 +53,6 @@ class UnifiedAuth {
                     }
                 }
                 
-                // Try Firebase session restore
-                if (this.hasFirebase) {
-                    await this.initFirebaseAuth();
-                }
-                
                 this.isInitialized = true;
                 return false;
             } catch (error) {
@@ -70,31 +63,6 @@ class UnifiedAuth {
         })();
         
         return this.initPromise;
-    }
-
-    /**
-     * Initialize Firebase authentication
-     */
-    async initFirebaseAuth() {
-        try {
-            const response = await fetch('/api/auth/firebase/status');
-            const data = await response.json();
-            
-            if (!data.available || !data.config) {
-                console.log('Firebase not configured');
-                return;
-            }
-
-            if (!firebase.apps.length) {
-                firebase.initializeApp(data.config);
-            }
-            
-            // Note: firebase-init.js handles the onAuthStateChanged listener
-            // to avoid duplicate listeners. This method just ensures Firebase is initialized.
-            console.log('✅ Firebase initialized in unified-auth');
-        } catch (error) {
-            console.error('⚠️ Firebase initialization failed:', error.message);
-        }
     }
 
     /**
@@ -180,23 +148,6 @@ class UnifiedAuth {
             }
             
             return result;
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
-    }
-
-    /**
-     * Login with Firebase token
-     */
-    async loginWithFirebase(idToken) {
-        try {
-            const response = await fetch('/api/auth/firebase/verify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken })
-            });
-            
-            return await response.json();
         } catch (error) {
             return { success: false, error: error.message };
         }
@@ -375,15 +326,6 @@ class UnifiedAuth {
      * Logout
      */
     async logout() {
-        // Sign out from Firebase if available
-        if (this.hasFirebase && firebase.auth) {
-            try {
-                await firebase.auth().signOut();
-            } catch (error) {
-                // Silent fail - Firebase signout is optional
-            }
-        }
-        
         this.clearSession();
         this.notifyListeners();
     }
