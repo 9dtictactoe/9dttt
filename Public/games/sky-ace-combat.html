@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sky Ace Combat - 9DTTT Arcade</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden;
+        }
+        #gameCanvas {
+            display: block;
+            margin: 0;
+        }
+        #hud {
+            position: absolute;
+            color: #0f0;
+            font-size: 14px;
+            text-shadow: 0 0 5px #0f0;
+        }
+        #topHud {
+            top: 20px;
+            left: 20px;
+        }
+        #radar {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 150px;
+            height: 150px;
+            border: 2px solid #0f0;
+            background: rgba(0, 0, 0, 0.7);
+        }
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 2px solid #f00;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        #crosshair::before, #crosshair::after {
+            content: '';
+            position: absolute;
+            background: #f00;
+        }
+        #crosshair::before {
+            width: 2px;
+            height: 20px;
+            left: 50%;
+            top: -10px;
+            transform: translateX(-50%);
+        }
+        #crosshair::after {
+            height: 2px;
+            width: 20px;
+            top: 50%;
+            left: -10px;
+            transform: translateY(-50%);
+        }
+        .message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border: 4px solid #0f0;
+            text-align: center;
+            color: #fff;
+        }
+        .btn {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 14px;
+            font-family: 'Press Start 2P', cursive;
+            cursor: pointer;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="crosshair"></div>
+    <div id="topHud" class="hud">
+        <div>ALTITUDE: <span id="altitude">0</span>m</div>
+        <div>SPEED: <span id="speed">0</span> km/h</div>
+        <div>AMMO: <span id="ammo">0</span></div>
+        <div>MISSILES: <span id="missiles">0</span></div>
+        <div>SCORE: <span id="score">0</span></div>
+        <div>ENEMIES: <span id="enemies">0</span></div>
+    </div>
+    <canvas id="radar"></canvas>
+    <div id="startScreen" class="message">
+        <h1 style="color: #0f0;">✈️ SKY ACE COMBAT ✈️</h1>
+        <p>DEFEND THE SKIES!</p>
+        <button class="btn" onclick="game.start()">TAKE OFF</button>
+    </div>
+    <!-- Universal Integration Systems -->
+    <script src="../js/universal-auth.js"></script>
+    <script src="../js/global-leaderboard.js"></script>
+    <script src="../js/leaderboard-ui.js"></script>
+    <script src="../js/fullscreen-manager.js"></script>
+    <script src="../js/auth-ui.js"></script>
+    <script src="../js/gamepad-config.js"></script>
+    <script src="../js/game-polish.js"></script>
+    <script src="../js/universal-game-integration.js"></script>
+    
+    <script src="../js/sky-ace-combat.js"></script>
+    <script>
+        // Initialize Universal Integration
+        document.addEventListener('DOMContentLoaded', () => {
+            window.gameIntegration = new UniversalGameIntegration('sky-ace-combat', 'Sky Ace Combat');
+            if (window.GamepadConfigurator) {
+                window.gamepadConfig = new GamepadConfigurator();
+                window.gamepadConfig.applyPreset('shooter');
+            }
+        });
+    </script>
+</body>
+</html>

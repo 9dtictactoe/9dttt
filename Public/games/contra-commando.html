@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contra Commando - 9DTTT Arcade</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/game-ui.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        #gameCanvas {
+            border: 4px solid #ff0000;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+            background: #000;
+            image-rendering: pixelated;
+        }
+
+        #hud {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            color: #fff;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #ff0000;
+        }
+
+        .hud-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .hud-item {
+            font-size: 14px;
+            color: #0f0;
+            text-shadow: 0 0 5px #0f0;
+        }
+
+        .lives {
+            color: #ff0000;
+        }
+
+        .weapon-display {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .weapon-icon {
+            font-size: 24px;
+        }
+
+        #startScreen, #gameOverScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px;
+            border: 4px solid #ff0000;
+            text-align: center;
+            color: #fff;
+            z-index: 100;
+        }
+
+        #startScreen.hidden, #gameOverScreen.hidden {
+            display: none;
+        }
+
+        .btn {
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-family: 'Press Start 2P', cursive;
+            cursor: pointer;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            background: #ff4444;
+        }
+
+        .controls-info {
+            margin-top: 20px;
+            font-size: 10px;
+            color: #888;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <h1 style="color: #ff0000; text-shadow: 0 0 10px #ff0000; font-size: 28px;">
+            💥 CONTRA COMMANDO 💥
+        </h1>
+        
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="hud">
+            <div class="hud-section">
+                <div class="hud-item">SCORE: <span id="score">0</span></div>
+                <div class="hud-item">LEVEL: <span id="level">1</span></div>
+            </div>
+            <div class="hud-section">
+                <div class="weapon-display">
+                    <span class="hud-item">WEAPON:</span>
+                    <span class="weapon-icon" id="weapon">🔫</span>
+                    <span class="hud-item" id="weaponName">RIFLE</span>
+                </div>
+                <div class="hud-item">AMMO: <span id="ammo">∞</span></div>
+            </div>
+            <div class="hud-section">
+                <div class="hud-item lives">LIVES: <span id="lives">3</span> ❤️</div>
+                <div class="hud-item">HEALTH: <span id="health">100</span></div>
+            </div>
+        </div>
+
+        <div class="controls-info">
+            WASD/Arrows: Move | Space: Jump | J/Z: Shoot | K/X: Special | L/C: Switch Weapon | P: Pause
+        </div>
+
+        <div id="startScreen">
+            <h2 style="color: #ff0000; font-size: 32px;">CONTRA COMMANDO</h2>
+            <p style="margin: 20px 0;">THE ULTIMATE RUN & GUN EXPERIENCE</p>
+            <button class="btn" onclick="game.start()">START GAME</button>
+            <button class="btn" onclick="game.start(true)">2 PLAYER CO-OP</button>
+            <div style="margin-top: 30px; font-size: 10px;">
+                <p>Destroy the alien invasion!</p>
+                <p>Collect power-ups and upgrade your weapons!</p>
+            </div>
+        </div>
+
+        <div id="gameOverScreen" class="hidden">
+            <h2>GAME OVER</h2>
+            <div id="finalScore"></div>
+            <button class="btn" onclick="location.reload()">TRY AGAIN</button>
+        </div>
+    </div>
+
+    <!-- Universal Integration Systems -->
+    <script src="../js/universal-auth.js"></script>
+    <script src="../js/global-leaderboard.js"></script>
+    <script src="../js/leaderboard-ui.js"></script>
+    <script src="../js/fullscreen-manager.js"></script>
+    <script src="../js/auth-ui.js"></script>
+    <script src="../js/gamepad-config.js"></script>
+    <script src="../js/game-polish.js"></script>
+    <script src="../js/universal-game-integration.js"></script>
+    
+    <script src="../js/contra-commando.js"></script>
+    <script>
+        // Initialize Universal Integration
+        document.addEventListener('DOMContentLoaded', () => {
+            window.gameIntegration = new UniversalGameIntegration('contra-commando', 'Contra Commando');
+            if (window.GamepadConfigurator) {
+                window.gamepadConfig = new GamepadConfigurator();
+                window.gamepadConfig.applyPreset('shooter');
+            }
+        });
+    </script>
+</body>
+</html>

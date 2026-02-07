@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reflex Master - Motor Skills Training</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            font-family: 'Arial', sans-serif;
+            color: #fff;
+            overflow: hidden;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 48px;
+            margin-bottom: 30px;
+            text-shadow: 3px 3px rgba(0, 0, 0, 0.3);
+        }
+        #gameCanvas {
+            border: 5px solid #fff;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            cursor: crosshair;
+        }
+        #stats {
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            display: flex;
+            gap: 40px;
+            font-size: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .menu {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            color: #333;
+            max-width: 600px;
+        }
+        .menu h2 {
+            margin-bottom: 20px;
+            color: #f5576c;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: scale(1.1);
+        }
+        .game-mode {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .game-mode:hover {
+            border-color: #667eea;
+            transform: translateX(10px);
+        }
+        .game-mode h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="menu" class="menu">
+            <h1>⚡ REFLEX MASTER ⚡</h1>
+            <h2>Choose Your Training Mode</h2>
+            
+            <div class="game-mode" onclick="startGame('reaction')">
+                <h3>🎯 Reaction Time</h3>
+                <p>Click targets as fast as you can!</p>
+            </div>
+            
+            <div class="game-mode" onclick="startGame('tracking')">
+                <h3>👁️ Eye Tracking</h3>
+                <p>Follow and click moving targets!</p>
+            </div>
+            
+            <div class="game-mode" onclick="startGame('precision')">
+                <h3>🎪 Precision Challenge</h3>
+                <p>Hit tiny targets with perfect accuracy!</p>
+            </div>
+            
+            <div class="game-mode" onclick="startGame('rhythm')">
+                <h3>🎵 Rhythm Master</h3>
+                <p>Click to the beat!</p>
+            </div>
+            
+            <div class="game-mode" onclick="startGame('whackamole')">
+                <h3>🔨 Whack-a-Mole</h3>
+                <p>Classic reflex training!</p>
+            </div>
+        </div>
+        
+        <div id="gameArea" style="display: none;">
+            <h1 id="gameTitle">Reflex Master</h1>
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+            <div id="stats">
+                <div class="stat">
+                    <span class="stat-value" id="score">0</span>
+                    <span>Score</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" id="accuracy">0%</span>
+                    <span>Accuracy</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" id="avgTime">0ms</span>
+                    <span>Avg Time</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" id="combo">0</span>
+                    <span>Combo</span>
+                </div>
+            </div>
+            <button class="btn" onclick="location.reload()">← Back to Menu</button>
+        </div>
+    </div>
+    
+    <!-- Universal Integration Systems -->
+    <script src="../js/universal-auth.js"></script>
+    <script src="../js/global-leaderboard.js"></script>
+    <script src="../js/leaderboard-ui.js"></script>
+    <script src="../js/fullscreen-manager.js"></script>
+    <script src="../js/auth-ui.js"></script>
+    <script src="../js/universal-game-integration.js"></script>
+    
+    <script src="../js/reflex-master.js"></script>
+    <script>
+        // Initialize Universal Integration
+        document.addEventListener('DOMContentLoaded', () => {
+            window.gameIntegration = new UniversalGameIntegration('reflex-master', 'Reflex Master');
+        });
+    </script>
+</body>
+</html>
