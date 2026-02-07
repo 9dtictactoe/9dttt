@@ -31,7 +31,7 @@ Bridge Operation:
 1. User bridges from Solana → XRP
 2. Tokens BURNED on Solana (destroyed)
 3. Tokens MINTED on XRP (created)
-4. Supply stays at 10M across all chains
+4. Supply stays at 77M across all chains
 
 Problems:
 - Requires mint authority on each chain
@@ -56,7 +56,7 @@ Bridge Operation:
 1. User bridges from Solana → XRP
 2. Tokens LOCKED in Solana treasury
 3. Tokens UNLOCKED from XRP treasury
-4. Supply stays at 10M (in treasuries)
+4. Supply stays at 77M (in treasuries)
 
 Benefits:
 - No mint authority needed
@@ -266,7 +266,7 @@ Purpose: Distribute on Ethereum, lock for bridges
    - User has 100 FIZZ on XRP ✅
    - Solana treasury: +100 FIZZ
    - XRP treasury: -100 FIZZ
-   - Total supply: Still 10M ✅
+   - Total supply: Still 77M ✅
 ```
 
 ---
@@ -327,14 +327,14 @@ All documentation updated to reflect treasury model:
 ```
 ✅ Lock-and-unlock bridge
 ✅ Tokens held in treasuries
-✅ Fixed supply (10M total)
+✅ Fixed supply (77M total)
 ✅ No minting after launch
 ✅ Matches AFC model exactly
 ```
 
 ### Key Takeaways
 
-1. **Fixed Supply** - 10M FIZZ, all pre-minted
+1. **Fixed Supply** - 77M FIZZ, all pre-minted
 2. **Treasury Holds** - All tokens in treasuries
 3. **Distribution** - Treasury sends (not mints)
 4. **Two-Tier** - CAPS (virtual) vs FIZZ (real)
@@ -344,7 +344,7 @@ All documentation updated to reflect treasury model:
 
 ## 🚀 Next Steps
 
-1. **Deploy XRP Token** - Run script to create 10M FIZZ
+1. **Deploy XRP Token** - Run script to create 77M FIZZ
 2. **Create Treasuries** - Set up on each chain
 3. **Distribute Initial** - Move tokens to other chain treasuries
 4. **Test Redemption** - Players redeem CAPS for FIZZ
@@ -358,10 +358,10 @@ All documentation updated to reflect treasury model:
 A: They earn in-game CAPS, then redeem for FIZZ from treasury
 
 **Q: Where do rewards come from?**
-A: Treasury distributes existing tokens (from the 10M)
+A: Treasury distributes existing tokens (from the 77M)
 
 **Q: Can more tokens be created?**
-A: NO - 10M is fixed forever, no minting
+A: NO - 77M is fixed forever, no minting
 
 **Q: What happens when treasury runs out?**
 A: Treasury replenished from fees, unclaimed rewards, etc.

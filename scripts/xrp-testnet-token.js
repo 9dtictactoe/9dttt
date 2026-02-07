@@ -16,7 +16,7 @@ const xrpl = require('xrpl');
 const CONFIG = {
     testnetServer: 'wss://s.altnet.rippletest.net:51233',
     tokenCurrency: 'FIZZ', // Your token code (3 chars) or hex for longer names
-    tokenValue: '10000000', // Total supply: 10 million (FIXED - all pre-minted)
+    tokenValue: '77000000', // Total supply: 77 million (FIXED - all pre-minted)
     decimals: 6,
     treasuryModel: true, // Treasury holds all tokens, NO minting after launch
 };
@@ -242,7 +242,7 @@ class XRPTestnetTokenManager {
                 testMode: true,
                 mechanism: 'lock-unlock', // Standard bridge: lock on source, unlock on target
                 model: 'treasury', // Treasury-based distribution (NO minting)
-                totalSupply: '10000000', // Fixed total - all pre-minted
+                totalSupply: '77000000', // Fixed total - all pre-minted
                 minTransfer: '1',
                 maxTransfer: '10000',
                 fee: '0.01', // 1% bridge fee

@@ -3,7 +3,7 @@
 ## 🪙 Token Overview
 
 **Token Name**: FIZZ Token (Atomic Fizz Caps)  
-**Total Supply**: 10,000,000 FIZZ (FIXED - pre-minted at launch)  
+**Total Supply**: 77,000,000 FIZZ (FIXED - pre-minted at launch)  
 **Decimals**: 6  
 **Distribution Model**: Treasury-Based (NO MINTING)  
 **Chains**: XRP Ledger, Solana, Ethereum
@@ -13,14 +13,14 @@
 ## 🏦 Treasury Distribution Model
 
 ### Core Principle
-**All 10 million FIZZ tokens are pre-minted at launch and held in a treasury wallet.**
+**All 77 million FIZZ tokens are pre-minted at launch and held in a treasury wallet.**
 
 NO additional tokens will EVER be created. The treasury DISTRIBUTES tokens to players - it does NOT mint new ones.
 
 ### How It Works
 
 ```
-Total Supply = 10,000,000 FIZZ (fixed forever)
+Total Supply = 77,000,000 FIZZ (fixed forever)
 Treasury Wallet = Holds all tokens
 Distribution = Treasury SENDS tokens to players
 ```
@@ -35,37 +35,37 @@ Distribution = Treasury SENDS tokens to players
 
 ## 📊 Initial Distribution Strategy
 
-### Total Supply: 10,000,000 FIZZ (Fixed)
+### Total Supply: 77,000,000 FIZZ (Fixed)
 
 ```
-Treasury Reserve:      4,000,000 FIZZ (40%)
+Treasury Reserve:      30,800,000 FIZZ (40%)
 ├─ Gaming Rewards Pool
 ├─ Airdrop Campaigns
 ├─ Community Events
 └─ Future Distribution
 
-Gaming Rewards:        2,000,000 FIZZ (20%)
+Gaming Rewards:        15,400,000 FIZZ (20%)
 ├─ Crypto Quest rewards
 ├─ Pong rewards
 ├─ Backgammon rewards
 └─ All other games
 
-Liquidity Pools:       1,500,000 FIZZ (15%)
+Liquidity Pools:       11,550,000 FIZZ (15%)
 ├─ DEX liquidity
 ├─ Bridge liquidity
 └─ Market making
 
-Community/Marketing:   1,000,000 FIZZ (10%)
+Community/Marketing:    7,700,000 FIZZ (10%)
 ├─ Airdrops
 ├─ Promotions
 └─ Partnerships
 
-Team & Development:    1,000,000 FIZZ (10%)
+Team & Development:     7,700,000 FIZZ (10%)
 ├─ Core team (vested)
 ├─ Advisors
 └─ Development fund
 
-Early Supporters:        500,000 FIZZ (5%)
+Early Supporters:       3,850,000 FIZZ (5%)
 ├─ Beta testers
 ├─ Early backers
 └─ Initial liquidity
@@ -126,7 +126,7 @@ In-game CAPS: 1000 → 0 (consumed)
 **Solana Treasury:** Holds Y FIZZ  
 **Ethereum Treasury:** Holds Z FIZZ  
 
-**Total:** X + Y + Z = 10,000,000 FIZZ ✅
+**Total:** X + Y + Z = 77,000,000 FIZZ ✅
 
 ### Bridge Operations
 
@@ -143,23 +143,23 @@ In-game CAPS: 1000 → 0 (consumed)
    - Ethereum treasury: Z - 100
 
 3. **Result:**
-   - Total supply: Still 10M ✅
+   - Total supply: Still 77M ✅
    - User has tokens on Ethereum
    - Treasuries balanced
 
 **Example Flow:**
 ```
 Initial State:
-├─ XRP Treasury:      5,000,000 FIZZ
-├─ Solana Treasury:   3,000,000 FIZZ
-├─ Ethereum Treasury: 2,000,000 FIZZ
-└─ Total:            10,000,000 FIZZ ✅
+├─ XRP Treasury:      30,800,000 FIZZ
+├─ Solana Treasury:   30,800,000 FIZZ
+├─ Ethereum Treasury: 15,400,000 FIZZ
+└─ Total:             77,000,000 FIZZ ✅
 
-User bridges 500K from Solana to XRP:
-├─ XRP Treasury:      5,500,000 FIZZ (+500K)
-├─ Solana Treasury:   2,500,000 FIZZ (-500K)
-├─ Ethereum Treasury: 2,000,000 FIZZ (unchanged)
-└─ Total:            10,000,000 FIZZ ✅
+User bridges 5M from Solana to XRP:
+├─ XRP Treasury:      35,800,000 FIZZ (+5M)
+├─ Solana Treasury:   25,800,000 FIZZ (-5M)
+├─ Ethereum Treasury: 15,400,000 FIZZ (unchanged)
+└─ Total:             77,000,000 FIZZ ✅
 ```
 
 ---
@@ -231,7 +231,7 @@ const totalSupply =
     await getEthereumTreasuryBalance();
 
 // Should always equal initial mint
-assert(totalSupply === 10_000_000, 'Supply mismatch!');
+assert(totalSupply === 77_000_000, 'Supply mismatch!');
 ```
 
 ### Audit Trail
@@ -264,33 +264,33 @@ https://atomicfizzcaps.xyz/supply
 
 **Displays:**
 ```
-XRP Treasury:       5,000,000 FIZZ (50%)
-Solana Treasury:    3,000,000 FIZZ (30%)
-Ethereum Treasury:  2,000,000 FIZZ (20%)
+XRP Treasury:       30,800,000 FIZZ (40%)
+Solana Treasury:    30,800,000 FIZZ (40%)
+Ethereum Treasury:  15,400,000 FIZZ (20%)
 ──────────────────────────────────────
-Total Supply:      10,000,000 FIZZ ✅
+Total Supply:       77,000,000 FIZZ ✅
 
-Distributed:        3,500,000 FIZZ (35%)
-In Treasuries:      6,500,000 FIZZ (65%)
+Distributed:        27,000,000 FIZZ (35%)
+In Treasuries:      50,000,000 FIZZ (65%)
 ```
 
 ### API Endpoints
 
 ```javascript
-// Get total supply (always 10M)
+// Get total supply (always 77M)
 GET /api/token/total-supply
 Response: { 
-  total: "10000000",
-  distributed: "3500000",
-  inTreasury: "6500000"
+  total: "77000000",
+  distributed: "27000000",
+  inTreasury: "50000000"
 }
 
 // Get treasury balances per chain
 GET /api/token/treasuries
 Response: {
-  xrp: "5000000",
-  solana: "3000000", 
-  ethereum: "2000000"
+  xrp: "30800000",
+  solana: "30800000", 
+  ethereum: "15400000"
 }
 
 // Get user balance (all chains)
@@ -310,19 +310,19 @@ Response: {
 ## 🚀 Deployment Checklist
 
 ### XRP Testnet Token
-- [x] Deploy FIZZ token with 10M supply
+- [x] Deploy FIZZ token with 77M supply
 - [x] Set up treasury wallet
 - [x] Lock entire supply in treasury
 - [x] Test distribution mechanics
 
 ### Solana Devnet Token
-- [ ] Deploy SPL token (10M supply)
+- [ ] Deploy SPL token (77M supply)
 - [ ] Set up treasury wallet
 - [ ] Disable minting authority
 - [ ] Test distribution
 
 ### Ethereum Sepolia Token
-- [ ] Deploy ERC20 (10M supply)
+- [ ] Deploy ERC20 (77M supply)
 - [ ] Set up treasury wallet
 - [ ] Revoke minter role
 - [ ] Verify on Etherscan
@@ -342,7 +342,7 @@ Response: {
 {
   "currency": "FIZZ",
   "issuer": "rXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-  "totalSupply": "10000000",
+  "totalSupply": "77000000",
   "decimals": 6,
   "mintingDisabled": true
 }
@@ -353,7 +353,7 @@ Response: {
 pub struct FizzToken {
     pub mint: Pubkey,
     pub decimals: u8,         // 6
-    pub supply: u64,          // 10_000_000 * 10^6
+    pub supply: u64,          // 77_000_000 * 10^6
     pub mint_authority: None, // Disabled after initial mint
 }
 ```
@@ -361,7 +361,7 @@ pub struct FizzToken {
 ### Ethereum ERC20
 ```solidity
 contract FizzToken is ERC20, Ownable {
-    uint256 public constant TOTAL_SUPPLY = 10_000_000 * 10**6;
+    uint256 public constant TOTAL_SUPPLY = 77_000_000 * 10**6;
     
     constructor() ERC20("Fizz Token", "FIZZ") {
         _mint(msg.sender, TOTAL_SUPPLY);
@@ -377,7 +377,7 @@ contract FizzToken is ERC20, Ownable {
 
 ## ⚠️ Important Notes
 
-1. **No Inflation**: Total supply capped at 10M forever
+1. **No Inflation**: Total supply capped at 77M forever
 2. **No Minting**: After initial creation, no new tokens can be made
 3. **Treasury Model**: All tokens held in secure wallets
 4. **Distribution Only**: Treasury sends existing tokens
@@ -399,6 +399,6 @@ contract FizzToken is ERC20, Ownable {
 ---
 
 **AtomicFizz Ecosystem** - atomicfizzcaps.xyz  
-**Total Supply**: 10,000,000 FIZZ (fixed forever)  
+**Total Supply**: 77,000,000 FIZZ (fixed forever)  
 **Distribution Model**: Treasury-Based (NO MINTING)  
 **Updated**: 2026-02-07

@@ -1,8 +1,8 @@
-# 🚀 READY TO DEPLOY: 10 Million FIZZ Token
+# 🚀 READY TO DEPLOY: 77 Million FIZZ Token
 
 ## ✅ What's Been Set Up
 
-You now have everything ready to deploy a **10 million supply FIZZ token** with a **treasury-based distribution model** (matching AFC tokenomics).
+You now have everything ready to deploy a **77 million supply FIZZ token** with a **treasury-based distribution model** (matching AFC tokenomics).
 
 ---
 
@@ -10,7 +10,7 @@ You now have everything ready to deploy a **10 million supply FIZZ token** with 
 
 ```
 Token Name:      FIZZ Token (Atomic Fizz Caps)
-Total Supply:    10,000,000 FIZZ (FIXED - pre-minted)
+Total Supply:    77,000,000 FIZZ (FIXED - pre-minted)
 Decimals:        6
 Distribution:    Treasury-Based (NO MINTING)
 Chains:          XRP Ledger, Solana, Ethereum
@@ -24,7 +24,7 @@ Chains:          XRP Ledger, Solana, Ethereum
 
 **AFC Model (CORRECT):**
 ```
-✅ All 10M tokens pre-minted at launch
+✅ All 77M tokens pre-minted at launch
 ✅ Treasury wallet holds all tokens
 ✅ Treasury DISTRIBUTES tokens (sends existing)
 ✅ NO minting after launch
@@ -39,34 +39,34 @@ Chains:          XRP Ledger, Solana, Ethereum
 ┌─────────────────────────────────────────────────────────┐
 │  INITIAL STATE: All tokens in XRP Treasury             │
 ├─────────────────────────────────────────────────────────┤
-│  XRP Treasury:       10,000,000 FIZZ  ████████████████ │
+│  XRP Treasury:       77,000,000 FIZZ  ████████████████ │
 │  Solana Treasury:             0 FIZZ                    │
 │  Ethereum Treasury:           0 FIZZ                    │
-│  TOTAL:              10,000,000 FIZZ  ✅                │
+│  TOTAL:              77,000,000 FIZZ  ✅                │
 └─────────────────────────────────────────────────────────┘
 
-          📦 Distribute 4M to Solana Treasury
+          📦 Distribute across chain treasuries
                         ⬇️
           
 ┌─────────────────────────────────────────────────────────┐
 │  AFTER DISTRIBUTION: Tokens spread across treasuries   │
 ├─────────────────────────────────────────────────────────┤
-│  XRP Treasury:        4,000,000 FIZZ  ████████         │
-│  Solana Treasury:     4,000,000 FIZZ  ████████         │
-│  Ethereum Treasury:   2,000,000 FIZZ  ████             │
-│  TOTAL:              10,000,000 FIZZ  ✅                │
+│  XRP Treasury:        30,800,000 FIZZ  ████████         │
+│  Solana Treasury:     30,800,000 FIZZ  ████████         │
+│  Ethereum Treasury:   15,400,000 FIZZ  ████             │
+│  TOTAL:               77,000,000 FIZZ  ✅                │
 └─────────────────────────────────────────────────────────┘
 
-          👤 User bridges 1M from Solana to XRP
+          👤 User bridges 5M from Solana to XRP
                         ⬇️
           
 ┌─────────────────────────────────────────────────────────┐
 │  AFTER BRIDGE: Tokens locked/unlocked in treasuries    │
 ├─────────────────────────────────────────────────────────┤
-│  XRP Treasury:        5,000,000 FIZZ  ██████████       │
-│  Solana Treasury:     3,000,000 FIZZ  ██████           │
-│  Ethereum Treasury:   2,000,000 FIZZ  ████             │
-│  TOTAL:              10,000,000 FIZZ  ✅                │
+│  XRP Treasury:        35,800,000 FIZZ  ██████████       │
+│  Solana Treasury:     25,800,000 FIZZ  ██████           │
+│  Ethereum Treasury:   15,400,000 FIZZ  ████             │
+│  TOTAL:               77,000,000 FIZZ  ✅                │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -85,7 +85,7 @@ node scripts/xrp-testnet-token.js
 
 **What happens:**
 1. ✅ Creates treasury wallet on XRP testnet
-2. ✅ Issues 10,000,000 FIZZ tokens
+2. ✅ Issues 77,000,000 FIZZ tokens
 3. ✅ ALL tokens go to treasury (NOT distributed yet)
 4. ✅ Creates distributor wallet for operations
 5. ✅ Creates 3 test user accounts
@@ -98,13 +98,13 @@ node scripts/xrp-testnet-token.js
 🚀 Starting XRP Testnet Token Setup...
 ════════════════════════════════════════════════════════════
 
-🏦 Creating Treasury Account (holds ALL 10M tokens)...
+🏦 Creating Treasury Account (holds ALL 77M tokens)...
 💰 Creating Treasury...
    Address: rXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
    Seed: sXXXXXXXXXXXXXXXXXXXXXXXX
    Balance: 1000 XRP
 
-💸 Issuing ALL 10,000,000 FIZZ to Treasury...
+�� Issuing ALL 77,000,000 FIZZ to Treasury...
 ✅ Tokens Issued Successfully!
 
 ✅ Setup Complete!
@@ -114,7 +114,7 @@ node scripts/xrp-testnet-token.js
    Currency: FIZZ
    Issuer: rXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
    Treasury: rYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
-   Total Supply: 10,000,000 (ALL in treasury)
+   Total Supply: 77,000,000 (ALL in treasury)
 
 ⚠️  IMPORTANT: Save these credentials securely!
    Treasury Seed: sYYYYYYYYYYYYYYYYYYYYYYY
@@ -125,7 +125,7 @@ node scripts/xrp-testnet-token.js
 1. Copy your treasury address
 2. Visit: https://testnet.xrpl.org/
 3. Paste address and search
-4. See your 10M FIZZ in treasury! 🎉
+4. See your 77M FIZZ in treasury! 🎉
 
 ---
 
@@ -165,26 +165,26 @@ Result: Player CAPS -100, FIZZ +10
 
 ## 📊 Initial Distribution Plan
 
-From your 10 million supply:
+From your 77 million supply:
 
 ```
-XRP Treasury (Initial):    10,000,000 FIZZ (100%)
+XRP Treasury (Initial):    77,000,000 FIZZ (100%)
 ├─ Will distribute to other chains
 ├─ Will send rewards to players
 └─ Holds reserve for future
 
 Target Distribution:
-├─ XRP Treasury:        4,000,000 FIZZ (40%)
-├─ Solana Treasury:     4,000,000 FIZZ (40%)
-└─ Ethereum Treasury:   2,000,000 FIZZ (20%)
+├─ XRP Treasury:        30,800,000 FIZZ (40%)
+├─ Solana Treasury:     30,800,000 FIZZ (40%)
+└─ Ethereum Treasury:   15,400,000 FIZZ (20%)
 
 Usage Allocation:
-├─ Gaming Rewards:      2,000,000 FIZZ (20%)
-├─ Liquidity Pools:     1,500,000 FIZZ (15%)
-├─ Community:           1,000,000 FIZZ (10%)
-├─ Team (vested):       1,000,000 FIZZ (10%)
-├─ Early Supporters:      500,000 FIZZ (5%)
-└─ Treasury Reserve:    4,000,000 FIZZ (40%)
+├─ Gaming Rewards:      15,400,000 FIZZ (20%)
+├─ Liquidity Pools:     11,550,000 FIZZ (15%)
+├─ Community:            7,700,000 FIZZ (10%)
+├─ Team (vested):        7,700,000 FIZZ (10%)
+├─ Early Supporters:     3,850,000 FIZZ (5%)
+└─ Treasury Reserve:    30,800,000 FIZZ (40%)
 ```
 
 ---
@@ -231,7 +231,7 @@ Once deployed, games reward players with IN-GAME CAPS:
    - XRP treasury balance: -100
 
 4. **Result:**
-   - Total supply: Still 10M ✅
+   - Total supply: Still 77M ✅
    - Tokens moved between treasuries
    - User has FIZZ on target chain
 
@@ -239,10 +239,10 @@ Once deployed, games reward players with IN-GAME CAPS:
 
 ## 🔒 Security Features
 
-1. **No Minting**: After initial 10M, NO new tokens
+1. **No Minting**: After initial 77M, NO new tokens
 2. **Treasury Multi-Sig**: Requires multiple signatures
 3. **Rate Limits**: Max transfers per hour/day
-4. **Supply Monitoring**: Always equals 10M
+4. **Supply Monitoring**: Always equals 77M
 5. **Audit Trail**: All distributions logged
 
 ---
@@ -274,14 +274,14 @@ Before running the script, ensure:
 
 ## 🎉 Ready to Launch!
 
-Run this command to deploy your 10 million FIZZ token:
+Run this command to deploy your 77 million FIZZ token:
 
 ```bash
 node scripts/xrp-testnet-token.js
 ```
 
 **What you'll get:**
-- ✅ 10,000,000 FIZZ on XRP testnet
+- ✅ 77,000,000 FIZZ on XRP testnet
 - ✅ Treasury wallet (holds all tokens)
 - ✅ Distributor wallet
 - ✅ 3 test user accounts
@@ -293,7 +293,7 @@ node scripts/xrp-testnet-token.js
 ## 💡 Key Differences from Burn-Mint
 
 **Treasury Model (AFC - Correct):**
-- ✅ Fixed supply (10M forever)
+- ✅ Fixed supply (77M forever)
 - ✅ Tokens locked/unlocked in treasuries
 - ✅ NO minting after launch
 - ✅ NO burning
@@ -326,12 +326,12 @@ cat BRIDGE_STATUS.md
 
 ## 🚀 Let's Go!
 
-**Your 10 million supply FIZZ token is ready to deploy!**
+**Your 77 million supply FIZZ token is ready to deploy!**
 
 The treasury-based model matches AFC tokenomics: fixed supply, NO minting, treasuries distribute existing tokens across chains. 🏦
 
 ```
-Total Supply Forever = 10,000,000 FIZZ ✨
+Total Supply Forever = 77,000,000 FIZZ ✨
 Treasury Model = NO MINTING 🚫
 ```
 

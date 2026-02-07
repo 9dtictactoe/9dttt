@@ -38,7 +38,7 @@
     "testMode": true,
     "mechanism": "lock-unlock",
     "model": "treasury",
-    "totalSupply": "10000000",
+    "totalSupply": "77000000",
     "description": "Treasury-Based Distribution: Fixed supply, treasuries on each chain lock/unlock tokens",
     "minTransfer": "1",
     "maxTransfer": "10000",
@@ -51,17 +51,17 @@
     "treasuries": {
       "xrp": {
         "address": "TO_BE_SET",
-        "initialBalance": "4000000",
+        "initialBalance": "30800000",
         "description": "XRP treasury holds tokens for distribution"
       },
       "solana": {
         "address": "TO_BE_SET",
-        "initialBalance": "4000000",
+        "initialBalance": "30800000",
         "description": "Solana treasury holds tokens for distribution"
       },
       "ethereum": {
         "address": "TO_BE_SET",
-        "initialBalance": "2000000",
+        "initialBalance": "15400000",
         "description": "Ethereum treasury holds tokens for distribution"
       }
     },
