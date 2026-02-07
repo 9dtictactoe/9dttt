@@ -246,18 +246,59 @@ class AuthUI {
         this.modal = modal;
     }
     
+    // Helper to normalize user data from backend
+    normalizeUser(user) {
+        if (!user) return null;
+        
+        // Create normalized user object with consistent property names
+        const normalized = {
+            id: user.id,
+            username: user.username,
+            name: user.displayName || user.username,
+            email: user.email,
+            tokens: user.tokens || 0,
+            isGuest: user.isGuest || false
+        };
+        
+        // Handle avatar - convert from backend format to emoji/string
+        if (user.profile && user.profile.avatar) {
+            const avatar = user.profile.avatar;
+            if (avatar.url) {
+                // URL avatar - use emoji representation for now
+                normalized.avatar = '👤';
+            } else if (avatar.icon) {
+                // Icon emoji from wallet auth
+                normalized.avatar = avatar.icon;
+            } else if (avatar.initial) {
+                // Initial-based avatar - use the initial as emoji-style
+                normalized.avatar = avatar.initial;
+            } else {
+                normalized.avatar = '👤';
+            }
+        } else if (user.avatar) {
+            // Already in simple format
+            normalized.avatar = user.avatar;
+        } else {
+            normalized.avatar = '👤';
+        }
+        
+        return normalized;
+    }
+    
     setupEventListeners() {
         // Listen to unified auth state changes
         if (window.unifiedAuth) {
             window.unifiedAuth.onAuthStateChanged((user) => {
-                this.updateUI(user);
+                const normalizedUser = this.normalizeUser(user);
+                this.updateUI(normalizedUser);
             });
         }
     }
     
     show() {
         const user = window.unifiedAuth?.getUser();
-        this.updateUI(user);
+        const normalizedUser = this.normalizeUser(user);
+        this.updateUI(normalizedUser);
         this.modal.style.display = 'block';
     }
     
@@ -347,9 +388,50 @@ class AuthUI {
                 alert('Firebase not available. Try email/password or wallet login instead.');
                 return;
             }
+            
+            // Show loading state
+            const content = this.modal.querySelector('#authContent');
+            content.innerHTML = `
+                <div style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">🔍</div>
+                    <h2 style="color: #fff; margin-bottom: 10px;">Signing in with Google...</h2>
+                    <p style="color: rgba(255,255,255,0.7);">Please complete the sign-in in the popup window</p>
+                </div>
+            `;
+            
             const provider = new firebase.auth.GoogleAuthProvider();
-            await firebase.auth().signInWithPopup(provider);
-            this.hide();
+            const result = await firebase.auth().signInWithPopup(provider);
+            
+            // Get ID token and verify with backend
+            const idToken = await result.user.getIdToken();
+            const verifyResponse = await fetch('/api/auth/firebase/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken })
+            });
+            
+            // Check for network errors
+            if (!verifyResponse.ok) {
+                throw new Error(`Server error: ${verifyResponse.status}`);
+            }
+            
+            const verifyResult = await verifyResponse.json();
+            
+            if (verifyResult.success) {
+                // Update unified auth
+                if (window.unifiedAuth) {
+                    window.unifiedAuth.user = verifyResult.user;
+                    window.unifiedAuth.token = verifyResult.token;
+                    localStorage.setItem('auth_token', verifyResult.token);
+                    localStorage.setItem('auth_method', 'firebase');
+                    window.unifiedAuth.notifyListeners();
+                }
+                this.hide();
+            } else {
+                // Sign out from Firebase if backend verification failed
+                await firebase.auth().signOut();
+                throw new Error(verifyResult.error || 'Authentication failed');
+            }
         } catch (error) {
             console.error('⚠️ Google login failed:', error.message);
             
@@ -359,11 +441,14 @@ class AuthUI {
             } else if (error.code === 'auth/popup-blocked') {
                 alert('Popup blocked by browser. Please allow popups for this site.');
             } else if (error.code === 'auth/popup-closed-by-user') {
-                // User closed popup - no alert needed
+                // User closed popup - just show the login screen again
                 console.log('Google login cancelled by user');
             } else {
                 alert('Google login failed: ' + (error.message || 'Please try another login method.'));
             }
+            
+            // Restore the login screen
+            this.show();
         }
     }
     
@@ -373,9 +458,50 @@ class AuthUI {
                 alert('Firebase not available. Try email/password or wallet login instead.');
                 return;
             }
+            
+            // Show loading state
+            const content = this.modal.querySelector('#authContent');
+            content.innerHTML = `
+                <div style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">🍎</div>
+                    <h2 style="color: #fff; margin-bottom: 10px;">Signing in with Apple...</h2>
+                    <p style="color: rgba(255,255,255,0.7);">Please complete the sign-in in the popup window</p>
+                </div>
+            `;
+            
             const provider = new firebase.auth.OAuthProvider('apple.com');
-            await firebase.auth().signInWithPopup(provider);
-            this.hide();
+            const result = await firebase.auth().signInWithPopup(provider);
+            
+            // Get ID token and verify with backend
+            const idToken = await result.user.getIdToken();
+            const verifyResponse = await fetch('/api/auth/firebase/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken })
+            });
+            
+            // Check for network errors
+            if (!verifyResponse.ok) {
+                throw new Error(`Server error: ${verifyResponse.status}`);
+            }
+            
+            const verifyResult = await verifyResponse.json();
+            
+            if (verifyResult.success) {
+                // Update unified auth
+                if (window.unifiedAuth) {
+                    window.unifiedAuth.user = verifyResult.user;
+                    window.unifiedAuth.token = verifyResult.token;
+                    localStorage.setItem('auth_token', verifyResult.token);
+                    localStorage.setItem('auth_method', 'firebase');
+                    window.unifiedAuth.notifyListeners();
+                }
+                this.hide();
+            } else {
+                // Sign out from Firebase if backend verification failed
+                await firebase.auth().signOut();
+                throw new Error(verifyResult.error || 'Authentication failed');
+            }
         } catch (error) {
             console.error('⚠️ Apple login failed:', error.message);
             
@@ -385,12 +511,19 @@ class AuthUI {
             } else if (error.code === 'auth/popup-blocked') {
                 alert('Popup blocked by browser. Please allow popups for this site.');
             } else if (error.code === 'auth/popup-closed-by-user') {
-                // User closed popup - no alert needed
+                // User closed popup - just show the login screen again
                 console.log('Apple login cancelled by user');
             } else {
                 alert('Apple login failed: ' + (error.message || 'Please try another login method.'));
             }
+            
+            // Restore the login screen
+            this.show();
         }
+    }
+    
+    showLoginOptions() {
+        this.show();
     }
     
     async loginWithWallet() {
@@ -649,7 +782,10 @@ function updateUserBadge(user) {
     const badge = document.getElementById('userBadge');
     if (!badge) return;
     
-    if (user) {
+    // Normalize user data
+    const normalizedUser = window.authUI?.normalizeUser(user);
+    
+    if (normalizedUser) {
         badge.innerHTML = `
             <div style="
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -661,10 +797,10 @@ function updateUserBadge(user) {
                 gap: 10px;
                 color: #fff;
             ">
-                <span style="font-size: 20px;">${user.avatar}</span>
+                <span style="font-size: 20px;">${normalizedUser.avatar}</span>
                 <div>
-                    <div style="font-weight: bold; font-size: 14px;">${user.name}</div>
-                    <div style="font-size: 11px; opacity: 0.9;">🪙 ${user.tokens || 0}</div>
+                    <div style="font-weight: bold; font-size: 14px;">${normalizedUser.name}</div>
+                    <div style="font-size: 11px; opacity: 0.9;">🪙 ${normalizedUser.tokens || 0}</div>
                 </div>
             </div>
         `;

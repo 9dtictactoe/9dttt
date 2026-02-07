@@ -68,11 +68,18 @@
                         localStorage.setItem('auth_token', result.token);
                         localStorage.setItem('auth_method', 'firebase');
                         
-                        // Update auth client if available
-                        if (window.authClient) {
+                        // Update unified auth (preferred) or fall back to authClient
+                        if (window.unifiedAuth) {
+                            window.unifiedAuth.user = result.user;
+                            window.unifiedAuth.token = result.token;
+                            window.unifiedAuth.notifyListeners();
+                        } else if (window.authClient) {
+                            // Legacy support
                             window.authClient.token = result.token;
                             window.authClient.user = result.user;
-                            window.authClient.notifyListeners();
+                            if (window.authClient.notifyListeners) {
+                                window.authClient.notifyListeners();
+                            }
                         }
                         
                         const provider = firebaseUser.providerData[0]?.providerId || 'unknown';
@@ -91,6 +98,8 @@
                         }));
                     } else {
                         console.log('Firebase auto-login failed:', result.error);
+                        // Sign out from Firebase if backend verification failed
+                        await firebase.auth().signOut();
                     }
                 } catch (error) {
                     console.log('Auto-login verification failed:', error.message);
