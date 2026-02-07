@@ -76,6 +76,11 @@ class FirebaseAuth {
      * This is a lightweight verification without requiring firebase-admin
      */
     async verifyIdToken(idToken) {
+        // Security check: Ensure Firebase is properly configured
+        if (!this.projectId) {
+            throw new Error('Firebase not configured - cannot verify token');
+        }
+
         return new Promise((resolve, reject) => {
             // Verify token with Google's tokeninfo endpoint
             const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`;
@@ -94,7 +99,7 @@ class FirebaseAuth {
 
                         // Verify the token is for our project
                         // Firebase ID tokens have 'aud' set to the project ID
-                        if (this.projectId && tokenInfo.aud !== this.projectId) {
+                        if (tokenInfo.aud !== this.projectId) {
                             reject(new Error('Token not issued for this application'));
                             return;
                         }
