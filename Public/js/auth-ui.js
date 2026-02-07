@@ -110,8 +110,46 @@ class AuthUI {
                 }
                 
                 .auth-button-wallet {
-                    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                    background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
                     color: #fff;
+                    position: relative;
+                    overflow: hidden;
+                    border: 2px solid #FFD700;
+                    font-size: 18px !important;
+                    padding: 18px 24px !important;
+                }
+                
+                .auth-button-wallet::before {
+                    content: '';
+                    position: absolute;
+                    top: -50%;
+                    left: -50%;
+                    width: 200%;
+                    height: 200%;
+                    background: linear-gradient(45deg, transparent, rgba(255,215,0,0.3), transparent);
+                    animation: shimmer 3s infinite;
+                }
+                
+                @keyframes shimmer {
+                    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+                    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+                }
+                
+                .auth-button-wallet:hover {
+                    background: linear-gradient(135deg, #9b59b6 0%, #a569bd 100%);
+                    border-color: #FFD700;
+                    box-shadow: 0 0 20px rgba(255,215,0,0.5);
+                }
+                
+                .wallet-badge {
+                    display: inline-block;
+                    background: rgba(255,215,0,0.3);
+                    padding: 2px 8px;
+                    border-radius: 12px;
+                    font-size: 11px;
+                    margin-left: 8px;
+                    color: #FFD700;
+                    font-weight: bold;
                 }
                 
                 .auth-button-guest {
@@ -242,6 +280,14 @@ class AuthUI {
             </div>
             
             <div class="auth-methods">
+                <button class="auth-button auth-button-wallet" onclick="window.authUI.loginWithWallet()">
+                    <span class="auth-icon">👛</span>
+                    <span>Connect Web3 Wallet</span>
+                    <span class="wallet-badge">CRYPTO</span>
+                </button>
+                
+                <div class="auth-divider">or use traditional login</div>
+                
                 <button class="auth-button auth-button-google" onclick="window.authUI.loginWithGoogle()">
                     <span class="auth-icon">G</span>
                     <span>Continue with Google</span>
@@ -250,13 +296,6 @@ class AuthUI {
                 <button class="auth-button auth-button-apple" onclick="window.authUI.loginWithApple()">
                     <span class="auth-icon">🍎</span>
                     <span>Continue with Apple</span>
-                </button>
-                
-                <div class="auth-divider">or</div>
-                
-                <button class="auth-button auth-button-wallet" onclick="window.authUI.loginWithWallet()">
-                    <span class="auth-icon">👻</span>
-                    <span>Connect Web3 Wallet</span>
                 </button>
                 
                 <div class="auth-divider">or</div>
