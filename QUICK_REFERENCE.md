@@ -138,13 +138,15 @@ No env vars needed! API calls are proxied via `vercel.json`
 ## Next Steps
 
 1. ✅ Push code to GitHub
-2. ⬜ Deploy to Render (automatic)
-3. ⬜ Deploy to Vercel (automatic)
-4. ⬜ Set custom domain in Vercel
-5. ⬜ Update FRONTEND_URL in Render
+2. ⬜ **[CREATE RENDER SERVICE](SETUP_RENDER.md)** ← Start here!
+3. ⬜ Get your actual Render URL
+4. ⬜ Update vercel.json with real Render URL
+5. ⬜ Set custom domain in Vercel (optional)
 6. ⬜ Test auth flow end-to-end
 7. ⬜ Monitor logs for issues
 
 ---
 
-Need help? Check [DEPLOYMENT_SPLIT.md](DEPLOYMENT_SPLIT.md) for the full guide!
+Need help? 
+- **First time setup**: [SETUP_RENDER.md](SETUP_RENDER.md) ← Start here!
+- **Full guide**: [DEPLOYMENT_SPLIT.md](DEPLOYMENT_SPLIT.md)
