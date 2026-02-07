@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - 9DTTT Platform</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            font-size: 48px;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        .stat-card h3 {
+            font-size: 18px;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+        .stat-card .value {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        .stat-card .trend {
+            font-size: 16px;
+            color: #4caf50;
+        }
+        .chart-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        th {
+            background: rgba(0, 0, 0, 0.3);
+            font-weight: bold;
+        }
+        .status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: inline-block;
+        }
+        .status.online { background: #4caf50; }
+        .status.offline { background: #f44336; }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+        }
+        .btn-primary { background: #2196f3; color: white; }
+        .btn-success { background: #4caf50; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        .btn:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .actions {
+            text-align: center;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 9DTTT Admin Dashboard</h1>
+        
+        <div class="dashboard-grid">
+            <div class="stat-card">
+                <h3>Total Players</h3>
+                <div class="value" id="totalPlayers">0</div>
+                <div class="trend">↗ +<span id="newPlayers">0</span> today</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Active Games</h3>
+                <div class="value" id="activeGames">31</div>
+                <div class="trend">All systems operational</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Total Sessions</h3>
+                <div class="value" id="totalSessions">0</div>
+                <div class="trend">↗ +<span id="newSessions">0</span> today</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Server Status</h3>
+                <div class="value"><span class="status online" id="serverStatus">ONLINE</span></div>
+                <div class="trend">99.9% uptime</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <h2>Platform Health</h2>
+            <div id="healthInfo">Loading...</div>
+        </div>
+        
+        <div class="chart-container">
+            <h2>Top Players Leaderboard</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Player</th>
+                        <th>Game</th>
+                        <th>Score</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardData">
+                    <tr>
+                        <td colspan="5" style="text-align:center;">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="chart-container">
+            <h2>Recent Activity</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Event</th>
+                        <th>User</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody id="activityLog">
+                    <tr>
+                        <td colspan="4" style="text-align:center;">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="actions">
+            <a href="/Public/index.html" class="btn btn-primary">Go to Game Library</a>
+            <button class="btn btn-success" onclick="refreshData()">Refresh Data</button>
+            <button class="btn btn-danger" onclick="clearCache()">Clear Cache</button>
+        </div>
+    </div>
+    
+    <script>
+        // Fetch dashboard data
+        async function loadDashboardData() {
+            try {
+                // Health check
+                const health = await fetch('/api/health').then(r => r.json());
+                document.getElementById('healthInfo').innerHTML = `
+                    <p>Status: <strong>${health.status}</strong></p>
+                    <p>Uptime: <strong>${Math.floor(health.uptime / 3600)}h ${Math.floor((health.uptime % 3600) / 60)}m</strong></p>
+                    <p>Environment: <strong>${health.environment}</strong></p>
+                    <p>Version: <strong>${health.version}</strong></p>
+                    <p>Last Check: <strong>${new Date(health.timestamp).toLocaleString()}</strong></p>
+                `;
+                document.getElementById('serverStatus').textContent = health.status === 'healthy' ? 'ONLINE' : 'OFFLINE';
+                document.getElementById('serverStatus').className = health.status === 'healthy' ? 'status online' : 'status offline';
+                
+                // Leaderboard
+                const leaderboard = await fetch('/api/leaderboard?limit=10').then(r => r.json());
+                const tbody = document.getElementById('leaderboardData');
+                
+                if (leaderboard.global && leaderboard.global.length > 0) {
+                    tbody.innerHTML = leaderboard.global.map((entry, index) => `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${entry.username}</td>
+                            <td>${entry.gameId}</td>
+                            <td><strong>${entry.score}</strong></td>
+                            <td>${new Date(entry.timestamp).toLocaleDateString()}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No data yet</td></tr>';
+                }
+                
+                // Mock stats (replace with real data)
+                document.getElementById('totalPlayers').textContent = Math.floor(Math.random() * 10000) + 1000;
+                document.getElementById('newPlayers').textContent = Math.floor(Math.random() * 100) + 10;
+                document.getElementById('totalSessions').textContent = Math.floor(Math.random() * 50000) + 5000;
+                document.getElementById('newSessions').textContent = Math.floor(Math.random() * 500) + 50;
+                
+                // Activity log (mock data)
+                const activities = [
+                    { time: new Date(), event: 'New Player Joined', user: 'Player_' + Math.random().toString(36).substr(2, 5), details: 'Created account' },
+                    { time: new Date(), event: 'Level Completed', user: 'Player_' + Math.random().toString(36).substr(2, 5), details: 'Crypto Quest Level 5' },
+                    { time: new Date(), event: 'High Score', user: 'Player_' + Math.random().toString(36).substr(2, 5), details: 'New record in Tic-Tac-Toe' },
+                    { time: new Date(), event: 'Achievement Unlocked', user: 'Player_' + Math.random().toString(36).substr(2, 5), details: 'Master Trader' },
+                    { time: new Date(), event: 'Game Started', user: 'Player_' + Math.random().toString(36).substr(2, 5), details: 'Playing Air Hockey' }
+                ];
+                
+                document.getElementById('activityLog').innerHTML = activities.map(activity => `
+                    <tr>
+                        <td>${activity.time.toLocaleTimeString()}</td>
+                        <td>${activity.event}</td>
+                        <td>${activity.user}</td>
+                        <td>${activity.details}</td>
+                    </tr>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                document.getElementById('healthInfo').innerHTML = '<p style="color: #f44336;">Error loading data. Server may be offline.</p>';
+            }
+        }
+        
+        function refreshData() {
+            loadDashboardData();
+            alert('Dashboard data refreshed!');
+        }
+        
+        function clearCache() {
+            if (confirm('Clear all cached data?')) {
+                localStorage.clear();
+                alert('Cache cleared!');
+                location.reload();
+            }
+        }
+        
+        // Load data on page load
+        loadDashboardData();
+        
+        // Auto-refresh every 30 seconds
+        setInterval(loadDashboardData, 30000);
+    </script>
+</body>
+</html>

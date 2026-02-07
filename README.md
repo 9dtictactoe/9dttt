@@ -29,6 +29,53 @@
 
 ## 🎮 About
 
+**Version 2.0 - Full Stack Edition** 🚀
+
+9DTTT (Nine Dimensional Tic-Tac-Toe Tournament Tournament Tournament) has evolved into a comprehensive full-stack game platform featuring 31 games, complete backend API, and real interactive educational experiences.
+
+### 🆕 What's New in v2.0
+
+#### Full-Stack Architecture
+- ✅ **Vercel-Ready Deployment** - One-command serverless deployment
+- ✅ **Real API Backend** - RESTful endpoints for auth, leaderboards, stats, and progress
+- ✅ **Admin Dashboard** - Real-time platform monitoring at `/admin.html`
+- ✅ **Cloud Sync** - Player progress saves across devices
+- ✅ **JWT Authentication** - Secure login with guest mode fallback
+
+#### Enhanced Crypto Quest Academy
+Completely rebuilt with **actual interactive gameplay** instead of text screens:
+- 🎮 **Mining Simulator** - Click-to-mine with real hashrate upgrades
+- ⛓️ **Blockchain Builder** - Visually build and validate blockchain
+- 👛 **Wallet Creator** - Generate realistic wallets with seed phrases
+- 📈 **Trading Academy** - Live charts, buy/sell tokens, manage portfolio
+- 🛡️ **Scam Detector** - Interactive quiz to identify crypto scams
+- 🎨 **NFT Studio** - Create and mint NFTs *(coming soon)*
+- 💰 **DeFi Farming** - Stake and earn yield *(coming soon)*
+- 🏛️ **DAO Builder** - Create governance proposals *(coming soon)*
+
+### API Endpoints
+```
+GET  /api/health                   - Health check
+GET  /api/stats                    - Platform statistics  
+GET  /api/leaderboard              - Global leaderboard
+POST /api/leaderboard              - Submit high score
+POST /api/auth/login               - Login/register
+GET  /api/crypto-quest/progress    - Load player progress
+POST /api/crypto-quest/progress    - Save player progress
+```
+
+### Quick Deploy to Vercel
+```bash
+npm install -g vercel
+vercel --prod
+```
+
+See [README_DEPLOYMENT.md](README_DEPLOYMENT.md) for detailed deployment guide.
+
+---
+
+### Original Platform Description
+
 **9DTTT** is a real-time multiplayer game platform developed by **Bastion Quartet**. Our mission is to create engaging, accessible, and strategic games that bring players together.
 
 ### Features
