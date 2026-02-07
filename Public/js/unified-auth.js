@@ -89,26 +89,9 @@ class UnifiedAuth {
                 firebase.initializeApp(data.config);
             }
             
-            return new Promise((resolve) => {
-                firebase.auth().onAuthStateChanged(async (firebaseUser) => {
-                    if (firebaseUser && !this.user) {
-                        try {
-                            const idToken = await firebaseUser.getIdToken();
-                            const result = await this.loginWithFirebase(idToken);
-                            if (result.success) {
-                                this.user = result.user;
-                                this.token = result.token;
-                                localStorage.setItem('auth_token', this.token);
-                                localStorage.setItem('auth_method', 'firebase');
-                                this.notifyListeners();
-                            }
-                        } catch (error) {
-                            console.error('⚠️ Firebase login failed:', error.message);
-                        }
-                    }
-                    resolve();
-                });
-            });
+            // Note: firebase-init.js handles the onAuthStateChanged listener
+            // to avoid duplicate listeners. This method just ensures Firebase is initialized.
+            console.log('✅ Firebase initialized in unified-auth');
         } catch (error) {
             console.error('⚠️ Firebase initialization failed:', error.message);
         }
