@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain Age Training - DS Style Games</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #e8f4f8;
+            font-family: 'Trebuchet MS', sans-serif;
+            color: #333;
+        }
+        .ds-console {
+            max-width: 500px;
+            margin: 40px auto;
+            background: #d0d0d0;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        .ds-screen {
+            background: #fff;
+            border: 5px solid #000;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 400px;
+        }
+        .ds-screen.top {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            text-align: center;
+        }
+        h1 {
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+        .brain-age {
+            font-size: 72px;
+            font-weight: bold;
+            color: #ff0;
+            text-shadow: 3px 3px rgba(0, 0, 0, 0.3);
+            margin: 20px 0;
+        }
+        .game-list {
+            display: grid;
+            gap: 10px;
+        }
+        .game-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            padding: 20px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .game-btn:hover {
+            transform: translateX(10px);
+        }
+        .game-icon {
+            font-size: 36px;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .ds-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid #333;
+            background: #555;
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+        .ds-button:active {
+            background: #777;
+            transform: scale(0.95);
+        }
+        #gameCanvas {
+            border: 2px solid #666;
+            display: block;
+            margin: 10px auto;
+            background: #fff;
+        }
+        .stat-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ds-console">
+        <div class="ds-screen top" id="topScreen">
+            <h1>🧠 BRAIN AGE TRAINING</h1>
+            <p>How old is your brain?</p>
+            <div class="brain-age" id="brainAge">??</div>
+            <div class="stat-display" id="stats" style="display: none;">
+                <div class="stat-card">
+                    <span class="stat-value" id="gamesPlayed">0</span>
+                    <span>Games Played</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="totalScore">0</span>
+                    <span>Total Score</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="ds-screen" id="bottomScreen">
+            <div id="menu">
+                <h2 style="margin-bottom: 20px;">Select Training</h2>
+                <div class="game-list">
+                    <button class="game-btn" onclick="loadBrainGame('calculation')">
+                        <span class="game-icon">➕</span>
+                        <div>
+                            <div style="font-weight: bold;">Calculation 20</div>
+                            <div style="font-size: 12px;">Solve 20 calculations fast!</div>
+                        </div>
+                    </button>
+                    
+                    <button class="game-btn" onclick="loadBrainGame('stroop')">
+                        <span class="game-icon">🎨</span>
+                        <div>
+                            <div style="font-weight: bold;">Stroop Test</div>
+                            <div style="font-size: 12px;">Name the color, not the word!</div>
+                        </div>
+                    </button>
+                    
+                    <button class="game-btn" onclick="loadBrainGame('counting')">
+                        <span class="game-icon">🔢</span>
+                        <div>
+                            <div style="font-weight: bold;">Number Memory</div>
+                            <div style="font-size: 12px;">Remember numbers and recall!</div>
+                        </div>
+                    </button>
+                    
+                    <button class="game-btn" onclick="loadBrainGame('syllable')">
+                        <span class="game-icon">📚</span>
+                        <div>
+                            <div style="font-weight: bold;">Syllable Count</div>
+                            <div style="font-size: 12px;">Count syllables in words!</div>
+                        </div>
+                    </button>
+                    
+                    <button class="game-btn" onclick="loadBrainGame('triangle')">
+                        <span class="game-icon">🔺</span>
+                        <div>
+                            <div style="font-weight: bold;">Triangle Count</div>
+                            <div style="font-size: 12px;">How many triangles?</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="gameArea" style="display: none;">
+                <canvas id="gameCanvas" width="460" height="300"></canvas>
+                <div id="gameControls"></div>
+                <div class="controls">
+                    <button class="ds-button" onclick="location.reload()">◄</button>
+                    <button class="ds-button" onclick="checkAnswer()" id="answerBtn">✓</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Universal Integration Systems -->
+    <script src="../js/universal-auth.js"></script>
+    <script src="../js/global-leaderboard.js"></script>
+    <script src="../js/leaderboard-ui.js"></script>
+    <script src="../js/fullscreen-manager.js"></script>
+    <script src="../js/auth-ui.js"></script>
+    <script src="../js/universal-game-integration.js"></script>
+    
+    <script src="../js/brain-age.js"></script>
+    <script>
+        // Initialize Universal Integration
+        document.addEventListener('DOMContentLoaded', () => {
+            window.gameIntegration = new UniversalGameIntegration('brain-age', 'Brain Age');
+        });
+    </script>
+</body>
+</html>

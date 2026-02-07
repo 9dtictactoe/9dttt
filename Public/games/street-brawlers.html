@@ -117,6 +117,9 @@
                     <button id="start-2p" onclick="startGame(2)">2 Players</button>
                     <button id="start-3p" onclick="startGame(3)">3 Players</button>
                     <button id="start-4p" onclick="startGame(4)">4 Players</button>
+                    <button onclick="window.gamepadConfig?.show()" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">🎮 Configure Controls</button>
+                    <button onclick="window.gameIntegration?.showLeaderboard()" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">🏆 Leaderboard</button>
+                    <button onclick="window.gameIntegration?.toggleFullscreen()" style="background: linear-gradient(135deg, #16a085 0%, #27ae60 100%);">⛶ Fullscreen</button>
                 </div>
                 
                 <div class="control-hint">
@@ -156,14 +159,26 @@
         </footer>
     </div>
 
+    <!-- Core Systems -->
     <script src="../js/gamepad-manager.js"></script>
     <script src="../js/accessibility-manager.js"></script>
     <script src="../js/game-engine.js"></script>
     <script src="../js/beat-em-up-engine.js"></script>
-    <!-- Browser Native Authentication (Credential Management API) -->
-    <script src="../js/browser-auth-init.js"></script>
-    <script src="../js/auth-client.js"></script>
-    <script src="../js/game-ui.js"></script>
+    
+    <!-- Enhancement Systems -->
+    <script src="../js/enhanced-combat.js"></script>
+    <script src="../js/gamepad-config.js"></script>
+    <script src="../js/game-polish.js"></script>
+    
+    <!-- Universal Integration (Auth, Leaderboards, Fullscreen, Multiplayer) -->
+    <script src="../js/universal-auth.js"></script>
+    <script src="../js/global-leaderboard.js"></script>
+    <script src="../js/leaderboard-ui.js"></script>
+    <script src="../js/fullscreen-manager.js"></script>
+    <script src="../js/auth-ui.js"></script>
+    <script src="../js/multiplayer-client.js"></script>
+    <script src="../js/universal-game-integration.js"></script>
+    
     <script>
         let game;
         
@@ -251,14 +266,26 @@
         
         // Initialize game
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialize unified auth UI for login across all pages
-            if (window.GameUI) {
-                window.gameUI = new GameUI();
-                window.gameUI.init();
-            }
-
+            // Initialize Universal Game Integration
+            window.gameIntegration = new UniversalGameIntegration('street-brawlers', 'Street Brawlers');
+            
+            // Initialize game
             game = new BeatEmUpEngine('game-canvas');
             game.levels = [new Level1()];
+            
+            // Initialize polish systems
+            if (window.GamePolishSystem) {
+                game.polish = new GamePolishSystem(game);
+                game.comboSystem = new ComboSystem();
+                game.specialMoves = new SpecialMoves();
+                game.weaponSystem = new WeaponSystem();
+            }
+            
+            // Initialize Gamepad Configuration UI
+            if (window.GamepadConfigurator) {
+                window.gamepadConfig = new GamepadConfigurator();
+                window.gamepadConfig.applyPreset('beatEmUp'); // Beat-em-up preset
+            }
             
             // Gamepad widget
             new GamepadWidget('gamepad-status');
@@ -275,6 +302,11 @@
                     } else if (game.state === 'playing') {
                         game.pauseGame();
                     }
+                }
+                // ESC for pause menu
+                if (e.code === 'Escape' && game.state === 'playing' && game.polish?.pauseMenu) {
+                    game.polish.pauseMenu.show();
+                    e.preventDefault();
                 }
             });
         });

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournament Fighters - 9DTTT Arcade</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #000;
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden;
+        }
+        #gameCanvas {
+            display: block;
+            margin: 20px auto;
+            border: 4px solid #ff0;
+            box-shadow: 0 0 30px #ff0;
+        }
+        #hud {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 50px;
+            color: #fff;
+            font-size: 14px;
+        }
+        .fighter-hud {
+            width: 300px;
+        }
+        .health-bar {
+            width: 100%;
+            height: 30px;
+            background: #333;
+            border: 2px solid #fff;
+            margin-top: 10px;
+        }
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f00, #ff0, #0f0);
+            transition: width 0.3s;
+        }
+        .timer {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 48px;
+            color: #fff;
+            text-shadow: 3px 3px #000;
+        }
+        .round-display {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 64px;
+            color: #ff0;
+            text-shadow: 4px 4px #000;
+            display: none;
+        }
+        .round-display.show {
+            display: block;
+            animation: roundAnnounce 2s;
+        }
+        @keyframes roundAnnounce {
+            0% { transform: translateX(-50%) scale(0); }
+            50% { transform: translateX(-50%) scale(1.2); }
+            100% { transform: translateX(-50%) scale(1); opacity: 0; }
+        }
+        #menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px;
+            border: 4px solid #ff0;
+            text-align: center;
+            color: #fff;
+        }
+        #menu.hidden { display: none; }
+        .fighter-select {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .fighter-card {
+            padding: 15px;
+            border: 2px solid #666;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .fighter-card:hover {
+            border-color: #ff0;
+            background: #222;
+        }
+        .fighter-card.selected {
+            border-color: #0f0;
+            background: #2d5;
+        }
+        .btn {
+            background: #ff0;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 14px;
+            font-family: 'Press Start 2P', cursive;
+            cursor: pointer;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="hud">
+        <div class="fighter-hud">
+            <div id="p1Name">PLAYER 1</div>
+            <div class="health-bar">
+                <div class="health-fill" id="p1Health" style="width: 100%"></div>
+            </div>
+            <div style="margin-top: 10px;">
+                <span id="p1Wins">0</span> WINS
+            </div>
+        </div>
+        <div class="fighter-hud" style="text-align: right;">
+            <div id="p2Name">PLAYER 2</div>
+            <div class="health-bar">
+                <div class="health-fill" id="p2Health" style="width: 100%"></div>
+            </div>
+            <div style="margin-top: 10px;">
+                <span id="p2Wins">0</span> WINS
+            </div>
+        </div>
+    </div>
+    <div class="timer" id="timer">99</div>
+    <div class="round-display" id="roundDisplay">ROUND 1</div>
+    
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="menu">
+        <h1 style="color: #ff0; margin-bottom: 30px;">🥊 TOURNAMENT FIGHTERS 🥊</h1>
+        <h3>SELECT YOUR FIGHTER</h3>
+        <div class="fighter-select" id="fighterSelect"></div>
+        <button class="btn" onclick="game.startTournament()">START TOURNAMENT</button>
+        <button class="btn" onclick="game.startVersus()">VS MODE (2P)</button>
+    </div>
+    
+    <!-- Universal Integration Systems -->
+    <script src="../js/universal-auth.js"></script>
+    <script src="../js/global-leaderboard.js"></script>
+    <script src="../js/leaderboard-ui.js"></script>
+    <script src="../js/fullscreen-manager.js"></script>
+    <script src="../js/auth-ui.js"></script>
+    <script src="../js/enhanced-combat.js"></script>
+    <script src="../js/gamepad-config.js"></script>
+    <script src="../js/game-polish.js"></script>
+    <script src="../js/universal-game-integration.js"></script>
+    
+    <script src="../js/tournament-fighters.js"></script>
+    <script>
+        // Initialize Universal Integration
+        document.addEventListener('DOMContentLoaded', () => {
+            window.gameIntegration = new UniversalGameIntegration('tournament-fighters', 'Tournament Fighters');
+            if (window.GamepadConfigurator) {
+                window.gamepadConfig = new GamepadConfigurator();
+                window.gamepadConfig.applyPreset('fighting');
+            }
+        });
+    </script>
+</body>
+</html>

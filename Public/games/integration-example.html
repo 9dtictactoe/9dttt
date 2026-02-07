@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Integration Example - Contra Commando</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/arcade-games.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 Contra Commando</h1>
+            <p>Enhanced with Authentication, Leaderboards, Fullscreen & Multiplayer!</p>
+        </header>
+
+        <main>
+            <div class="game-container" id="gameContainer">
+                <canvas id="game-canvas" width="800" height="600"></canvas>
+                
+                <div class="controls">
+                    <button id="startBtn">Start Game</button>
+                    <button id="multiplayerBtn">🎮 Multiplayer</button>
+                    <button id="leaderboardBtn">🏆 Leaderboard</button>
+                </div>
+            </div>
+
+            <div class="instructions">
+                <h2>Features Demonstrated</h2>
+                <ul>
+                    <li>✅ Browser-based authentication (Google/Apple/Wallet)</li>
+                    <li>✅ Automatic score submission with token rewards</li>
+                    <li>✅ Global leaderboards (game-specific & overall)</li>
+                    <li>✅ Fullscreen immersion mode</li>
+                    <li>✅ WebRTC multiplayer with room codes</li>
+                    <li>✅ Mobile touch controls</li>
+                    <li>✅ TV casting support</li>
+                </ul>
+                
+                <h3>Keyboard Shortcuts</h3>
+                <ul>
+                    <li><kbd>ESC</kbd> - Game Menu</li>
+                    <li><kbd>F11</kbd> - Fullscreen</li>
+                    <li><kbd>Shift+L</kbd> - Leaderboard</li>
+                    <li><kbd>Shift+A</kbd> - Account</li>
+                </ul>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 9DTTT Gaming Platform</p>
+            <p><a href="../index.html">← Back to Library</a></p>
+        </footer>
+    </div>
+
+    <!-- Core Game Scripts -->
+    <script src="../js/gamepad-manager.js"></script>
+    <script src="../js/accessibility-manager.js"></script>
+    <script src="../js/game-engine.js"></script>
+    
+    <!-- Universal Integration Scripts (NEW!) -->
+    <script src="../js/universal-auth.js"></script>
+    <script src="../js/global-leaderboard.js"></script>
+    <script src="../js/leaderboard-ui.js"></script>
+    <script src="../js/fullscreen-manager.js"></script>
+    <script src="../js/auth-ui.js"></script>
+    <script src="../js/multiplayer-client.js"></script>
+    <script src="../js/universal-game-integration.js"></script>
+    
+    <!-- Game Logic -->
+    <script>
+        // Simple demo game
+        class ContraDemo {
+            constructor() {
+                this.canvas = document.getElementById('game-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.score = 0;
+                this.isRunning = false;
+                this.init();
+            }
+            
+            init() {
+                document.getElementById('startBtn').onclick = () => this.start();
+                document.getElementById('multiplayerBtn').onclick = () => this.createMultiplayer();
+                document.getElementById('leaderboardBtn').onclick = () => window.leaderboardUI.show();
+            }
+            
+            start() {
+                this.isRunning = true;
+                this.score = 0;
+                this.gameLoop();
+            }
+            
+            gameLoop() {
+                if (!this.isRunning) return;
+                
+                this.ctx.fillStyle = '#1a1a2e';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                this.ctx.fillStyle = '#fff';
+                this.ctx.font = '32px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('Demo Game Running...', this.canvas.width/2, this.canvas.height/2 - 40);
+                this.ctx.fillText(`Score: ${this.score}`, this.canvas.width/2, this.canvas.height/2);
+                this.ctx.font = '16px Arial';
+                this.ctx.fillText('Press SPACE to add points, ESC to end', this.canvas.width/2, this.canvas.height/2 + 40);
+                
+                requestAnimationFrame(() => this.gameLoop());
+            }
+            
+            async endGame() {
+                this.isRunning = false;
+                
+                // THIS IS THE KEY INTEGRATION!
+                // Submit score with metadata for token calculation
+                await window.gameIntegration.submitScore(this.score, {
+                    level: 1,
+                    accuracy: 85,
+                    time: 60,
+                    enemiesKilled: 25
+                });
+            }
+            
+            async createMultiplayer() {
+                await window.gameIntegration.createMultiplayerRoom();
+            }
+        }
+        
+        // Initialize game
+        const game = new ContraDemo();
+        
+        // Initialize Universal Game Integration
+        window.gameIntegration = new UniversalGameIntegration('contra-commando', 'Contra Commando');
+        
+        // Handle keyboard input
+        document.addEventListener('keydown', (e) => {
+            if (game.isRunning) {
+                if (e.code === 'Space') {
+                    game.score += 100;
+                } else if (e.key === 'Escape') {
+                    game.endGame();
+                }
+            }
+        });
+        
+        // Demo: Auto-start after 2 seconds
+        setTimeout(() => {
+            console.log('🎮 Game Integration Demo Ready!');
+            console.log('👉 Press START to begin demo');
+            console.log('👉 Press SPACE to add 100 points');
+            console.log('👉 Press ESC to end game and see score submission');
+        }, 2000);
+    </script>
+</body>
+</html>

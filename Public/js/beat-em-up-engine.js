@@ -727,10 +727,35 @@ class BeatEmUpEngine {
 
     gameOver() {
         this.state = 'gameover';
+        
+        // Submit scores to leaderboard
+        if (window.gameIntegration) {
+            this.players.forEach(player => {
+                if (player.score) {
+                    gameIntegration.submitScore(Math.floor(player.score), {
+                        level: this.levelIndex + 1,
+                        enemies: player.enemiesDefeated || 0
+                    });
+                }
+            });
+        }
     }
 
     victory() {
         this.state = 'victory';
+        
+        // Submit final scores to leaderboard
+        if (window.gameIntegration) {
+            this.players.forEach(player => {
+                if (player.score) {
+                    gameIntegration.submitScore(Math.floor(player.score), {
+                        level: this.levels.length,
+                        enemies: player.enemiesDefeated || 0,
+                        completed: true
+                    });
+                }
+            });
+        }
     }
 
     // ==================== RENDERING ====================

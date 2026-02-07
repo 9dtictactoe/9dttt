@@ -28,6 +28,8 @@
                 <div class="controls">
                     <button onclick="game.startGame(1)">1 Player</button>
                     <button onclick="game.startGame(2)">2 Players</button>
+                    <button onclick="window.gameIntegration?.showLeaderboard()" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">🏆 Leaderboard</button>
+                    <button onclick="window.gameIntegration?.toggleFullscreen()" style="background: linear-gradient(135deg, #16a085 0%, #27ae60 100%);">⛶ Fullscreen</button>
                 </div>
                 
                 <div class="control-hint">
@@ -59,13 +61,25 @@
         </footer>
     </div>
 
+    <!-- Core Systems -->
     <script src="../js/gamepad-manager.js"></script>
     <script src="../js/accessibility-manager.js"></script>
     <script src="../js/game-engine.js"></script>
-    <!-- Browser Native Authentication (Credential Management API) -->
-    <script src="../js/browser-auth-init.js"></script>
-    <script src="../js/auth-client.js"></script>
-    <script src="../js/game-ui.js"></script>
+    
+    <!-- New Enhancement Systems -->
+    <script src="../js/enhanced-combat.js"></script>
+    <script src="../js/gamepad-config.js"></script>
+    <script src="../js/game-polish.js"></script>
+    
+    <!-- Universal Integration (Auth, Leaderboards, Fullscreen, Multiplayer) -->
+    <script src="../js/universal-auth.js"></script>
+    <script src="../js/global-leaderboard.js"></script>
+    <script src="../js/leaderboard-ui.js"></script>
+    <script src="../js/fullscreen-manager.js"></script>
+    <script src="../js/auth-ui.js"></script>
+    <script src="../js/multiplayer-client.js"></script>
+    <script src="../js/universal-game-integration.js"></script>
+    
     <script>
         class DragonFist {
             constructor(canvasId) {
@@ -153,6 +167,13 @@
                     elite: { health: 80, speed: 1.8, damage: 22, color: '#c0392b', points: 300 }
                 };
                 
+                // Initialize Enhanced Systems
+                this.polish = new GamePolishSystem(this);
+                this.comboSystem = new ComboSystem();
+                this.specialMoves = new SpecialMoves();
+                this.weaponSystem = new WeaponSystem();
+                this.bossAI = new BossAISystem();
+                
                 this.keys = {};
                 this.setupInput();
                 this.gameLoop();
@@ -161,6 +182,12 @@
             setupInput() {
                 window.addEventListener('keydown', e => {
                     this.keys[e.code] = true;
+                    
+                    // Pause menu toggle (ESC key)
+                    if (e.code === 'Escape' && this.state === 'playing') {
+                        this.polish.pauseMenu.show();
+                        e.preventDefault();
+                    }
                 });
                 window.addEventListener('keyup', e => this.keys[e.code] = false);
             }
@@ -359,6 +386,17 @@
             advanceStage() {
                 if (this.stage >= this.maxStages) {
                     this.state = 'victory';
+                    
+                    // Submit final scores to leaderboard
+                    this.players.forEach(player => {
+                        if (window.gameIntegration) {
+                            gameIntegration.submitScore(Math.floor(player.score), {
+                                level: player.level,
+                                enemiesDefeated: this.enemiesDefeated,
+                                stages: this.stage
+                            });
+                        }
+                    });
                     return;
                 }
                 
@@ -384,6 +422,11 @@
                 if (this.state !== 'playing') return;
                 
                 const dt = 1/60;
+                
+                // Update polish systems
+                this.polish.particles.update(dt);
+                this.polish.screenEffects.update(dt);
+                this.polish.performanceMonitor.update();
                 
                 // Handle stage transition
                 if (this.stageTransition) {
@@ -434,6 +477,17 @@
                 const alivePlayers = this.players.filter(p => p.lives > 0);
                 if (alivePlayers.length === 0) {
                     this.state = 'gameover';
+                    
+                    // Submit scores to leaderboard
+                    this.players.forEach(player => {
+                        if (window.gameIntegration) {
+                            gameIntegration.submitScore(Math.floor(player.score), {
+                                level: player.level,
+                                enemiesDefeated: this.enemiesDefeated,
+                                stages: this.stage
+                            });
+                        }
+                    });
                 }
             }
             
@@ -488,12 +542,18 @@
                         player.stateTime = 0;
                     }
                     
-                    // Attacks
+                    // Attacks with Combo System
                     if (input.punch && player.attackCooldown <= 0) {
                         player.state = 'attacking';
                         player.stateTime = 0;
                         player.attackType = 'punch';
                         player.attackCooldown = 0.3;
+                        
+                        // Track combo input
+                        this.comboSystem.addInput(player, 'light');
+                        
+                        // Sound effect
+                        this.polish.soundManager.play('hit');
                     }
                     
                     if (input.kick && player.attackCooldown <= 0) {
@@ -501,26 +561,45 @@
                         player.stateTime = 0;
                         player.attackType = 'kick';
                         player.attackCooldown = 0.35;
+                        
+                        // Track combo input
+                        this.comboSystem.addInput(player, 'heavy');
+                        
+                        // Sound effect
+                        this.polish.soundManager.play('hit');
                     }
                     
-                    // Special attack
+                    // Special move detection
                     if (input.special && player.specialMeter >= 50) {
-                        player.state = 'attacking';
-                        player.stateTime = 0;
-                        player.attackType = 'special';
-                        player.attackCooldown = 0.5;
-                        player.specialMeter -= 50;
-                        
-                        // Special effect
-                        this.effects.push({
-                            type: 'shockwave',
-                            x: player.x,
-                            y: player.y,
-                            radius: 0,
-                            maxRadius: 100,
-                            color: player.color,
-                            life: 0.4
-                        });
+                        const move = this.specialMoves.checkInputs(player);
+                        if (move && move.cost <= player.specialMeter) {
+                            player.state = 'attacking';
+                            player.stateTime = 0;
+                            player.attackType = 'special';
+                            player.attackCooldown = 0.5;
+                            player.specialMeter -= move.cost;
+                            player.currentSpecialMove = move;
+                            
+                            // Special effect with screen shake
+                            this.polish.screenEffects.screenShake(8, 0.3);
+                            this.polish.screenEffects.flash('#FFD700', 0.6, 0.2);
+                            this.polish.soundManager.play('powerup');
+                            
+                            this.effects.push({
+                                type: 'shockwave',
+                                x: player.x,
+                                y: player.y,
+                                radius: 0,
+                                maxRadius: move.range,
+                                color: player.color,
+                                life: 0.4
+                            });
+                            
+                            // Particles
+                            for (let i = 0; i < 20; i++) {
+                                this.polish.particles.emit('spark', player.x, player.y, { color: player.color });
+                            }
+                        }
                     }
                     
                     // Apply physics
@@ -676,11 +755,40 @@
                         
                         // Check if in attack range and correct direction
                         if (Math.abs(dx) < attackRange && dy < 30 && Math.sign(dx) === player.facing) {
+                            // Check for combo execution
+                            const combo = this.comboSystem.checkCombos(player);
+                            let damageMultiplier = 1.0;
+                            
+                            if (combo) {
+                                damageMultiplier = combo.damageMultiplier;
+                                // Combo visual effects
+                                this.polish.screenEffects.screenShake(combo.effects.shake || 3, 0.2);
+                                if (combo.effects.flash) {
+                                    this.polish.screenEffects.flash('#FFD700', 0.5, 0.15);
+                                }
+                                // Combo particles
+                                for (let i = 0; i < 15; i++) {
+                                    this.polish.particles.emit('spark', enemy.x, enemy.y - 30, { color: '#FFD700' });
+                                }
+                                this.polish.soundManager.play('hit');
+                            }
+                            
                             // Hit!
-                            enemy.health -= attackDamage;
+                            const finalDamage = Math.floor(attackDamage * damageMultiplier);
+                            enemy.health -= finalDamage;
                             enemy.state = 'hurt';
                             enemy.stateTime = 0;
-                            enemy.vx = player.facing * 5;
+                            enemy.vx = player.facing * (combo ? combo.effects.knockback || 5 : 5);
+                            
+                            // Vibration feedback
+                            if (window.gamepadManager) {
+                                gamepadManager.vibrate(player.index || 0, 0.5, 100);
+                            }
+                            
+                            // Hit particles
+                            for (let i = 0; i < (combo ? 10 : 5); i++) {
+                                this.polish.particles.emit('hit', enemy.x, enemy.y - 30);
+                            }
                             
                             // Combo
                             player.combo++;
@@ -692,9 +800,10 @@
                                 type: 'hit',
                                 x: enemy.x,
                                 y: enemy.y - 30,
-                                text: player.attackType === 'special' ? 'SPECIAL!' : 
-                                      player.combo > 2 ? `${player.combo} HIT!` : `${attackDamage}`,
-                                color: player.combo > 4 ? '#FFD700' : '#FFF',
+                                text: combo ? combo.name.toUpperCase() + '!' : 
+                                      player.attackType === 'special' ? 'SPECIAL!' : 
+                                      player.combo > 2 ? `${player.combo} HIT!` : `${finalDamage}`,
+                                color: combo ? '#FFD700' : player.combo > 4 ? '#FFD700' : '#FFF',
                                 life: 0.5
                             });
                             
@@ -707,6 +816,15 @@
                                 // Grant XP
                                 const xpGain = Math.floor(enemy.points / 5) + (enemy.isBoss ? 100 : 0);
                                 this.gainXP(player, xpGain);
+                                
+                                // Death effects - screen shake and particles
+                                this.polish.screenEffects.screenShake(enemy.isBoss ? 10 : 5, enemy.isBoss ? 0.4 : 0.2);
+                                this.polish.soundManager.play('explosion');
+                                
+                                // Explosion particles
+                                for (let i = 0; i < (enemy.isBoss ? 50 : 20); i++) {
+                                    this.polish.particles.emit('explosion', enemy.x, enemy.y - 30, { color: enemy.color });
+                                }
                                 
                                 // Death effect
                                 this.effects.push({
@@ -735,6 +853,11 @@
                                         type: Math.random() < 0.7 ? 'health' : 'power',
                                         life: 10
                                     });
+                                    
+                                    // Powerup particles
+                                    for (let i = 0; i < 10; i++) {
+                                        this.polish.particles.emit('powerup', enemy.x, enemy.y);
+                                    }
                                 }
                                 
                                 // Remove enemy
@@ -899,6 +1022,9 @@
             }
             
             render() {
+                // Apply screen effects (shake, zoom)
+                const restoreEffects = this.polish.screenEffects.apply(this.ctx, this.canvas);
+                
                 const stageInfo = this.stageData[this.stage] || this.stageData[1];
                 
                 // Clear with stage-specific background
@@ -962,6 +1088,12 @@
                 
                 // State screens
                 this.renderStateScreens();
+                
+                // Restore screen effects (flash, overlays)
+                restoreEffects();
+                
+                // Render particles on top
+                this.polish.particles.render(this.ctx, { x: this.worldX, y: 0 });
             }
             
             renderStageTransition() {
@@ -1599,13 +1731,29 @@
         
         let game;
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialize unified auth UI for login across all pages
-            if (window.GameUI) {
-                window.gameUI = new GameUI();
-                window.gameUI.init();
-            }
-
+            // Initialize Universal Game Integration
+            window.gameIntegration = new UniversalGameIntegration('dragon-fist', 'Dragon Fist');
+            
+            // Initialize game
             game = new DragonFist('game-canvas');
+            
+            // Initialize Gamepad Configuration UI
+            if (window.GamepadConfigurator) {
+                window.gamepadConfig = new GamepadConfigurator();
+            }
+            
+            // Add Configure Controls button
+            const controlsDiv = document.querySelector('.controls');
+            const configBtn = document.createElement('button');
+            configBtn.textContent = '🎮 Configure Controls';
+            configBtn.onclick = () => {
+                if (window.gamepadConfig) {
+                    window.gamepadConfig.show();
+                    window.gamepadConfig.applyPreset('beatEmUp'); // Beat-em-up preset
+                }
+            };
+            controlsDiv.appendChild(configBtn);
+            
             if (window.GamepadWidget) new GamepadWidget('gamepad-status');
         });
     </script>
