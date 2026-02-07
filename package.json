@@ -1,23 +1,31 @@
 {
   "name": "9dttt",
-  "version": "1.0.0",
-  "description": "A modular, scalable multiplayer game library featuring accessible and strategic games",
+  "version": "2.0.0",
+  "description": "Full-stack educational game platform with 31 games, blockchain education, and multiplayer support",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "build": "echo 'Building for production'",
+    "vercel-build": "echo 'Vercel build complete'",
+    "test": "echo 'Running tests...'"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   },
   "keywords": [
     "games",
+    "education",
+    "blockchain",
+    "crypto",
+    "web3",
+    "multiplayer",
     "tic-tac-toe",
     "ultimate-tictactoe",
-    "multiplayer",
     "accessible-games"
   ],
-  "author": "",
+  "author": "9DTTT Team",
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -27,6 +35,14 @@
     "jsonwebtoken": "^9.0.2",
     "redis": "^4.6.12",
     "socket.io": "^4.7.4",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "cors": "^2.8.5",
+    "mongoose": "^8.0.3",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "compression": "^1.7.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
   }
 }
