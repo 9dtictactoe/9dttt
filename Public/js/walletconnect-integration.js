@@ -40,13 +40,17 @@ class WalletConnectIntegration {
      */
     async connectEthereum() {
         try {
+            // TODO: Move Infura ID to environment variable for production
+            // Get from server: const config = await fetch('/api/config/walletconnect').then(r => r.json());
+            const infuraId = "9aa3d95b3bc440fa88ea12eaa4456161"; // Public demo key - replace in production
+            
             // Create WalletConnect Provider
             this.provider = new window.WalletConnectProvider.default({
-                infuraId: "9aa3d95b3bc440fa88ea12eaa4456161", // Public Infura ID for demos
+                infuraId: infuraId,
                 rpc: {
-                    1: "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
-                    5: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
-                    11155111: "https://sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
+                    1: `https://mainnet.infura.io/v3/${infuraId}`,
+                    5: `https://goerli.infura.io/v3/${infuraId}`,
+                    11155111: `https://sepolia.infura.io/v3/${infuraId}`
                 },
                 qrcode: true,
                 chainId: 1 // Ethereum mainnet
@@ -84,8 +88,12 @@ class WalletConnectIntegration {
         }
 
         try {
-            // Convert message to hex
-            const hexMessage = '0x' + Buffer.from(message, 'utf8').toString('hex');
+            // Convert message to hex using TextEncoder (browser-compatible)
+            const encoder = new TextEncoder();
+            const messageBytes = encoder.encode(message);
+            const hexMessage = '0x' + Array.from(messageBytes)
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
             
             const signature = await this.provider.request({
                 method: 'personal_sign',

@@ -164,15 +164,21 @@ class MultiChainWallet {
             // Save connection state
             this.saveConnectionState();
 
+            // Remove any existing listeners to prevent duplicates
+            if (this._accountsChangedHandler) {
+                window.ethereum.removeListener('accountsChanged', this._accountsChangedHandler);
+            }
+
             // Listen for account changes
-            window.ethereum.on('accountsChanged', (accounts) => {
+            this._accountsChangedHandler = (accounts) => {
                 if (accounts.length === 0) {
                     this.clearConnectionState();
                 } else if (accounts[0] !== this.address) {
                     this.address = accounts[0];
                     this.saveConnectionState();
                 }
-            });
+            };
+            window.ethereum.on('accountsChanged', this._accountsChangedHandler);
 
             return {
                 success: true,
@@ -236,10 +242,16 @@ class MultiChainWallet {
             // Save connection state
             this.saveConnectionState();
 
+            // Remove any existing listeners to prevent duplicates
+            if (this._solanaDisconnectHandler) {
+                window.solana.removeListener('disconnect', this._solanaDisconnectHandler);
+            }
+
             // Listen for disconnection
-            window.solana.on('disconnect', () => {
+            this._solanaDisconnectHandler = () => {
                 this.clearConnectionState();
-            });
+            };
+            window.solana.on('disconnect', this._solanaDisconnectHandler);
 
             return {
                 success: true,
@@ -378,7 +390,17 @@ class MultiChainWallet {
      * Disconnect current wallet
      */
     async disconnect() {
+        // Clean up event listeners
+        if (this.chain === 'ethereum' && window.ethereum && this._accountsChangedHandler) {
+            window.ethereum.removeListener('accountsChanged', this._accountsChangedHandler);
+            this._accountsChangedHandler = null;
+        }
+        
         if (this.chain === 'solana' && window.solana) {
+            if (this._solanaDisconnectHandler) {
+                window.solana.removeListener('disconnect', this._solanaDisconnectHandler);
+                this._solanaDisconnectHandler = null;
+            }
             await window.solana.disconnect();
         }
         
