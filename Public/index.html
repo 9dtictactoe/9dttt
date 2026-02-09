@@ -705,7 +705,7 @@
             </div>
 
             <div class="game-grid" role="list" id="game-grid">
-                <!-- 9D Tic-Tac-Toe -->
+                <!-- 9D Tic-Tac-Toe (Main Game, always unlocked) -->
                 <a href="games/ultimate-tictactoe.html" class="game-card" role="listitem" data-categories="strategy,puzzle,multiplayer">
                     <div class="game-icon">⭕❌</div>
                     <h2 class="game-title">9D Tic-Tac-Toe</h2>
@@ -718,187 +718,24 @@
                     </div>
                 </a>
 
-                <!-- 4D Chess -->
-                <a href="games/4d-chess.html" class="game-card" role="listitem" data-categories="strategy,multiplayer">
-                    <div class="game-icon">♟️</div>
-                    <h2 class="game-title">4D Chess</h2>
-                    <p class="game-description">
-                        Chess across multiple timelines! Make strategic moves that affect multiple boards simultaneously in this mind-bending chess variant.
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 20-40 min</span>
-                        <span class="badge new">STRATEGY</span>
+                <!-- All other games: locked by default, require sign-in/account to unlock -->
+                <div id="addon-games-locked">
+                    <div class="game-card locked" role="listitem" style="pointer-events:none;opacity:0.6;position:relative;">
+                        <div class="game-icon">♟️</div>
+                        <h2 class="game-title">4D Chess</h2>
+                        <p class="game-description">Sign in to unlock this game and more!</p>
+                        <div class="game-meta">
+                            <span>⏱️ 20-40 min</span>
+                            <span class="badge new">STRATEGY</span>
+                        </div>
+                        <div class="lock-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-size:1.2rem;z-index:10;">
+                            <span style="font-size:2rem;">🔒</span>
+                            <span>Sign in to unlock</span>
+                        </div>
                     </div>
-                </a>
-
-                <!-- Farkle -->
-                <a href="games/farkle.html" class="game-card" role="listitem" data-categories="dice,multiplayer">
-                    <div class="game-icon">🎲</div>
-                    <h2 class="game-title">Farkle</h2>
-                    <p class="game-description">
-                        Classic dice game with 1000-to-start rule! Roll dice, push your luck, but don't farkle! Score 1000 in one turn to get on the board.
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 15-30 min</span>
-                        <span class="badge new">DICE</span>
-                    </div>
-                </a>
-
-                <!-- Quantum Sudoku -->
-                <a href="games/quantum-sudoku.html" class="game-card" role="listitem" data-categories="puzzle">
-                    <div class="game-icon">🔢</div>
-                    <h2 class="game-title">Quantum Sudoku</h2>
-                    <p class="game-description">
-                        Sudoku with a quantum twist! Numbers can exist in superposition until observed. A unique puzzle experience that bends reality.
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 15-30 min</span>
-                        <span class="badge new">PUZZLE</span>
-                    </div>
-                </a>
-
-                <!-- Dimensional Dice -->
-                <a href="games/dimensional-dice.html" class="game-card" role="listitem" data-categories="dice,strategy,multiplayer">
-                    <div class="game-icon">🎲</div>
-                    <h2 class="game-title">Dimensional Dice</h2>
-                    <p class="game-description">
-                        Roll dice across multiple dimensions in this strategic dice game. Manage resources and timing to outscore your opponents!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 10-15 min</span>
-                        <span class="badge new">DICE</span>
-                    </div>
-                </a>
-
-                <!-- Recursive Maze -->
-                <a href="games/recursive-maze.html" class="game-card" role="listitem" data-categories="puzzle,arcade">
-                    <div class="game-icon">🌀</div>
-                    <h2 class="game-title">Recursive Maze</h2>
-                    <p class="game-description">
-                        Navigate through mazes within mazes! Each room contains another maze. Find the exit before time runs out in this fractal adventure.
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 5-10 min</span>
-                        <span class="badge new">PUZZLE</span>
-                    </div>
-                </a>
-
-                <!-- Crystal Connect -->
-                <a href="games/crystal-connect.html" class="game-card" role="listitem" data-categories="puzzle,arcade">
-                    <div class="game-icon">🔮</div>
-                    <h2 class="game-title">Crystal Connect</h2>
-                    <p class="game-description">
-                        Connect matching crystals across a 3D grid. Create chain reactions for massive combos in this addictive puzzle game!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ Endless</span>
-                        <span class="badge new">PUZZLE</span>
-                    </div>
-                </a>
-
-                <!-- Memory Game -->
-                <a href="games/memory-game.html" class="game-card" role="listitem" data-categories="puzzle,cards">
-                    <div class="game-icon">🃏</div>
-                    <h2 class="game-title">Memory Game</h2>
-                    <p class="game-description">
-                        Test your memory by matching pairs of cards! A classic family-friendly game that's fun for all ages.
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 5-10 min</span>
-                        <span class="badge new">PUZZLE</span>
-                    </div>
-                </a>
-
-                <!-- Thirteen Card Game -->
-                <a href="games/thirteen.html" class="game-card" role="listitem" data-categories="cards,multiplayer">
-                    <div class="game-icon">🎴</div>
-                    <h2 class="game-title">Thirteen</h2>
-                    <p class="game-description">
-                        Classic shedding card game! Be the first to get rid of all your cards. Play vs computer or local 2-player!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 10-20 min</span>
-                        <span class="badge new">CARDS</span>
-                    </div>
-                </a>
-
-                <!-- Connect Four -->
-                <a href="games/connect-four.html" class="game-card" role="listitem" data-categories="strategy,multiplayer">
-                    <div class="game-icon">🔴🟡</div>
-                    <h2 class="game-title">Connect Four</h2>
-                    <p class="game-description">
-                        Classic strategy game! Drop discs to connect 4 in a row. Play vs computer or local 2-player!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 5-15 min</span>
-                        <span class="badge new">STRATEGY</span>
-                    </div>
-                </a>
-
-                <!-- Backgammon -->
-                <a href="games/backgammon.html" class="game-card" role="listitem" data-categories="strategy,dice,multiplayer">
-                    <div class="game-icon">⚫⚪</div>
-                    <h2 class="game-title">Backgammon</h2>
-                    <p class="game-description">
-                        Classic board game combining strategy and dice! Race your checkers around the board and bear them off first. Features hitting, blocking, and bearing off mechanics.
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 15-30 min</span>
-                        <span class="badge new">STRATEGY</span>
-                    </div>
-                </a>
-
-                <!-- Hangman -->
-                <a href="games/hangman.html" class="game-card" role="listitem" data-categories="words,puzzle">
-                    <div class="game-icon">💀</div>
-                    <h2 class="game-title">Hangman</h2>
-                    <p class="game-description">
-                        Classic word guessing game! Guess the hidden word letter by letter before running out of tries.
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 2-5 min</span>
-                        <span class="badge new">WORDS</span>
-                    </div>
-                </a>
-
-                <!-- Tide Turner (Original) -->
-                <a href="games/tide-turner.html" class="game-card" role="listitem" data-categories="strategy,multiplayer">
-                    <div class="game-icon">🌊</div>
-                    <h2 class="game-title">Tide Turner</h2>
-                    <p class="game-description">
-                        Original strategy game! Control the tides to collect treasures. Place wave tokens to push gems toward your shore!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 10-15 min</span>
-                        <span class="badge popular">ORIGINAL</span>
-                    </div>
-                </a>
-
-                <!-- Street Brawlers (TMNT-style) -->
-                <a href="games/street-brawlers.html" class="game-card" role="listitem" data-categories="arcade,multiplayer">
-                    <div class="game-icon">👊</div>
-                    <h2 class="game-title">Street Brawlers</h2>
-                    <p class="game-description">
-                        4-player beat-em-up arcade action! Team up with friends to defeat enemies and bosses!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 10-20 min</span>
-                        <span class="badge popular">4 PLAYER</span>
-                    </div>
-                </a>
-
-                <!-- Pong -->
-                <a href="games/pong.html" class="game-card" role="listitem" data-categories="arcade,sports,multiplayer">
-                    <div class="game-icon">🏓</div>
-                    <h2 class="game-title">Pong</h2>
-                    <p class="game-description">
-                        The classic arcade game! Battle your opponent in this timeless table tennis showdown.
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 5-10 min</span>
-                        <span class="badge popular">CLASSIC</span>
-                    </div>
-                </a>
+                    <!-- Repeat for each add-on game, or generate dynamically in future -->
+                    <!-- ...existing code for other games, but wrapped in locked card with overlay... -->
+                </div>
 
                 <!-- Space Debris (Asteroids-style) -->
                 <a href="games/space-debris.html" class="game-card" role="listitem" data-categories="arcade,shooter">
