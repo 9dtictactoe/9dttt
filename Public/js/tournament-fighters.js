@@ -567,7 +567,7 @@ class TournamentFighters {
     }
 }
 
-let game;
+window.game = null;
 window.addEventListener('load', () => {
-    game = new TournamentFighters();
+    window.game = new TournamentFighters();
 });

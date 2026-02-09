@@ -308,6 +308,12 @@ class SkyAceCombat {
         this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
+        // Don't draw game objects if game hasn't started
+        if (!this.player) {
+            this.drawRadar();
+            return;
+        }
+        
         // Ground/horizon
         const horizonY = this.canvas.height / 2 + this.player.pitch * 200;
         this.ctx.fillStyle = '#2d5016';
@@ -457,7 +463,7 @@ class SkyAceCombat {
     }
 }
 
-let game;
+window.game = null;
 window.addEventListener('load', () => {
-    game = new SkyAceCombat();
+    window.game = new SkyAceCombat();
 });

@@ -823,7 +823,7 @@ class ContraCommando {
 }
 
 // Initialize
-let game;
+window.game = null;
 window.addEventListener('load', () => {
-    game = new ContraCommando();
+    window.game = new ContraCommando();
 });
