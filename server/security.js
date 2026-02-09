@@ -338,8 +338,8 @@ class Security {
             // Cross-Origin policies
             // Use same-origin-allow-popups to allow games to open properly
             res.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
-            // Use cross-origin to allow game resources to load properly in the browser
-            res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+            // Use same-site to allow game resources to load within the same site while maintaining security
+            res.set('Cross-Origin-Resource-Policy', 'same-site');
 
             next();
         };
