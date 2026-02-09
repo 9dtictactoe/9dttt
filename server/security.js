@@ -336,9 +336,11 @@ class Security {
             );
 
             // Cross-Origin policies
-            // Use same-origin-allow-popups to allow games to open properly
+            // same-origin-allow-popups: Allows popups to maintain access to the opener window,
+            // enabling game windows to interact properly while still protecting against cross-origin attacks
             res.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
-            // Use same-site to allow game resources to load within the same site while maintaining security
+            // same-site: Permits resources from the same site but different origins (e.g., subdomains)
+            // to be loaded, allowing games to access their assets while blocking cross-site resource access
             res.set('Cross-Origin-Resource-Policy', 'same-site');
 
             next();
