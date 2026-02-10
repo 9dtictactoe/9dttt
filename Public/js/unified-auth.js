@@ -461,7 +461,12 @@ class UnifiedAuth {
 // Create and export global instance
 if (typeof window !== 'undefined') {
     window.unifiedAuth = new UnifiedAuth();
-    
+
+    // Ensure both addListener and onAuthStateChanged are always available and identical
+    window.unifiedAuth.addListener = function(callback) {
+        return window.unifiedAuth.onAuthStateChanged(callback);
+    };
+
     // Auto-initialize auth on page load
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
@@ -474,7 +479,7 @@ if (typeof window !== 'undefined') {
             console.error('Auth init failed:', err);
         });
     }
-    
+
     // Legacy compatibility - map to old authClient API
     window.authClient = {
         get user() { return window.unifiedAuth.getUser(); },
@@ -490,7 +495,9 @@ if (typeof window !== 'undefined') {
         updateProfile: (...args) => window.unifiedAuth.updateProfile(...args),
         getAuthHeader: () => window.unifiedAuth.getAuthHeader()
     };
-    
+    // Also ensure both methods exist on authClient
+    window.authClient.addListener = window.authClient.onAuthStateChanged;
+
     // Legacy compatibility - map to old universalAuth API
     window.universalAuth = {
         get user() { return window.unifiedAuth.getUser(); },
@@ -499,6 +506,8 @@ if (typeof window !== 'undefined') {
         saveUser: async (user) => {
             // Legacy method - update profile
             return window.unifiedAuth.updateProfile(user);
-        }
+        },
+        onAuthStateChanged: (...args) => window.unifiedAuth.onAuthStateChanged(...args),
+        addListener: (...args) => window.unifiedAuth.onAuthStateChanged(...args)
     };
 }

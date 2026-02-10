@@ -24,9 +24,8 @@ class GameUI {
         if (window.authClient) {
             await window.authClient.init();
             this.updateAuthUI();
-            
             // Listen for auth state changes
-            window.authClient.onAuthStateChanged(() => this.updateAuthUI());
+            window.authClient.addListener(() => this.updateAuthUI());
         }
         
         // Check URL params for auth callbacks (legacy)
