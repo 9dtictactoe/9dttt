@@ -64,14 +64,18 @@
 
     <!-- Core Systems -->
     <script src="../js/gamepad-manager.js"></script>
+    <script src="../js/controller-guide.js"></script>
+    <script src="../js/advanced-graphics.js"></script>
+    <script src="../js/game-error-handler.js"></script>
     <script src="../js/accessibility-manager.js"></script>
     <script src="../js/game-engine.js"></script>
-    
+    <script src="../js/sprite-renderer.js"></script>
+
     <!-- New Enhancement Systems -->
     <script src="../js/enhanced-combat.js"></script>
     <script src="../js/gamepad-config.js"></script>
     <script src="../js/game-polish.js"></script>
-    
+
     <!-- Universal Integration Systems -->
     <script src="../js/multi-chain-wallet.js"></script>
     <script src="../js/unified-auth.js"></script>
@@ -90,7 +94,10 @@
                 this.ctx = this.canvas.getContext('2d');
                 this.width = this.canvas.width;
                 this.height = this.canvas.height;
-                
+
+                // Initialize sprite renderer for better graphics
+                this.spriteRenderer = new SpriteRenderer();
+
                 this.state = 'menu';
                 this.numPlayers = 1;
                 

@@ -495,6 +495,21 @@ app.get('/api/stats', async (req, res) => {
     }
 });
 
+// Client configuration (public values only)
+app.get('/api/config', (req, res) => {
+    res.json({
+        success: true,
+        config: {
+            // Only expose safe, public configuration
+            infuraKey: config.INFURA_KEY,
+            alchemyKey: config.ALCHEMY_API_KEY,
+            environment: config.NODE_ENV,
+            maintenanceMode: config.MAINTENANCE_MODE
+        }
+    });
+});
+
+
 // ============================================
 // Monetization Routes
 // ============================================

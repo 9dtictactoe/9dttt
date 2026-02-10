@@ -30,4 +30,8 @@ module.exports = {
     MAX_MESSAGES_PER_MINUTE: 30,
     MAX_LOGIN_ATTEMPTS: 5,
     LOGIN_LOCKOUT_TIME: 15 * 60 * 1000, // 15 minutes
+
+    // Web3 / Blockchain Configuration
+    INFURA_KEY: process.env.INFURA_KEY || null,
+    ALCHEMY_API_KEY: process.env.ALCHEMY_API_KEY || null,
 };

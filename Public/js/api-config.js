@@ -31,27 +31,34 @@
     
     // Determine which backend to use
     let backendUrl;
+    let wsUrl;
+    let isProxied = false;
+
     if (isLocalhost) {
+        // Development: Connect directly to local backend
         backendUrl = API_CONFIG.development;
-    } else if (isVercel && !isProduction) {
-        backendUrl = API_CONFIG.preview;
-    } else {
-        backendUrl = API_CONFIG.production;
-    }
-    
-    // For Vercel/production, use relative URLs (they're proxied)
-    if (isProduction || isVercel) {
+        wsUrl = backendUrl.replace('https:', 'wss:').replace('http:', 'ws:');
+    } else if (isProduction || isVercel) {
+        // Production/Vercel: Use relative URLs (proxied by Vercel)
         backendUrl = ''; // Empty string = same domain (proxied by Vercel)
+        // WebSocket URL needs to be the current domain
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${protocol}//${window.location.host}`;
+        isProxied = true;
+    } else {
+        // Fallback: Direct connection to production backend
+        backendUrl = API_CONFIG.production;
+        wsUrl = backendUrl.replace('https:', 'wss:').replace('http:', 'ws:');
     }
-    
+
     // Global API configuration
     window.API_BASE_URL = backendUrl;
     window.API_CONFIG = {
         baseUrl: backendUrl,
         apiUrl: `${backendUrl}/api`,
-        wsUrl: backendUrl.replace('https:', 'wss:').replace('http:', 'ws:'),
+        wsUrl: wsUrl,
         environment: isLocalhost ? 'development' : 'production',
-        isProxied: isProduction || isVercel
+        isProxied: isProxied
     };
     
     // Silent configuration

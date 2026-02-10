@@ -36,8 +36,16 @@ class MultiplayerClient {
             return false;
         }
 
-        this.socket = io({
-            transports: ['websocket', 'polling']
+        // Get WebSocket URL from API config
+        const socketUrl = window.API_CONFIG?.wsUrl || window.API_BASE_URL || '';
+        console.log('Connecting to Socket.io server:', socketUrl || '(same domain)');
+
+        this.socket = io(socketUrl, {
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            reconnectionAttempts: 5
         });
 
         this.setupEventListeners();

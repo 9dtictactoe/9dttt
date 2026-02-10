@@ -28,8 +28,14 @@ class UnifiedAuth {
                 // Check browser capabilities
                 this.hasBrowserAuth = !!window.PasswordCredential;
                 
+                // Wait for wallet to initialize
+                if (window.multiChainWallet && !window.multiChainWallet.isInitialized) {
+                    await window.multiChainWallet.init();
+                }
+                
                 // Load existing token
                 this.token = localStorage.getItem('auth_token');
+                const authMethod = localStorage.getItem('auth_method');
                 
                 if (this.token) {
                     // Verify existing session
@@ -38,6 +44,16 @@ class UnifiedAuth {
                         this.user = result.user;
                         this.notifyListeners();
                         this.isInitialized = true;
+                        
+                        // If wallet auth, ensure wallet is still connected
+                        if (authMethod === 'wallet' && window.multiChainWallet) {
+                            const walletStatus = window.multiChainWallet.getStatus();
+                            if (!walletStatus.connected) {
+                                console.warn('⚠️ Wallet disconnected, clearing auth');
+                                this.clearSession();
+                            }
+                        }
+                        
                         return true;
                     } else {
                         this.clearSession();
@@ -215,6 +231,9 @@ class UnifiedAuth {
                 case 'ethereum':
                     walletResult = await window.multiChainWallet.connectEthereum();
                     break;
+                case 'walletconnect':
+                    walletResult = await window.multiChainWallet.connectViaWalletConnect();
+                    break;
                 case 'solana':
                     walletResult = await window.multiChainWallet.connectSolana();
                     break;
@@ -239,23 +258,36 @@ class UnifiedAuth {
             
             const signResult = await window.multiChainWallet.signMessage(message);
 
-            // Create local user (backend integration coming soon)
-            this.user = {
-                id: `wallet_${walletResult.chain}_${walletResult.address.slice(0, 8)}`,
-                username: `${walletResult.wallet}User`,
-                displayName: `${walletResult.wallet} (${walletResult.address.slice(0, 6)}...${walletResult.address.slice(-4)})`,
-                wallet: walletResult.address,
-                chain: walletResult.chain,
-                walletType: walletResult.wallet,
-                isGuest: false,
-                profile: {
-                    avatar: {
-                        type: 'icon',
-                        icon: walletResult.chain === 'ethereum' ? '🦊' : walletResult.chain === 'solana' ? '👻' : '💎'
-                    }
-                }
-            };
+            // Authenticate with backend
+            const response = await fetch('/api/auth/wallet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chain: walletResult.chain,
+                    address: walletResult.address,
+                    signature: signResult.signature,
+                    message: message,
+                    wallet: walletResult.wallet
+                })
+            });
+
+            // Check for network or server errors
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Server error (${response.status}): ${errorText}`);
+            }
+
+            const authResult = await response.json();
+
+            if (!authResult.success) {
+                throw new Error(authResult.error || 'Wallet authentication failed');
+            }
+
+            // Store authenticated user and token
+            this.user = authResult.user;
+            this.token = authResult.token;
             
+            localStorage.setItem('auth_token', this.token);
             localStorage.setItem('auth_method', 'wallet');
             localStorage.setItem('wallet_chain', walletResult.chain);
             localStorage.setItem('wallet_address', walletResult.address);
@@ -429,7 +461,25 @@ class UnifiedAuth {
 // Create and export global instance
 if (typeof window !== 'undefined') {
     window.unifiedAuth = new UnifiedAuth();
-    
+
+    // Ensure both addListener and onAuthStateChanged are always available and identical
+    window.unifiedAuth.addListener = function(callback) {
+        return window.unifiedAuth.onAuthStateChanged(callback);
+    };
+
+    // Auto-initialize auth on page load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            window.unifiedAuth.init().catch(err => {
+                console.error('Auth init failed:', err);
+            });
+        });
+    } else {
+        window.unifiedAuth.init().catch(err => {
+            console.error('Auth init failed:', err);
+        });
+    }
+
     // Legacy compatibility - map to old authClient API
     window.authClient = {
         get user() { return window.unifiedAuth.getUser(); },
@@ -444,5 +494,20 @@ if (typeof window !== 'undefined') {
         verifyToken: () => window.unifiedAuth.verifyToken(),
         updateProfile: (...args) => window.unifiedAuth.updateProfile(...args),
         getAuthHeader: () => window.unifiedAuth.getAuthHeader()
+    };
+    // Also ensure both methods exist on authClient
+    window.authClient.addListener = window.authClient.onAuthStateChanged;
+
+    // Legacy compatibility - map to old universalAuth API
+    window.universalAuth = {
+        get user() { return window.unifiedAuth.getUser(); },
+        getUser: () => window.unifiedAuth.getUser(),
+        init: () => window.unifiedAuth.init(),
+        saveUser: async (user) => {
+            // Legacy method - update profile
+            return window.unifiedAuth.updateProfile(user);
+        },
+        onAuthStateChanged: (...args) => window.unifiedAuth.onAuthStateChanged(...args),
+        addListener: (...args) => window.unifiedAuth.onAuthStateChanged(...args)
     };
 }

@@ -141,7 +141,7 @@ class AuthUI {
                     box-shadow: 0 0 20px rgba(255,215,0,0.5);
                 }
                 
-                .wallet-badge {
+                .recommended-badge {
                     display: inline-block;
                     background: rgba(255,215,0,0.3);
                     padding: 2px 8px;
@@ -324,19 +324,13 @@ class AuthUI {
             </div>
             
             <div class="auth-methods">
-                ${window.firebase ? `
-                <button class="auth-button auth-button-google" onclick="window.authUI.loginWithGoogle()">
-                    <span class="auth-icon">G</span>
-                    <span>Continue with Google</span>
-                </button>
-                
-                <button class="auth-button auth-button-apple" onclick="window.authUI.loginWithApple()">
-                    <span class="auth-icon">🍎</span>
-                    <span>Continue with Apple</span>
+                <button class="auth-button auth-button-wallet" onclick="window.authUI.showWalletOptions()">
+                    <span class="auth-icon">💎</span>
+                    <span>Connect Wallet (XRP/SOL/ETH)</span>
+                    <span class="recommended-badge">✨ RECOMMENDED</span>
                 </button>
                 
                 <div class="auth-divider">or</div>
-                ` : ''}
                 
                 <button class="auth-button auth-button-wallet" onclick="window.authUI.showEmailLogin()">
                     <span class="auth-icon">✉️</span>
@@ -382,148 +376,13 @@ class AuthUI {
         `;
     }
     
-    async loginWithGoogle() {
-        try {
-            if (!window.firebase || !firebase.auth) {
-                alert('Firebase not available. Try email/password or wallet login instead.');
-                return;
-            }
-            
-            // Show loading state
-            const content = this.modal.querySelector('#authContent');
-            content.innerHTML = `
-                <div style="text-align: center; padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 20px;">🔍</div>
-                    <h2 style="color: #fff; margin-bottom: 10px;">Signing in with Google...</h2>
-                    <p style="color: rgba(255,255,255,0.7);">Please complete the sign-in in the popup window</p>
-                </div>
-            `;
-            
-            const provider = new firebase.auth.GoogleAuthProvider();
-            const result = await firebase.auth().signInWithPopup(provider);
-            
-            // Get ID token and verify with backend
-            const idToken = await result.user.getIdToken();
-            const verifyResponse = await fetch('/api/auth/firebase/verify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken })
-            });
-            
-            // Check for network errors
-            if (!verifyResponse.ok) {
-                throw new Error(`Server error: ${verifyResponse.status}`);
-            }
-            
-            const verifyResult = await verifyResponse.json();
-            
-            if (verifyResult.success) {
-                // Update unified auth
-                if (window.unifiedAuth) {
-                    window.unifiedAuth.user = verifyResult.user;
-                    window.unifiedAuth.token = verifyResult.token;
-                    localStorage.setItem('auth_token', verifyResult.token);
-                    localStorage.setItem('auth_method', 'firebase');
-                    window.unifiedAuth.notifyListeners();
-                }
-                this.hide();
-            } else {
-                // Sign out from Firebase if backend verification failed
-                await firebase.auth().signOut();
-                throw new Error(verifyResult.error || 'Authentication failed');
-            }
-        } catch (error) {
-            console.error('⚠️ Google login failed:', error.message);
-            
-            // Handle specific Firebase errors
-            if (error.code === 'auth/configuration-not-found') {
-                alert('⚠️ Google Sign-In is not enabled yet.\n\nPlease use:\n• 🦊 Wallet Login (MetaMask/Phantom/XUMM)\n• 📧 Email/Password\n• 👤 Guest Login');
-            } else if (error.code === 'auth/popup-blocked') {
-                alert('Popup blocked by browser. Please allow popups for this site.');
-            } else if (error.code === 'auth/popup-closed-by-user') {
-                // User closed popup - just show the login screen again
-                console.log('Google login cancelled by user');
-            } else {
-                alert('Google login failed: ' + (error.message || 'Please try another login method.'));
-            }
-            
-            // Restore the login screen
-            this.show();
-        }
-    }
-    
-    async loginWithApple() {
-        try {
-            if (!window.firebase || !firebase.auth) {
-                alert('Firebase not available. Try email/password or wallet login instead.');
-                return;
-            }
-            
-            // Show loading state
-            const content = this.modal.querySelector('#authContent');
-            content.innerHTML = `
-                <div style="text-align: center; padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 20px;">🍎</div>
-                    <h2 style="color: #fff; margin-bottom: 10px;">Signing in with Apple...</h2>
-                    <p style="color: rgba(255,255,255,0.7);">Please complete the sign-in in the popup window</p>
-                </div>
-            `;
-            
-            const provider = new firebase.auth.OAuthProvider('apple.com');
-            const result = await firebase.auth().signInWithPopup(provider);
-            
-            // Get ID token and verify with backend
-            const idToken = await result.user.getIdToken();
-            const verifyResponse = await fetch('/api/auth/firebase/verify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken })
-            });
-            
-            // Check for network errors
-            if (!verifyResponse.ok) {
-                throw new Error(`Server error: ${verifyResponse.status}`);
-            }
-            
-            const verifyResult = await verifyResponse.json();
-            
-            if (verifyResult.success) {
-                // Update unified auth
-                if (window.unifiedAuth) {
-                    window.unifiedAuth.user = verifyResult.user;
-                    window.unifiedAuth.token = verifyResult.token;
-                    localStorage.setItem('auth_token', verifyResult.token);
-                    localStorage.setItem('auth_method', 'firebase');
-                    window.unifiedAuth.notifyListeners();
-                }
-                this.hide();
-            } else {
-                // Sign out from Firebase if backend verification failed
-                await firebase.auth().signOut();
-                throw new Error(verifyResult.error || 'Authentication failed');
-            }
-        } catch (error) {
-            console.error('⚠️ Apple login failed:', error.message);
-            
-            // Handle specific Firebase errors
-            if (error.code === 'auth/configuration-not-found') {
-                alert('⚠️ Apple Sign-In is not enabled yet.\n\nPlease use:\n• 🦊 Wallet Login (MetaMask/Phantom/XUMM)\n• 📧 Email/Password\n• 👤 Guest Login');
-            } else if (error.code === 'auth/popup-blocked') {
-                alert('Popup blocked by browser. Please allow popups for this site.');
-            } else if (error.code === 'auth/popup-closed-by-user') {
-                // User closed popup - just show the login screen again
-                console.log('Apple login cancelled by user');
-            } else {
-                alert('Apple login failed: ' + (error.message || 'Please try another login method.'));
-            }
-            
-            // Restore the login screen
-            this.show();
-        }
-    }
     
     showLoginOptions() {
         this.show();
+    }
+    
+    showWalletOptions() {
+        this.loginWithWallet();
     }
     
     async loginWithWallet() {
@@ -561,6 +420,11 @@ class AuthUI {
                         <button class="auth-button" onclick="window.authUI.connectWallet('ethereum')" 
                                 style="background: linear-gradient(135deg, #627EEA 0%, #5270E8 100%);">
                             🦊 MetaMask (Ethereum)
+                        </button>
+                        
+                        <button class="auth-button" onclick="window.authUI.connectWallet('walletconnect')" 
+                                style="background: linear-gradient(135deg, #3B99FC 0%, #2980E8 100%);">
+                            📱 WalletConnect (Mobile)
                         </button>
                         
                         <button class="auth-button" onclick="window.authUI.connectWallet('auto')" 

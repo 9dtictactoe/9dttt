@@ -24,9 +24,8 @@ class GameUI {
         if (window.authClient) {
             await window.authClient.init();
             this.updateAuthUI();
-            
             // Listen for auth state changes
-            window.authClient.onAuthStateChanged(() => this.updateAuthUI());
+            window.authClient.addListener(() => this.updateAuthUI());
         }
         
         // Check URL params for auth callbacks (legacy)
@@ -54,23 +53,17 @@ class GameUI {
     }
 
     /**
-     * Create header UI with auth buttons
+     * Create header UI - Sign in button moved to bottom right corner (auth-ui.js)
      */
     createHeaderUI() {
         const header = document.querySelector('header');
         if (!header) return;
 
-        // Create user info section
+        // Create user info section (only shows when logged in)
         const userSection = document.createElement('div');
         userSection.id = 'user-section';
         userSection.className = 'user-section';
         userSection.innerHTML = `
-            <div class="auth-buttons" id="auth-buttons">
-                <button id="signin-btn" class="auth-btn signin-unified">
-                    <span class="signin-icon">👤</span>
-                    <span class="signin-text">Sign In</span>
-                </button>
-            </div>
             <div class="user-info" id="user-info" style="display: none;">
                 <div class="user-avatar" id="user-avatar"></div>
                 <span class="user-name" id="user-name"></span>
@@ -93,14 +86,7 @@ class GameUI {
             multiplayerBtn.addEventListener('click', () => this.showMultiplayerModal());
         }
 
-        // Event listeners
-        document.getElementById('signin-btn')?.addEventListener('click', () => {
-            if (window.authUI) {
-                window.authUI.show();
-            } else {
-                this.showAuthModal('login');
-            }
-        });
+        // Event listeners - signin button now in bottom right corner (auth-ui.js)
         document.getElementById('profile-btn')?.addEventListener('click', () => this.showProfileModal());
         document.getElementById('logout-btn')?.addEventListener('click', () => this.handleLogout());
     }
@@ -1157,10 +1143,4 @@ class GameUI {
 // Export GameUI class globally
 window.GameUI = GameUI;
 
-// Create global UI instance
-window.gameUI = new GameUI();
-
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    window.gameUI.init();
-});
+// Note: GameUI instance is created in game-init.js to avoid duplicate initialization

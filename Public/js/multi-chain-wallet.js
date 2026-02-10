@@ -9,6 +9,106 @@ class MultiChainWallet {
         this.connectedWallet = null;
         this.chain = null;
         this.address = null;
+        this.walletConnectProvider = null;
+        this.isInitialized = false;
+        this.initPromise = null;
+    }
+
+    /**
+     * Initialize wallet system - load saved connections
+     */
+    async init() {
+        if (this.initPromise) return this.initPromise;
+        
+        this.initPromise = (async () => {
+            try {
+                console.log('🔌 Initializing multi-chain wallet...');
+                
+                // Try to restore previous connection
+                const savedChain = localStorage.getItem('wallet_chain');
+                const savedAddress = localStorage.getItem('wallet_address');
+                const savedWallet = localStorage.getItem('wallet_type');
+                
+                if (savedChain && savedAddress && savedWallet) {
+                    console.log(`🔄 Restoring ${savedChain} wallet connection...`);
+                    this.chain = savedChain;
+                    this.address = savedAddress;
+                    this.connectedWallet = savedWallet;
+                    
+                    // Verify connection is still active
+                    const isStillConnected = await this.verifyConnection();
+                    if (!isStillConnected) {
+                        console.warn('⚠️ Previous wallet connection lost');
+                        this.clearConnectionState();
+                    } else {
+                        console.log('✅ Wallet connection restored');
+                    }
+                }
+                
+                this.isInitialized = true;
+                return true;
+            } catch (error) {
+                console.error('⚠️ Wallet initialization error:', error.message);
+                this.isInitialized = true;
+                return false;
+            }
+        })();
+        
+        return this.initPromise;
+    }
+
+    /**
+     * Verify if wallet is still connected
+     */
+    async verifyConnection() {
+        if (!this.address || !this.chain) return false;
+        
+        try {
+            switch (this.chain) {
+                case 'ethereum':
+                    if (!window.ethereum) return false;
+                    const accounts = await window.ethereum.request({ 
+                        method: 'eth_accounts' 
+                    });
+                    return accounts.includes(this.address);
+                    
+                case 'solana':
+                    if (!window.solana || !window.solana.isConnected) return false;
+                    return window.solana.publicKey?.toString() === this.address;
+                    
+                case 'xrp':
+                    // XRP wallets require manual reconnection
+                    return false;
+                    
+                default:
+                    return false;
+            }
+        } catch (error) {
+            return false;
+        }
+    }
+
+    /**
+     * Clear connection state
+     */
+    clearConnectionState() {
+        this.connectedWallet = null;
+        this.chain = null;
+        this.address = null;
+        localStorage.removeItem('wallet_chain');
+        localStorage.removeItem('wallet_address');
+        localStorage.removeItem('wallet_type');
+    }
+
+    /**
+     * Save connection state
+     */
+    saveConnectionState() {
+        if (this.chain && this.address && this.connectedWallet) {
+            localStorage.setItem('wallet_chain', this.chain);
+            localStorage.setItem('wallet_address', this.address);
+            localStorage.setItem('wallet_type', this.connectedWallet);
+        }
     }
 
     /**
@@ -29,8 +129,22 @@ class MultiChainWallet {
      * Connect to Ethereum (MetaMask, etc.)
      */
     async connectEthereum() {
+        // Try MetaMask first, fallback to WalletConnect
+        if (window.ethereum) {
+            return this.connectMetaMask();
+        } else if (window.walletConnect && window.walletConnect.isInitialized) {
+            return this.connectViaWalletConnect();
+        } else {
+            throw new Error('No Ethereum wallet found. Install MetaMask or use WalletConnect');
+        }
+    }
+
+    /**
+     * Connect via MetaMask
+     */
+    async connectMetaMask() {
         if (!window.ethereum) {
-            throw new Error('Ethereum wallet not found. Install MetaMask: https://metamask.io');
+            throw new Error('MetaMask not found. Install MetaMask: https://metamask.io');
         }
 
         try {
@@ -47,6 +161,25 @@ class MultiChainWallet {
                 method: 'eth_chainId' 
             });
 
+            // Save connection state
+            this.saveConnectionState();
+
+            // Remove any existing listeners to prevent duplicates
+            if (this._accountsChangedHandler) {
+                window.ethereum.removeListener('accountsChanged', this._accountsChangedHandler);
+            }
+
+            // Listen for account changes
+            this._accountsChangedHandler = (accounts) => {
+                if (accounts.length === 0) {
+                    this.clearConnectionState();
+                } else if (accounts[0] !== this.address) {
+                    this.address = accounts[0];
+                    this.saveConnectionState();
+                }
+            };
+            window.ethereum.on('accountsChanged', this._accountsChangedHandler);
+
             return {
                 success: true,
                 wallet: this.connectedWallet,
@@ -55,7 +188,38 @@ class MultiChainWallet {
                 chainId: parseInt(chainId, 16)
             };
         } catch (error) {
-            throw new Error(`Ethereum connection failed: ${error.message}`);
+            throw new Error(`MetaMask connection failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Connect via WalletConnect
+     */
+    async connectViaWalletConnect() {
+        if (!window.walletConnect) {
+            throw new Error('WalletConnect not initialized');
+        }
+
+        try {
+            const result = await window.walletConnect.connectEthereum();
+            
+            this.connectedWallet = 'WalletConnect';
+            this.chain = 'ethereum';
+            this.address = result.address;
+            this.walletConnectProvider = result.provider;
+
+            // Save connection state
+            this.saveConnectionState();
+
+            return {
+                success: true,
+                wallet: this.connectedWallet,
+                chain: this.chain,
+                address: this.address,
+                chainId: result.chainId
+            };
+        } catch (error) {
+            throw new Error(`WalletConnect connection failed: ${error.message}`);
         }
     }
 
@@ -74,6 +238,20 @@ class MultiChainWallet {
             this.connectedWallet = 'Phantom';
             this.chain = 'solana';
             this.address = publicKey;
+
+            // Save connection state
+            this.saveConnectionState();
+
+            // Remove any existing listeners to prevent duplicates
+            if (this._solanaDisconnectHandler) {
+                window.solana.removeListener('disconnect', this._solanaDisconnectHandler);
+            }
+
+            // Listen for disconnection
+            this._solanaDisconnectHandler = () => {
+                this.clearConnectionState();
+            };
+            window.solana.on('disconnect', this._solanaDisconnectHandler);
 
             return {
                 success: true,
@@ -116,6 +294,9 @@ class MultiChainWallet {
             this.chain = 'xrp';
             this.address = result.account;
 
+            // Save connection state
+            this.saveConnectionState();
+
             return {
                 success: true,
                 wallet: this.connectedWallet,
@@ -148,6 +329,9 @@ class MultiChainWallet {
             this.connectedWallet = 'Crossmark';
             this.chain = 'xrp';
             this.address = address;
+
+            // Save connection state
+            this.saveConnectionState();
 
             return {
                 success: true,
@@ -206,13 +390,21 @@ class MultiChainWallet {
      * Disconnect current wallet
      */
     async disconnect() {
+        // Clean up event listeners
+        if (this.chain === 'ethereum' && window.ethereum && this._accountsChangedHandler) {
+            window.ethereum.removeListener('accountsChanged', this._accountsChangedHandler);
+            this._accountsChangedHandler = null;
+        }
+        
         if (this.chain === 'solana' && window.solana) {
+            if (this._solanaDisconnectHandler) {
+                window.solana.removeListener('disconnect', this._solanaDisconnectHandler);
+                this._solanaDisconnectHandler = null;
+            }
             await window.solana.disconnect();
         }
         
-        this.connectedWallet = null;
-        this.chain = null;
-        this.address = null;
+        this.clearConnectionState();
         
         return { success: true };
     }
@@ -286,11 +478,20 @@ class MultiChainWallet {
         try {
             switch (this.chain) {
                 case 'ethereum':
-                    const signature = await window.ethereum.request({
-                        method: 'personal_sign',
-                        params: [message, this.address]
-                    });
-                    return { signature, address: this.address, chain: 'ethereum' };
+                    // Use WalletConnect provider if connected via WalletConnect
+                    if (this.connectedWallet === 'WalletConnect' && this.walletConnectProvider) {
+                        const signature = await window.walletConnect.signMessage(message, this.address);
+                        return { signature, address: this.address, chain: 'ethereum' };
+                    }
+                    // Otherwise use MetaMask
+                    else if (window.ethereum) {
+                        const signature = await window.ethereum.request({
+                            method: 'personal_sign',
+                            params: [message, this.address]
+                        });
+                        return { signature, address: this.address, chain: 'ethereum' };
+                    }
+                    throw new Error('No Ethereum provider available');
 
                 case 'solana':
                     const encodedMessage = new TextEncoder().encode(message);
@@ -353,6 +554,19 @@ class MultiChainWallet {
 if (typeof window !== 'undefined') {
     window.MultiChainWallet = MultiChainWallet;
     window.multiChainWallet = new MultiChainWallet();
+    
+    // Auto-initialize wallet on page load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            window.multiChainWallet.init().catch(err => {
+                console.error('Wallet init failed:', err);
+            });
+        });
+    } else {
+        window.multiChainWallet.init().catch(err => {
+            console.error('Wallet init failed:', err);
+        });
+    }
 }
 
 // Export for module systems

@@ -37,6 +37,11 @@ class Auth {
             return { success: false, error: 'Invalid email address' };
         }
 
+        // Block reserved wallet email patterns
+        if (email.toLowerCase().includes('@wallet.reserved.9dttt.internal')) {
+            return { success: false, error: 'Invalid email address - reserved domain' };
+        }
+
         if (password.length < 6) {
             return { success: false, error: 'Password must be at least 6 characters' };
         }
