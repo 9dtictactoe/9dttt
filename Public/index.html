@@ -657,7 +657,7 @@
                 </div>
 
                 <!-- Show Game Downloads link only if user is signed in -->
-                <div id="downloads-link-container" style="display:none; margin-bottom:18px; text-align:center;">
+                <div id="downloads-link-container" style="margin-bottom:18px; text-align:center;">
                     <a href="games.html" class="downloads-link" style="font-size:1.2rem; color:#FFD700; font-weight:bold; text-shadow:0 0 6px rgba(255,215,0,0.7);">
                         ⬇️ Download More Games &rarr;
                     </a>
@@ -668,7 +668,7 @@
                     🪙 INSERT COIN TO PLAY 🪙
                 </button>
 
-                <p>Welcome to the 9DTTT Game Library! Filter by category or browse all games:</p>
+                <p>Welcome to 9DTTT — the 9-dimensional tic-tac-toe arena.</p>
                 <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: var(--spacing-sm);">
                     🎮 <strong>Controller Support:</strong> D-Pad/Left Stick to navigate • A to select • LB/RB to switch to filters
                 </p>
@@ -706,305 +706,19 @@
                 </ul>
             </div>
 
-            <!-- Category Filter Tabs -->
-            <div class="category-filters" role="tablist" aria-label="Game categories">
-                <button class="filter-btn active" data-category="all" role="tab" aria-selected="true">
-                    <span class="filter-icon">🎮</span> All Games
-                </button>
-                <button class="filter-btn" data-category="arcade" role="tab" aria-selected="false">
-                    <span class="filter-icon">👾</span> Arcade
-                </button>
-                <button class="filter-btn" data-category="racing" role="tab" aria-selected="false">
-                    <span class="filter-icon">🏁</span> Racing
-                </button>
-                <button class="filter-btn" data-category="shooter" role="tab" aria-selected="false">
-                    <span class="filter-icon">🔫</span> Shooter
-                </button>
-                <button class="filter-btn" data-category="puzzle" role="tab" aria-selected="false">
-                    <span class="filter-icon">🧩</span> Puzzle
-                </button>
-                <button class="filter-btn" data-category="strategy" role="tab" aria-selected="false">
-                    <span class="filter-icon">♟️</span> Strategy
-                </button>
-                <button class="filter-btn" data-category="cards" role="tab" aria-selected="false">
-                    <span class="filter-icon">🃏</span> Cards
-                </button>
-                <button class="filter-btn" data-category="dice" role="tab" aria-selected="false">
-                    <span class="filter-icon">🎲</span> Dice
-                </button>
-                <button class="filter-btn" data-category="words" role="tab" aria-selected="false">
-                    <span class="filter-icon">📝</span> Words
-                </button>
-                <button class="filter-btn" data-category="educational" role="tab" aria-selected="false">
-                    <span class="filter-icon">🎓</span> Educational
-                </button>
-                <button class="filter-btn" data-category="sports" role="tab" aria-selected="false">
-                    <span class="filter-icon">🏒</span> Sports
-                </button>
-                <button class="filter-btn" data-category="multiplayer" role="tab" aria-selected="false">
-                    <span class="filter-icon">👥</span> Multiplayer
-                </button>
-            </div>
-
-            <div class="game-grid" role="list" id="game-grid">
-                <!-- 9D Tic-Tac-Toe (Main Game, always unlocked) -->
-                <a href="games/ultimate-tictactoe.html" class="game-card" role="listitem" data-categories="strategy,puzzle,multiplayer">
-                    <div class="game-icon">⭕❌</div>
-                    <h2 class="game-title">9D Tic-Tac-Toe</h2>
-                    <p class="game-description">
-                        9 Dimensional Tic-Tac-Toe - A strategic twist on classic tic-tac-toe! Play on 9 interconnected boards where your move determines your opponent's next board. Win boards to win the game!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 10-20 min</span>
-                        <span class="badge new">STRATEGY</span>
-                    </div>
-                </a>
-
-                <!-- 4D Chess - now fully playable -->
-                <a href="games/4d-chess.html" class="game-card" role="listitem" data-game-id="4d-chess" data-categories="strategy,board">
-                    <div class="game-icon">♟️</div>
-                    <h2 class="game-title">4D Chess</h2>
-                    <p class="game-description">Chess across multiple timelines! Moves in one timeline affect parallel boards. The ultimate strategic chess variant.</p>
-                    <div class="game-meta">
-                        <span>⏱️ 20-40 min</span>
-                        <span class="badge new">STRATEGY</span>
-                    </div>
-                </a>
-
-                <!-- Space Debris (Asteroids-style) -->
-                <a href="games/space-debris.html" class="game-card" role="listitem" data-categories="arcade,shooter">
-                    <div class="game-icon">🚀</div>
-                    <h2 class="game-title">Space Debris</h2>
-                    <p class="game-description">
-                        Navigate through asteroid fields! Blast space rocks and survive as long as you can!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ Endless</span>
-                        <span class="badge popular">ARCADE</span>
-                    </div>
-                </a>
-
-                <!-- Air Hockey -->
-                <a href="games/air-hockey.html" class="game-card" role="listitem" data-categories="arcade,sports,multiplayer">
-                    <div class="game-icon">🏒</div>
-                    <h2 class="game-title">Air Hockey</h2>
-                    <p class="game-description">
-                        Fast-paced 2-player action! Score goals by hitting the puck into your opponent's goal!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 5-10 min</span>
-                        <span class="badge new">SPORTS</span>
-                    </div>
-                </a>
-
-                <!-- Carnival Shooter -->
-                <a href="games/carnival-shooter.html" class="game-card" role="listitem" data-categories="arcade,shooter">
-                    <div class="game-icon">🎯</div>
-                    <h2 class="game-title">Carnival Shooter</h2>
-                    <p class="game-description">
-                        Shoot the star to win prizes! Classic carnival challenge where you can actually win!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 2-5 min</span>
-                        <span class="badge popular">WIN PRIZES</span>
-                    </div>
-                </a>
-
-                <!-- FPS Arena -->
-                <a href="games/fps-arena.html" class="game-card" role="listitem" data-categories="shooter,arcade">
-                    <div class="game-icon">🔫</div>
-                    <h2 class="game-title">FPS Arena</h2>
-                    <p class="game-description">
-                        Top-down arena shooter! Survive waves of enemies with WASD movement and mouse aiming. Multiple difficulty levels!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 5-15 min</span>
-                        <span class="badge new">SHOOTER</span>
-                    </div>
-                </a>
-
-                <!-- MotoGP Excite -->
-                <a href="games/motogp-excite.html" class="game-card" role="listitem" data-categories="racing,arcade">
-                    <div class="game-icon">🏍️</div>
-                    <h2 class="game-title">MotoGP Excite</h2>
-                    <p class="game-description">
-                        Excite Bike style MotoGP racing! Change lanes, hit boost pads, avoid obstacles, and use turbo wisely!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 5-10 min</span>
-                        <span class="badge new">RACING</span>
-                    </div>
-                </a>
-
-                <!-- Dragon Fist -->
-                <a href="games/dragon-fist.html" class="game-card" role="listitem" data-categories="arcade,multiplayer">
-                    <div class="game-icon">🐉</div>
-                    <h2 class="game-title">Dragon Fist</h2>
-                    <p class="game-description">
-                        Double Dragon style beat 'em up! Punch, kick, and combo your way through waves of enemies. 2-player co-op!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 10-20 min</span>
-                        <span class="badge popular">BEAT 'EM UP</span>
-                    </div>
-                </a>
-
-                <!-- Beach Games -->
-                <a href="games/beach-games.html" class="game-card" role="listitem" data-categories="arcade,sports">
-                    <div class="game-icon">🏄</div>
-                    <h2 class="game-title">Beach Games</h2>
-                    <p class="game-description">
-                        T&C Surf style minigames! Surfing, skateboarding, and hacky sack - all the beach vibes in one game!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 5-15 min</span>
-                        <span class="badge new">3 GAMES!</span>
-                    </div>
-                </a>
-
-                <!-- Crypto Quest Academy -->
-                <a href="games/crypto-quest.html" class="game-card" role="listitem" data-categories="educational,puzzle">
-                    <div class="game-icon">🚀💰</div>
-                    <h2 class="game-title">Crypto Quest Academy</h2>
-                    <p class="game-description">
-                        Learn blockchain, crypto, and Web3 through adventure! Create wallets, spot scams, mint NFTs, and master DeFi. 25 interactive lessons!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 30-90 min</span>
-                        <span class="badge new">FULL WEB3!</span>
-                    </div>
-                </a>
-
-                <!-- Brain Academy -->
-                <a href="games/brain-academy.html" class="game-card" role="listitem" data-categories="puzzle,educational">
-                    <div class="game-icon">🧠</div>
-                    <h2 class="game-title">Brain Academy</h2>
-                    <p class="game-description">
-                        Educational game collection! Math, spelling, geography, typing, memory, and pattern challenges for all ages.
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 5-10 min</span>
-                        <span class="badge new">EDUCATIONAL</span>
-                    </div>
-                </a>
-
-                <!-- Brain Age -->
-                <a href="games/brain-age.html" class="game-card" role="listitem" data-categories="puzzle,educational">
-                    <div class="game-icon">🎓</div>
-                    <h2 class="game-title">Brain Age</h2>
-                    <p class="game-description">
-                        Test your mental fitness! Quick calculation and memory challenges to keep your brain sharp.
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 3-5 min</span>
-                        <span class="badge popular">BRAIN TRAINING</span>
-                    </div>
-                </a>
-
-                <!-- Contra Commando -->
-                <a href="games/contra-commando.html" class="game-card" role="listitem" data-categories="arcade,shooter">
-                    <div class="game-icon">🎖️</div>
-                    <h2 class="game-title">Contra Commando</h2>
-                    <p class="game-description">
-                        Run-and-gun action! Platform shooter with power-ups, explosions, and wave-based enemies!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 10-15 min</span>
-                        <span class="badge new">RUN & GUN</span>
-                    </div>
-                </a>
-
-                <!-- Mega Heroes -->
-                <a href="games/mega-heroes.html" class="game-card" role="listitem" data-categories="arcade,shooter">
-                    <div class="game-icon">🤖</div>
-                    <h2 class="game-title">Mega Heroes</h2>
-                    <p class="game-description">
-                        Mega Man inspired action! Run, jump, and shoot through robot-filled levels. Defeat bosses to gain powers!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 15-30 min</span>
-                        <span class="badge popular">PLATFORMER</span>
-                    </div>
-                </a>
-
-                <!-- Monster Rampage -->
-                <a href="games/monster-rampage.html" class="game-card" role="listitem" data-categories="arcade">
-                    <div class="game-icon">🦖</div>
-                    <h2 class="game-title">Monster Rampage</h2>
-                    <p class="game-description">
-                        Rampage style destruction! Play as giant monsters and destroy buildings, vehicles, and everything in sight!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 10-20 min</span>
-                        <span class="badge new">DESTROY!</span>
-                    </div>
-                </a>
-
-                <!-- Reflex Master -->
-                <a href="games/reflex-master.html" class="game-card" role="listitem" data-categories="puzzle,arcade">
-                    <div class="game-icon">⚡</div>
-                    <h2 class="game-title">Reflex Master</h2>
-                    <p class="game-description">
-                        Test your reflexes! Quick reaction challenges, pattern recognition, and speed trials.
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 3-5 min</span>
-                        <span class="badge popular">SPEED TEST</span>
-                    </div>
-                </a>
-
-                <!-- Sky Ace Combat -->
-                <a href="games/sky-ace-combat.html" class="game-card" role="listitem" data-categories="arcade,shooter">
-                    <div class="game-icon">✈️</div>
-                    <h2 class="game-title">Sky Ace Combat</h2>
-                    <p class="game-description">
-                        1942-style vertical shooter! Pilot WWII fighters, dodge enemy fire, and defeat boss planes!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 10-15 min</span>
-                        <span class="badge new">SHMUP</span>
-                    </div>
-                </a>
-
-                <!-- Tournament Fighters -->
-                <a href="games/tournament-fighters.html" class="game-card" role="listitem" data-categories="arcade,multiplayer">
-                    <div class="game-icon">🥊</div>
-                    <h2 class="game-title">Tournament Fighters</h2>
-                    <p class="game-description">
-                        Street Fighter style combat! Special moves, combos, and one-on-one battles. Challenge the CPU or a friend!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 5-15 min</span>
-                        <span class="badge popular">FIGHTER</span>
-                    </div>
-                </a>
-
-                <!-- Wasteland Quest (AtomicFizzCaps) -->
-                <a href="games/zelda-adventure.html" class="game-card" role="listitem" data-categories="arcade,action">
-                    <div class="game-icon">☢️</div>
-                    <h2 class="game-title">Wasteland Quest</h2>
-                    <p class="game-description">
-                        Roam the Mojave Wasteland, battle Radroaches &amp; Ghouls, collect FIZZ caps, and defeat The Overseer in this Fallout-themed adventure!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 10-20 min</span>
-                        <span class="badge new">RPG</span>
-                    </div>
-                </a>
-
-                <!-- 9D Oregon Trail -->
-                <a href="games/oregon-trail.html" class="game-card" role="listitem" data-categories="arcade,strategy,puzzle">
-                    <div class="game-icon">🛖</div>
-                    <h2 class="game-title">9D Oregon Trail</h2>
-                    <p class="game-description">
-                        Survive the Dimensional Frontier — the classic trail reimagined across 9 bizarre dimensions! Hunt, trade, ford rivers, and dodge quantum bandits.
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 20-40 min</span>
-                        <span class="badge new">ADVENTURE</span>
-                    </div>
-                </a>
-            </div>
+            <!-- Flagship: 9D Tic-Tac-Toe is the only game on the home page.
+                 All other games live in the add-on catalog (games.html). -->
+            <section class="flagship" aria-labelledby="flagship-title" style="text-align:center; padding: var(--spacing-xl); border: 2px solid var(--primary-color); border-radius: var(--radius-lg); background: var(--secondary-bg);">
+                <div class="game-icon" style="font-size:4rem;">⭕❌</div>
+                <h2 id="flagship-title" class="game-title">9D Tic-Tac-Toe</h2>
+                <p class="game-description" style="max-width:640px; margin:0 auto var(--spacing-md);">
+                    A strategic twist on classic tic-tac-toe: play on 9 interconnected boards where your move decides your opponent's next board. Win boards to win the game.
+                </p>
+                <a href="games/ultimate-tictactoe.html" class="game-card flagship-play" style="display:inline-block; font-size:1.3rem; padding: var(--spacing-md) var(--spacing-xl);">▶ PLAY NOW</a>
+                <p style="margin-top: var(--spacing-lg);">
+                    <a href="games.html" class="downloads-link" style="color:#FFD700; font-weight:bold;">🎮 Browse add-on games &rarr;</a>
+                </p>
+            </section>
 
             <!-- About Section -->
             <section style="background: var(--secondary-bg); padding: var(--spacing-xl); border-radius: var(--radius-lg); border: 2px solid var(--primary-color); margin-top: var(--spacing-xxl);">
@@ -1088,7 +802,7 @@
             }
             if (window.unifiedAuth && window.unifiedAuth.addListener) {
                 window.unifiedAuth.addListener(function(user) {
-                    downloadsLink.style.display = user ? 'block' : 'none';
+                    // Catalog link is always visible now (flagship layout)
                     // Show/hide progression button based on auth status
                     const progressionBtn = document.getElementById('progression-btn');
                     if (progressionBtn) {
