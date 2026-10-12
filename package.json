@@ -7,7 +7,6 @@
     "start": "node server.js",
     "dev": "node server.js",
     "build": "echo 'Building for production'",
-    "vercel-build": "echo 'Vercel build complete'",
     "test": "echo 'Running tests...'",
     "setup:xrp-testnet": "node scripts/xrp-testnet-token.js",
     "bridge:check": "node scripts/check-bridge-status.js",
@@ -19,7 +18,7 @@
   },
   "engines": {
     "node": "24.x",
-    "npm": "10.x"
+    "npm": ">=10"
   },
   "keywords": [
     "games",
