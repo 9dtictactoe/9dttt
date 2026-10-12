@@ -44,6 +44,8 @@ services:
         value: https://api.9dttt.com
       
       # Redis (optional - for session persistence)
+      # TLS hosts (e.g. Layerbase): rediss://default:<password>@<host>:<port>
+      # rediss:// enables TLS with SNI servername = host. Set in dashboard, never commit.
       - key: REDIS_URL
         sync: false
       
