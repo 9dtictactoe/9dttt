@@ -404,11 +404,6 @@
     }
 }
 
-/* Board game: keep New Game / opponent picker / 3D toggle visible even when the
-   mobile adapter puts the page in arcade "game-active" mode (responsive.css hides .controls). */
-body.game-active .controls:not(#gamepad-status) {
-    display: flex !important;
-}
 
 .ai-mode-label {
     display: inline-flex;
