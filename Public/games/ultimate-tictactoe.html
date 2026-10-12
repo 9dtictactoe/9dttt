@@ -106,6 +106,15 @@
 
             <!-- Controls -->
             <div class="controls">
+                <label for="ai-mode-select" class="ai-mode-label">Opponent:
+                    <select id="ai-mode-select" aria-label="Choose opponent: local 2-player or AI difficulty">
+                        <option value="">2 Players (local)</option>
+                        <option value="easy">vs AI – Easy</option>
+                        <option value="medium">vs AI – Medium</option>
+                        <option value="hard">vs AI – Hard</option>
+                        <option value="expert">vs AI – Expert</option>
+                    </select>
+                </label>
                 <button id="new-game-btn" aria-label="Start a new game">New Game</button>
                 <button id="toggle-3d-btn" class="secondary" aria-label="Toggle between 2D and 3D view">Switch to 3D</button>
                 <button id="toggle-instructions-btn" class="secondary" aria-label="Toggle game instructions">How to Play</button>
@@ -166,6 +175,8 @@
     <script src="../js/multiplayer-client.js"></script>
     <script src="../js/game-ui.js"></script>
     <script src="../js/game-init.js"></script>
+    <script src="../js/ai/ttt9d-engine.js"></script>
+    <script src="../js/ai/ttt9d-ai-client.js"></script>
     <script src="../js/ultimate-tictactoe.js"></script>
     <script src="../js/ultimate-tictactoe-3d.js"></script>
 </body>

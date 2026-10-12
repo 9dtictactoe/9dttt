@@ -22,6 +22,12 @@ class UltimateTicTacToe {
         this.playerSymbol = null; // 'X' or 'O' - which symbol this player is
         this.opponentInfo = null;
 
+        // vs-AI properties (offline). aiDifficulty null = local 2-player
+        this.aiDifficulty = null;
+        this.aiSymbol = 'O';
+        this.aiThinking = false;
+        this.aiGeneration = 0;
+
         // 3D properties
         this.is3DMode = false;
         this.renderer3D = null;
@@ -202,6 +208,12 @@ class UltimateTicTacToe {
             }
         }
 
+        // In vs-AI mode, block input while it's the AI's turn
+        if (!this.onlineMode && this.aiDifficulty && (this.aiThinking || this.currentPlayer === this.aiSymbol)) {
+            this.showNotification('Wait for the AI to move');
+            return;
+        }
+
         // Check if this board is active
         if (this.activeBoard !== null && this.activeBoard !== boardIndex) {
             this.showNotification('You must play on the highlighted board!');
@@ -325,6 +337,50 @@ class UltimateTicTacToe {
 
         // Update the board
         this.updateBoard();
+
+        this.maybeScheduleAIMove();
+    }
+
+    /**
+     * Snapshot of the game in the AI engine's state format
+     */
+    getEngineState() {
+        return {
+            boards: this.boards.map(b => b.cells.slice()),
+            activeBoard: this.activeBoard,
+            currentPlayer: this.currentPlayer
+        };
+    }
+
+    /**
+     * Set vs-AI difficulty ('easy'|'medium'|'hard'|'expert') or null for local 2-player
+     */
+    setAIDifficulty(difficulty) {
+        this.aiDifficulty = difficulty || null;
+        this.resetGame();
+    }
+
+    maybeScheduleAIMove() {
+        if (this.onlineMode || !this.aiDifficulty || this.ultimateWinner) return;
+        if (this.currentPlayer !== this.aiSymbol || this.aiThinking) return;
+        if (!window.TTT9DAI || !window.TTT9DEngine) return;
+        this.aiThinking = true;
+        const generation = this.aiGeneration;
+        const turnIndicator = document.getElementById('turn-indicator');
+        if (turnIndicator) turnIndicator.innerHTML = 'AI is thinking…';
+        // Let the browser paint before searching
+        setTimeout(async () => {
+            try {
+                const result = await window.TTT9DAI.getAIMove(this.getEngineState(), this.aiDifficulty);
+                if (generation !== this.aiGeneration || this.ultimateWinner) return;
+                this.aiThinking = false;
+                this.makeLocalMove(result.move.board, result.move.cell);
+            } catch (e) {
+                console.error('AI move failed', e);
+            } finally {
+                if (generation === this.aiGeneration) this.aiThinking = false;
+            }
+        }, 250);
     }
 
     /**
@@ -499,6 +555,9 @@ class UltimateTicTacToe {
             } else {
                 message.textContent = `You lost. Final Score - X: ${this.scores.X}, O: ${this.scores.O}`;
             }
+        } else if (this.aiDifficulty) {
+            message.textContent = (winner === this.aiSymbol ? `AI (${this.aiDifficulty}) wins.` : '🎉 You beat the AI!') +
+                ` Final Score - X: ${this.scores.X}, O: ${this.scores.O}`;
         } else {
             message.textContent = `Player ${winner} wins! Final Score - X: ${this.scores.X}, O: ${this.scores.O}`;
         }
@@ -573,6 +632,8 @@ class UltimateTicTacToe {
             winner: null
         }));
         this.ultimateWinner = null;
+        this.aiGeneration++;
+        this.aiThinking = false;
         // Scores are intentionally kept across games for session tracking
         
         // Exit online mode on reset
@@ -894,6 +955,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event listeners
     document.getElementById('new-game-btn').addEventListener('click', () => game.resetGame());
+    const aiModeSelect = document.getElementById('ai-mode-select');
+    if (aiModeSelect) {
+        aiModeSelect.addEventListener('change', () => game.setAIDifficulty(aiModeSelect.value || null));
+    }
     document.getElementById('modal-new-game-btn').addEventListener('click', () => game.resetGame());
     
     document.getElementById('toggle-3d-btn').addEventListener('click', async () => {
