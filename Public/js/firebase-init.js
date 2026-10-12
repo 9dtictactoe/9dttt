@@ -14,6 +14,7 @@
 
         // Fetch Firebase status/config from server
         const response = await fetch('/api/auth/firebase/status');
+        if (!response.ok) return; // backend unavailable: Firebase is optional
         const data = await response.json();
         
         if (!data.available || !data.config) {

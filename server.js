@@ -266,6 +266,26 @@ app.post('/api/auth/wallet', security.rateLimitMiddleware('api_auth'), async (re
 // Uses browser's built-in password manager for seamless sign-in
 // ============================================
 
+// Firebase social-login status (called by Public/js/firebase-init.js and game-init.js).
+// Returns available:false unless the public Firebase web config is set in env.
+app.get('/api/auth/firebase/status', (req, res) => {
+    const { FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_PROJECT_ID, FIREBASE_APP_ID } = process.env;
+    if (!FIREBASE_API_KEY || !FIREBASE_PROJECT_ID) {
+        return res.json({ success: true, available: false });
+    }
+    res.json({
+        success: true,
+        available: true,
+        config: {
+            apiKey: FIREBASE_API_KEY,
+            authDomain: FIREBASE_AUTH_DOMAIN || `${FIREBASE_PROJECT_ID}.firebaseapp.com`,
+            projectId: FIREBASE_PROJECT_ID,
+            appId: FIREBASE_APP_ID
+        },
+        providers: [{ id: 'google.com', name: 'Google' }, { id: 'apple.com', name: 'Apple' }]
+    });
+});
+
 // Get browser auth status and configuration
 app.get('/api/auth/browser/status', (req, res) => {
     res.json({
