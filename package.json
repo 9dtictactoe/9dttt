@@ -14,7 +14,8 @@
     "bridge:info": "cat TESTNET_BRIDGE_SETUP.md",
     "deploy:token": "node scripts/xrp-testnet-token.js",
     "tokenomics": "cat TOKENOMICS.md",
-    "deploy:info": "cat DEPLOY_NOW.md"
+    "deploy:info": "cat DEPLOY_NOW.md",
+    "test:ai": "node --test tests/ttt9d-engine.test.js"
   },
   "engines": {
     "node": "20.x",
