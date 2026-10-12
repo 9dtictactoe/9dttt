@@ -802,7 +802,7 @@
             }
             if (window.unifiedAuth && window.unifiedAuth.addListener) {
                 window.unifiedAuth.addListener(function(user) {
-                    downloadsLink.style.display = user ? 'block' : 'none';
+                    // Catalog link is always visible now (flagship layout)
                     // Show/hide progression button based on auth status
                     const progressionBtn = document.getElementById('progression-btn');
                     if (progressionBtn) {
