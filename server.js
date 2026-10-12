@@ -244,21 +244,6 @@ async function handleVerifyToken(req, res) {
 app.get('/api/auth/verify', security.rateLimitMiddleware('api_auth'), handleVerifyToken);
 app.post('/api/auth/verify', security.rateLimitMiddleware('api_auth'), handleVerifyToken);
 
-// ============================================
-// Web3 Wallet Authentication
-// Multi-chain support: Ethereum (MetaMask), Solana (Phantom), XRP (XUMM/Crossmark)
-// For AtomicFizz ecosystem integration
-// ============================================
-
-app.post('/api/auth/wallet', security.rateLimitMiddleware('api_auth'), async (req, res) => {
-    try {
-        const walletAuth = require('./api/auth/wallet');
-        await walletAuth(req, res);
-    } catch (error) {
-        console.error('Wallet auth error:', error);
-        res.status(500).json({ success: false, error: 'Wallet authentication failed' });
-    }
-});
 
 // ============================================
 // Browser-Native Authentication (Credential Management API)
