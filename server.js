@@ -33,7 +33,11 @@ const allowedOrigins = [
     'https://d9ttt.com',
     'https://www.d9ttt.com',
     'https://9dttt.vercel.app',
-    'https://ninedttt.onrender.com', // allow self-origin (Socket.io direct connect from Vercel frontend)
+    'https://9dttt.com',
+    'https://www.9dttt.com',
+    'https://api.9dttt.com', // self-origin (Socket.io direct connect from the Vercel frontend)
+    'https://www.api.9dttt.com',
+    'https://ninedttt.onrender.com',
     process.env.VERCEL_URL,
     process.env.FRONTEND_URL
 ].filter(Boolean);
@@ -1350,9 +1354,13 @@ async function startServer() {
     
     server.listen(config.PORT, () => {
         // Start keep-alive service for Render (prevents free tier from sleeping)
-        const renderUrl = process.env.RENDER_EXTERNAL_URL;
-        if (renderUrl) {
-            keepAlive.start(renderUrl, 14 * 60 * 1000); // Ping every 14 minutes
+        // RENDER_EXTERNAL_URL is Render's *.onrender.com name, which is disabled for this
+        // service (404 "blocked-render-subdomain"), so ping the public custom domain instead.
+        // Override with KEEPALIVE_URL.
+        const keepAliveUrl = process.env.KEEPALIVE_URL ||
+            (process.env.RENDER_EXTERNAL_URL ? (process.env.PUBLIC_BACKEND_URL || 'https://api.9dttt.com') : null);
+        if (keepAliveUrl) {
+            keepAlive.start(keepAliveUrl.replace(/\/$/, ''), 14 * 60 * 1000); // Ping every 14 minutes
         }
         
         console.log(`  ${'\x1b[32m'}✓ Server listening on port ${config.PORT}${'\x1b[0m'}\n`);

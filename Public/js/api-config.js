@@ -15,15 +15,18 @@
     const isVercel = window.location.hostname.includes('vercel.app');
 
     // All known production front-end hostnames (Vercel + custom domain)
-    const isProduction = window.location.hostname === '9dttt.vercel.app' || 
-                        window.location.hostname === 'd9ttt.com' || 
-                        window.location.hostname === 'www.d9ttt.com';
+    // (9dttt.com was previously missing here - only the 'd9ttt.com' typo was listed -
+    // so the live site skipped the Vercel proxy and called the backend cross-origin.)
+    const PRODUCTION_HOSTS = ['9dttt.vercel.app', '9dttt.com', 'www.9dttt.com', 'd9ttt.com', 'www.d9ttt.com'];
+    const isProduction = PRODUCTION_HOSTS.includes(window.location.hostname);
 
-    // Accessing the backend directly (e.g. ninedttt.onrender.com)
-    const isRenderDirect = window.location.hostname === 'ninedttt.onrender.com';
-    
-    // Canonical backend URL (Render)
-    const BACKEND_URL = 'https://ninedttt.onrender.com';
+    // Canonical backend URL (Render custom domain). Override with window.NINEDTTT_BACKEND_URL.
+    // ninedttt.onrender.com is disabled on Render ("blocked-render-subdomain").
+    const BACKEND_URL = (window.NINEDTTT_BACKEND_URL || 'https://api.9dttt.com').replace(/\/$/, '');
+
+    // Accessing the backend directly
+    const BACKEND_HOSTS = ['api.9dttt.com', 'www.api.9dttt.com', 'ninedttt.onrender.com'];
+    const isRenderDirect = BACKEND_HOSTS.includes(window.location.hostname);
 
     // Determine which backend to use
     let backendUrl;

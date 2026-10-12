@@ -50,11 +50,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://ninedttt.onrender.com/api/:path*"
+      "destination": "https://api.9dttt.com/api/:path*"
     },
     {
       "source": "/socket.io/:path*",
-      "destination": "https://ninedttt.onrender.com/socket.io/:path*"
+      "destination": "https://api.9dttt.com/socket.io/:path*"
     },
     {
       "source": "/(.*)",
