@@ -1,7 +1,6 @@
 {
   "version": 2,
   "name": "9dttt-frontend",
-  "public": true,
   "github": {
     "silent": true
   },
