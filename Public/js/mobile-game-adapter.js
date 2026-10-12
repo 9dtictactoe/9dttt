@@ -7,19 +7,8 @@
  * - Device orientation change handling
  */
 
-// Inject scroll-lock CSS immediately (before DOMContentLoaded)
-(function injectScrollLock() {
-    const s = document.createElement('style');
-    s.id = 'mga-scroll-lock';
-    s.textContent = 'html,body{overflow:hidden!important;height:100%;}';
-    if (document.head) {
-        document.head.appendChild(s);
-    } else {
-        document.addEventListener('DOMContentLoaded', function() {
-            document.head.appendChild(s);
-        });
-    }
-})();
+// Note: pages are NOT scroll-locked globally (that made long pages unscrollable).
+// Only the game surface (canvas / d-pad) blocks touch scrolling; see lockPageScroll().
 
 (function() {
     'use strict';
@@ -79,44 +68,42 @@
             if (this._scrollLocked) return;
             this._scrollLocked = true;
 
-            // CSS overflow lock – stops wheel and programmatic scroll
-            document.documentElement.style.overflow = 'hidden';
-            document.body.style.overflow = 'hidden';
+            // Mark canvas games so CSS can apply arcade-only "game mode" rules.
+            if (this.canvas) document.body.classList.add('mga-canvas-game');
 
-            // Keys that normally scroll the page
+            // Keys that normally scroll the page: only swallow them on canvas
+            // (arcade) games, where they drive the game. DOM/board games keep
+            // normal keyboard scrolling.
             const SCROLL_KEYS = new Set([
                 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
                 'Space', 'PageUp', 'PageDown', 'Home', 'End'
             ]);
+            const hasCanvas = () => !!this.canvas;
 
             window.addEventListener('keydown', function (e) {
-                if (!SCROLL_KEYS.has(e.code)) return;
+                if (!hasCanvas() || !SCROLL_KEYS.has(e.code)) return;
                 // Don't interfere with text inputs / selects
                 const el = document.activeElement;
                 if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT')) return;
                 e.preventDefault();
             }, { passive: false });
 
-            // Prevent touch-based page scroll on the document body.
-            // Individual game elements (canvas, d-pad overlay) handle their own touch.
+            // Block touch scrolling only when the gesture is on the game surface
+            // (canvas, on-screen d-pad, or anything marked data-no-scroll).
+            // Everywhere else the page scrolls normally.
             document.addEventListener('touchmove', function (e) {
-                // Allow scrolling inside explicitly marked scrollable containers
-                if (e.target.closest && e.target.closest('[data-scrollable]')) return;
-                e.preventDefault();
+                const t = e.target;
+                if (!t || !t.closest) return;
+                if (t.closest('[data-scrollable]')) return;
+                if (t.closest('canvas, #mga-dpad-overlay, [data-no-scroll]')) e.preventDefault();
             }, { passive: false });
         },
 
         applyCanvasScaling() {
             if (!this.canvas) {
                 // For DOM-based games (no canvas), ensure container fills viewport
-                if (this.container) {
-                    const vh = window.innerHeight;
-                    const headerH = document.querySelector('header')?.offsetHeight || 56;
-                    const footerH = document.querySelector('footer')?.offsetHeight || 0;
-                    const available = vh - headerH - footerH - 20;
-                    this.container.style.maxHeight = available + 'px';
-                    this.container.style.overflow = 'hidden';
-                }
+                // DOM-based games (no canvas) lay out normally and the page
+                // scrolls; don't clamp/clip the container to the viewport.
                 return;
             }
 
