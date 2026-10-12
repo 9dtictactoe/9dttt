@@ -862,19 +862,21 @@ class TutorialSystem {
             this.panel.remove();
             this.panel = null;
         }
-        if (this.highlightElement) {
-            this.highlightElement.remove();
-            this.highlightElement = null;
+        if (this.highlightEl) {
+            this.highlightEl.remove();
+            this.highlightEl = null;
         }
         
+        // Mark tutorial as completed (before clearing activeTutorial)
+        if (this.activeTutorial) {
+            try {
+                localStorage.setItem(`tutorial_${this.activeTutorial}_completed`, 'true');
+            } catch (e) { /* storage unavailable (private mode) */ }
+        }
+
         this.activeTutorial = null;
         this.tutorialSteps = [];
         this.currentStepIndex = 0;
-        
-        // Mark tutorial as completed
-        if (this.activeTutorial) {
-            localStorage.setItem(`tutorial_${this.activeTutorial}_completed`, 'true');
-        }
     }
     
     /**
