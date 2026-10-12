@@ -82,3 +82,68 @@ test('expert beats easy most of the time', () => {
     }
     assert.ok(wins > losses, `wins ${wins} losses ${losses}`);
 });
+
+// ---- Next-board rule regression tests (human move -> AI must answer on the required board) ----
+test('after human plays center of center on an empty board, every level answers on the center board', () => {
+    const s = E.applyMove(E.emptyState(), { board: 4, cell: 4 });
+    assert.strictEqual(s.activeBoard, 4);
+    assert.strictEqual(s.currentPlayer, 'O');
+    for (const d of ['easy', 'medium', 'hard', 'expert']) {
+        for (let seed = 0; seed < 25; seed++) {
+            const r = E.getMove(s, d, { seed, timeMs: 15 });
+            assert.strictEqual(r.move.board, 4, `${d} seed ${seed} played board ${r.move.board}`);
+        }
+    }
+});
+
+test('every human cell sends the AI to the matching board (cell index == board index)', () => {
+    for (let cell = 0; cell < 9; cell++) {
+        const humanBoard = (cell + 1) % 9; // any board, just not always the target
+        const s = E.applyMove(E.emptyState(), { board: humanBoard, cell });
+        for (const d of ['easy', 'hard']) {
+            const r = E.getMove(s, d, { seed: cell, timeMs: 15 });
+            assert.strictEqual(r.move.board, cell, `cell ${cell} -> board ${r.move.board} (${d})`);
+        }
+    }
+});
+
+test('sent to a won board -> AI may play anywhere open (and never on the won board)', () => {
+    // X wins the center board with its center cell, which sends O to that (now won) board.
+    let s = E.emptyState();
+    s.boards[4] = ['X', null, null, null, null, null, null, null, 'X'];
+    s.boards[0] = ['O', null, null, null, null, null, null, null, null];
+    s.boards[8] = ['O', null, null, null, null, null, null, null, null];
+    s.currentPlayer = 'X'; s.activeBoard = 4;
+    s = E.applyMove(s, { board: 4, cell: 4 });
+    assert.strictEqual(s.activeBoard, null, 'won target board frees the next move');
+    const legal = E.legalMoves(s);
+    assert.ok(legal.every(m => m.board !== 4));
+    assert.ok(new Set(legal.map(m => m.board)).size === 8);
+    for (let seed = 0; seed < 10; seed++) assert.notStrictEqual(E.getMove(s, 'hard', { seed, timeMs: 15 }).move.board, 4);
+});
+
+test('sent to a full (drawn) board -> free move', () => {
+    const s = E.emptyState();
+    s.boards[2] = ['X', 'O', 'X', 'X', 'O', 'O', 'O', 'X', 'X']; // drawn, no line
+    s.boards[5] = ['O', null, null, null, null, null, null, null, null];
+    s.currentPlayer = 'O'; s.activeBoard = 2;
+    assert.ok(new Set(E.legalMoves(s).map(m => m.board)).size === 8);
+});
+
+test('random games: every AI reply obeys the board the previous move points to', () => {
+    for (let g = 0; g < 20; g++) {
+        let s = E.emptyState(); let r = g * 7919 + 1;
+        const rnd = () => ((r = (r * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+        while (!E.result(s)) {
+            const ms = E.legalMoves(s); const human = ms[(rnd() * ms.length) | 0];
+            s = E.applyMove(s, human);
+            if (E.result(s)) break;
+            const target = human.cell;
+            const targetOpen = !E._lineWinner(s.boards[target]) && s.boards[target].some(c => !c);
+            const ai = E.getMove(s, ['easy', 'medium', 'hard'][g % 3], { seed: g, timeMs: 10 }).move;
+            if (targetOpen) assert.strictEqual(ai.board, target, `game ${g}: sent to ${target}, AI played ${ai.board}`);
+            else assert.ok(!E._lineWinner(s.boards[ai.board]) && s.boards[ai.board][ai.cell] === null);
+            s = E.applyMove(s, ai);
+        }
+    }
+});

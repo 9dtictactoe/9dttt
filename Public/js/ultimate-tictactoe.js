@@ -360,6 +360,33 @@ class UltimateTicTacToe {
         this.resetGame();
     }
 
+    /**
+     * Game-rule legality: must play on the active board (or any open board when
+     * activeBoard is null), the board must not be won/drawn, and the cell must be empty.
+     */
+    isLegalMove(boardIndex, cellIndex) {
+        if (this.ultimateWinner) return false;
+        if (!Number.isInteger(boardIndex) || !Number.isInteger(cellIndex)) return false;
+        if (boardIndex < 0 || boardIndex > 8 || cellIndex < 0 || cellIndex > 8) return false;
+        if (this.activeBoard !== null && this.activeBoard !== boardIndex) return false;
+        const board = this.boards[boardIndex];
+        return !board.winner && !board.cells[cellIndex];
+    }
+
+    legalMoves() {
+        const moves = [];
+        for (let b = 0; b < 9; b++) for (let c = 0; c < 9; c++) {
+            if (this.isLegalMove(b, c)) moves.push({ board: b, cell: c });
+        }
+        return moves;
+    }
+
+    markLastMove(boardIndex, cellIndex) {
+        document.querySelectorAll('.cell.last-move').forEach(el => el.classList.remove('last-move'));
+        const el = document.querySelector(`.cell[data-board="${boardIndex}"][data-cell="${cellIndex}"]`);
+        if (el) el.classList.add('last-move');
+    }
+
     maybeScheduleAIMove() {
         if (this.onlineMode || !this.aiDifficulty || this.ultimateWinner) return;
         if (this.currentPlayer !== this.aiSymbol || this.aiThinking) return;
@@ -371,10 +398,21 @@ class UltimateTicTacToe {
         // Let the browser paint before searching
         setTimeout(async () => {
             try {
-                const result = await window.TTT9DAI.getAIMove(this.getEngineState(), this.aiDifficulty);
+                const stateForAI = this.getEngineState();
+                const result = await window.TTT9DAI.getAIMove(stateForAI, this.aiDifficulty);
                 if (generation !== this.aiGeneration || this.ultimateWinner) return;
+                if (this.currentPlayer !== this.aiSymbol) return; // state moved on; ignore stale result
+                let move = result && result.move;
+                if (!move || !this.isLegalMove(move.board, move.cell)) {
+                    console.warn('Rejected illegal AI move', move, 'activeBoard =', this.activeBoard);
+                    move = window.TTT9DEngine.getMove(this.getEngineState(), this.aiDifficulty).move;
+                    if (!this.isLegalMove(move.board, move.cell)) move = this.legalMoves()[0];
+                }
+                if (!move) return;
                 this.aiThinking = false;
-                this.makeLocalMove(result.move.board, result.move.cell);
+                this.makeLocalMove(move.board, move.cell);
+                this.markLastMove(move.board, move.cell);
+                this.announceToScreenReader(`AI played board ${move.board + 1}, cell ${move.cell + 1}`);
             } catch (e) {
                 console.error('AI move failed', e);
             } finally {
@@ -924,13 +962,13 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             {
                 title: "The Active Board Rule",
-                description: "The golden highlighted board shows where you MUST play. Your opponent chooses which cell you click, and that determines their next board!",
+                description: "The golden highlighted board shows where you MUST play. The cell your opponent just played picks your board: if they played the top-right cell of any board, you must play in the top-right board.",
                 target: ".small-board.active",
                 effect: "highlight"
             },
             {
                 title: "Winning the Whole Game",
-                description: "To win the entire game, get 3 small boards in a row (horizontally, vertically, or diagonally) on the big board. The small board winners become the symbols on the big board!",
+                description: "To win the entire game, get 3 small boards in a row (horizontally, vertically, or diagonally) on the big board. If every board is finished and nobody has 3 in a row, the higher score wins.",
                 target: "#ultimate-board",
                 effect: "highlight"
             },
