@@ -18,7 +18,7 @@
     "test:ai": "node --test tests/ttt9d-engine.test.js"
   },
   "engines": {
-    "node": "20.x",
+    "node": "24.x",
     "npm": "10.x"
   },
   "keywords": [
