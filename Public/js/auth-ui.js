@@ -109,7 +109,7 @@ class AuthUI {
                     color: #fff;
                 }
                 
-                .auth-button-wallet {
+                .auth-button-primary {
                     background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
                     color: #fff;
                     position: relative;
@@ -119,7 +119,7 @@ class AuthUI {
                     padding: 18px 24px !important;
                 }
                 
-                .auth-button-wallet::before {
+                .auth-button-primary::before {
                     content: '';
                     position: absolute;
                     top: -50%;
@@ -135,7 +135,7 @@ class AuthUI {
                     100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
                 }
                 
-                .auth-button-wallet:hover {
+                .auth-button-primary:hover {
                     background: linear-gradient(135deg, #9b59b6 0%, #a569bd 100%);
                     border-color: #FFD700;
                     box-shadow: 0 0 20px rgba(255,215,0,0.5);
@@ -267,7 +267,7 @@ class AuthUI {
                 // URL avatar - use emoji representation for now
                 normalized.avatar = '👤';
             } else if (avatar.icon) {
-                // Icon emoji from wallet auth
+                // Icon emoji avatar
                 normalized.avatar = avatar.icon;
             } else if (avatar.initial) {
                 // Initial-based avatar - use the initial as emoji-style
@@ -324,15 +324,7 @@ class AuthUI {
             </div>
             
             <div class="auth-methods">
-                <button class="auth-button auth-button-wallet" onclick="window.authUI.showWalletOptions()">
-                    <span class="auth-icon">💎</span>
-                    <span>Connect Wallet (XRP/SOL/ETH)</span>
-                    <span class="recommended-badge">✨ RECOMMENDED</span>
-                </button>
-                
-                <div class="auth-divider">or</div>
-                
-                <button class="auth-button auth-button-wallet" onclick="window.authUI.showEmailLogin()">
+                <button class="auth-button auth-button-primary" onclick="window.authUI.showEmailLogin()">
                     <span class="auth-icon">✉️</span>
                     <span>Email/Password Login</span>
                 </button>
@@ -369,9 +361,6 @@ class AuthUI {
                 <button class="auth-button auth-button-google" onclick="window.leaderboardUI.show('stats')">
                     📊 View My Stats
                 </button>
-                <button class="auth-button auth-button-wallet" onclick="window.authUI.openWallet()">
-                    💰 Manage Tokens
-                </button>
                 <button class="auth-button auth-button-guest" onclick="window.authUI.logout()">
                     🚪 Sign Out
                 </button>
@@ -397,134 +386,8 @@ class AuthUI {
         this.show();
     }
     
-    showWalletOptions() {
-        this.loginWithWallet();
-    }
     
-    async loginWithWallet() {
-        try {
-            // Ensure wallet module is loaded
-            if (!window.multiChainWallet) {
-                throw new Error('Wallet module not ready. Please refresh the page.');
-            }
-
-            // Show wallet selection UI
-            const content = this.modal.querySelector('#authContent');
-            content.innerHTML = `
-                <div style="text-align: center; padding: 20px;">
-                    <h2 style="margin-bottom: 24px;">🔐 Connect Wallet</h2>
-                    <p style="color: #888; margin-bottom: 32px;">
-                        Choose your preferred blockchain wallet
-                    </p>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 12px; max-width: 400px; margin: 0 auto;">
-                        <button class="auth-button" onclick="window.authUI.connectWallet('xrp')" 
-                                style="background: linear-gradient(135deg, #23292F 0%, #1A1F24 100%); border: 2px solid #888;">
-                            💎 XUMM (XRP Ledger)
-                        </button>
-                        
-                        <button class="auth-button" onclick="window.authUI.connectWallet('crossmark')" 
-                                style="background: linear-gradient(135deg, #2A2F35 0%, #1F2428 100%); border: 2px solid #888;">
-                            💠 Crossmark (XRP)
-                        </button>
-                        
-                        <button class="auth-button" onclick="window.authUI.connectWallet('solana')" 
-                                style="background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);">
-                            👻 Phantom (Solana)
-                        </button>
-                        
-                        <button class="auth-button" onclick="window.authUI.connectWallet('ethereum')" 
-                                style="background: linear-gradient(135deg, #627EEA 0%, #5270E8 100%);">
-                            🦊 MetaMask (Ethereum)
-                        </button>
-                        
-                        <button class="auth-button" onclick="window.authUI.connectWallet('walletconnect')" 
-                                style="background: linear-gradient(135deg, #3B99FC 0%, #2980E8 100%);">
-                            📱 WalletConnect (Mobile)
-                        </button>
-                        
-                        <button class="auth-button" onclick="window.authUI.connectWallet('auto')" 
-                                style="background: linear-gradient(135deg, #4CAF50 0%, #45A049 100%); margin-top: 16px;">
-                            ✨ Auto-Detect Wallet
-                        </button>
-                        
-                        <button onclick="window.authUI.showLoginOptions()" 
-                                style="background: none; border: none; color: #888; margin-top: 16px; cursor: pointer;">
-                            ← Back
-                        </button>
-                    </div>
-                    
-                    <div style="margin-top: 24px; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                        <p style="color: #888; font-size: 14px; margin: 0;">
-                            🌐 Part of <strong>AtomicFizz Ecosystem</strong><br>
-                            <a href="https://atomicfizzcaps.xyz" target="_blank" style="color: #4CAF50;">atomicfizzcaps.xyz</a>
-                        </p>
-                    </div>
-                </div>
-            `;
-            
-            this.show();
-        } catch (error) {
-            console.error('Wallet UI error:', error);
-            alert('Error showing wallet options: ' + error.message);
-        }
-    }
     
-    async connectWallet(chain) {
-        try {
-            const content = this.modal.querySelector('#authContent');
-            content.innerHTML = `
-                <div style="text-align: center; padding: 40px 20px;">
-                    <div class="auth-spinner"></div>
-                    <p style="color: #888; margin-top: 20px;">
-                        Connecting to your ${chain === 'auto' ? 'wallet' : chain.toUpperCase() + ' wallet'}...<br>
-                        <small>Please approve the connection request</small>
-                    </p>
-                </div>
-            `;
-
-            const result = await window.unifiedAuth.loginWithWallet(chain);
-            
-            if (result.success) {
-                this.hide();
-                
-                // Show success message
-                const successMsg = document.createElement('div');
-                successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #4CAF50; color: white; padding: 16px 24px; border-radius: 8px; z-index: 10001; animation: slideIn 0.3s ease-out;';
-                successMsg.innerHTML = `
-                    ✅ Connected!<br>
-                    <small>${result.wallet.wallet} (${result.wallet.chain})</small>
-                `;
-                document.body.appendChild(successMsg);
-                
-                setTimeout(() => {
-                    successMsg.style.animation = 'slideOut 0.3s ease-out';
-                    setTimeout(() => successMsg.remove(), 300);
-                }, 3000);
-            } else {
-                throw new Error(result.error || 'Connection failed');
-            }
-        } catch (error) {
-            console.error('Wallet connection error:', error);
-            
-            const content = this.modal.querySelector('#authContent');
-            content.innerHTML = `
-                <div style="text-align: center; padding: 20px;">
-                    <h2 style="margin-bottom: 16px;">❌ Connection Failed</h2>
-                    <p style="color: #ff5252; margin-bottom: 24px;">
-                        ${this._escapeHtml(error.message || 'Unknown error')}
-                    </p>
-                    <button class="auth-button" onclick="window.authUI.loginWithWallet()">
-                        Try Again
-                    </button>
-                    <button onclick="window.authUI.showLoginOptions()" 
-                            style="background: none; border: none; color: #888; margin-top: 16px; cursor: pointer;">
-                        ← Back
-                    </button>
-                </div>
-            `;
-        }
-    }
     
     showEmailLogin() {
         const content = this.modal.querySelector('#authContent');
@@ -550,7 +413,7 @@ class AuthUI {
                         onclick="window.authUI.handleEmailLogin()">
                         🔑 Login
                     </button>
-                    <button type="button" class="auth-button auth-button-wallet" style="flex: 1;" 
+                    <button type="button" class="auth-button auth-button-primary" style="flex: 1;" 
                         onclick="window.authUI.handleEmailRegister()">
                         ✨ Register
                     </button>
@@ -623,9 +486,6 @@ class AuthUI {
         }
     }
     
-    openWallet() {
-        window.open('https://atomicfizzcaps.xyz/wallet', '_blank');
-    }
 }
 
 // Initialize auth UI
