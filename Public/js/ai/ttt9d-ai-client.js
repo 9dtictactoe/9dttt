@@ -27,6 +27,42 @@
             return { move: r.move, eval: typeof r.eval === 'number' ? r.eval : 0, difficulty, source: 'realai', commentary: r.commentary };
         } finally { clearTimeout(t); }
     }
+    // Off-main-thread search via Web Worker, with main-thread fallback.
+    let worker = null, workerFailed = false, nextId = 1;
+    const pending = new Map();
+    function workerUrl() {
+        const el = root.document && root.document.querySelector('script[src*="ttt9d-ai-client.js"]');
+        return el ? el.src.replace(/ttt9d-ai-client\.js(\?.*)?$/, 'ttt9d-worker.js') : 'ttt9d-worker.js';
+    }
+    function getWorker() {
+        if (worker || workerFailed || typeof root.Worker !== 'function') return worker;
+        try {
+            worker = new root.Worker(workerUrl());
+            worker.onmessage = (e) => {
+                const p = pending.get(e.data.id); if (!p) return;
+                pending.delete(e.data.id);
+                e.data.ok ? p.resolve(e.data.result) : p.reject(new Error(e.data.error));
+            };
+            worker.onerror = (e) => {
+                workerFailed = true; worker = null;
+                for (const p of pending.values()) p.reject(new Error('worker error: ' + (e.message || 'unknown')));
+                pending.clear();
+            };
+        } catch (e) { workerFailed = true; worker = null; }
+        return worker;
+    }
+    function localMove(state, difficulty, options) {
+        const w = getWorker();
+        if (!w) return Promise.resolve(root.TTT9DEngine.getMove(state, difficulty, options));
+        return new Promise((resolve, reject) => {
+            const id = nextId++;
+            pending.set(id, { resolve, reject });
+            w.postMessage({ id, state, difficulty, options });
+        }).catch((e) => {
+            console.warn('AI worker failed, using main thread:', e.message);
+            return root.TTT9DEngine.getMove(state, difficulty, options);
+        });
+    }
     async function getAIMove(state, difficulty, opts) {
         opts = opts || {};
         const url = opts.realaiUrl !== undefined ? opts.realaiUrl : realaiUrl();
@@ -34,7 +70,7 @@
             try { return await remoteMove(url, state, difficulty, opts.timeoutMs || 1500); }
             catch (e) { console.warn('RealAI unavailable, using local engine:', e.message); }
         }
-        return root.TTT9DEngine.getMove(state, difficulty, { seed: (Math.random() * 2 ** 31) | 0 });
+        return localMove(state, difficulty, { seed: (Math.random() * 2 ** 31) | 0 });
     }
-    root.TTT9DAI = { getAIMove };
+    root.TTT9DAI = { getAIMove, _usingWorker: () => !!worker };
 })(typeof window !== 'undefined' ? window : globalThis);

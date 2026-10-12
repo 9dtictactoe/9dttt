@@ -408,9 +408,10 @@ class UltimateTicTacToe {
      */
     checkUltimateWinner() {
         const boardWinners = this.boards.map(board => board.winner);
-        const winner = this.checkWinner(boardWinners);
-        
-        if (winner && winner !== 'draw') {
+        // Only X/O boards count toward three-in-a-row; drawn boards must not mask a real line.
+        const winner = this.checkWinner(boardWinners.map(w => (w === 'X' || w === 'O') ? w : null));
+
+        if (winner) {
             return winner;
         }
 
