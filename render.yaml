@@ -33,11 +33,15 @@ services:
       
       # Backend self-URL (set after first deploy)
       - key: BACKEND_URL
-        value: https://ninedttt.onrender.com
+        value: https://api.9dttt.com
       
       # Keep-alive configuration
       - key: RENDER_EXTERNAL_URL
         sync: false
+
+      # URL the keep-alive pings (/api/health). Defaults to https://api.9dttt.com
+      - key: KEEPALIVE_URL
+        value: https://api.9dttt.com
       
       # Redis (optional - for session persistence)
       - key: REDIS_URL
