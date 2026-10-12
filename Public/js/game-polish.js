@@ -584,7 +584,7 @@ class TutorialSystem {
         this.tutorialSteps = [];
         this.currentStepIndex = 0;
         this.overlay = null;
-        this.highlightElement = null;
+        this.highlightEl = null;
     }
     
     addTip(id, text, trigger = 'auto', duration = 5) {
@@ -756,9 +756,9 @@ class TutorialSystem {
      */
     highlightElement(selector) {
         if (!selector) {
-            if (this.highlightElement) {
-                this.highlightElement.remove();
-                this.highlightElement = null;
+            if (this.highlightEl) {
+                this.highlightEl.remove();
+                this.highlightEl = null;
             }
             return;
         }
@@ -767,13 +767,13 @@ class TutorialSystem {
         if (!element) return;
         
         // Remove previous highlight
-        if (this.highlightElement) {
-            this.highlightElement.remove();
+        if (this.highlightEl) {
+            this.highlightEl.remove();
         }
         
         // Create highlight
-        this.highlightElement = document.createElement('div');
-        this.highlightElement.style.cssText = `
+        this.highlightEl = document.createElement('div');
+        this.highlightEl.style.cssText = `
             position: absolute;
             background: rgba(255, 215, 0, 0.3);
             border: 3px solid #FFD700;
@@ -784,12 +784,12 @@ class TutorialSystem {
         `;
         
         const rect = element.getBoundingClientRect();
-        this.highlightElement.style.left = rect.left - 10 + 'px';
-        this.highlightElement.style.top = rect.top - 10 + 'px';
-        this.highlightElement.style.width = rect.width + 20 + 'px';
-        this.highlightElement.style.height = rect.height + 20 + 'px';
+        this.highlightEl.style.left = rect.left - 10 + 'px';
+        this.highlightEl.style.top = rect.top - 10 + 'px';
+        this.highlightEl.style.width = rect.width + 20 + 'px';
+        this.highlightEl.style.height = rect.height + 20 + 'px';
         
-        document.body.appendChild(this.highlightElement);
+        document.body.appendChild(this.highlightEl);
     }
     
     /**
