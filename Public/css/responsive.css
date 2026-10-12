@@ -5,11 +5,13 @@
 
 /* ===== UNIVERSAL GAME PAGE LAYOUT (all game pages load this file) ===== */
 
-/* Viewport lock: loaded by mobile-game-adapter.js via JS injection too,
-   but having it in CSS ensures it's applied even before JS runs */
-html, body {
-    overflow: hidden;
-    height: 100%;
+/* Pages scroll normally. Only the game surface blocks touch scrolling
+   (canvas: touch-action none; board games: touch-action manipulation). */
+/* overflow-x only on body (not html too): setting it on both turns body into
+   its own scroll box and the window stops scrolling. */
+body {
+    overflow-x: hidden;
+    min-height: 100%;
 }
 
 /* Flex column so game content fills available height */
@@ -30,15 +32,15 @@ body.game-active footer[role="contentinfo"] {
     display: none !important;
 }
 
-body.game-active .controls:not(#gamepad-status) {
+body.game-active.mga-canvas-game .controls:not(#gamepad-status) {
     display: none;
 }
 
-body.game-active .control-hint {
+body.game-active.mga-canvas-game .control-hint {
     display: none;
 }
 
-body.game-active .gamepad-widget {
+body.game-active.mga-canvas-game .gamepad-widget {
     display: none;
 }
 
@@ -366,25 +368,20 @@ html, body {
    (Chrome 105+, Safari 15.4+, Firefox 121+).
    ===================================================== */
 @supports selector(:has(canvas)) {
-    /* Lock page scroll whenever a canvas is present in body –
-       i.e. on every game page. The main index page has no canvas. */
-    html:has(body > div canvas),
-    html:has(body canvas) {
-        overflow: hidden;
-        overscroll-behavior: none;
-    }
-
+    /* No page-level scroll lock (it made game pages unscrollable).
+       Just stop rubber-band overscroll; the canvas itself ignores touch scroll. */
     body:has(canvas) {
-        overflow: hidden;
-        overscroll-behavior: none;
-        /* Prevent iOS rubber-band scroll */
-        touch-action: pan-x pan-y;
+        overscroll-behavior-y: none;
     }
 
-    /* Canvas itself must not trigger page scroll on touch */
     body:has(canvas) canvas {
         touch-action: none;
     }
+}
+
+/* DOM board games: fast taps, no double-tap zoom, page can still be scrolled */
+.ultimate-board, .small-board, .cell, #board, .board, .game-board {
+    touch-action: manipulation;
 }
 
 /* Safe area for notched devices */

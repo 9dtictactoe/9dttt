@@ -365,10 +365,14 @@ document.addEventListener('mousemove', () => {
 
     function prefersLandscape() {
         // Explicit opt-in on the body element
-        if (document.body && document.body.dataset.orientation === 'landscape') return true;
+        const orient = document.body && document.body.dataset.orientation;
+        if (orient === 'landscape') return true;
+        if (orient === 'any' || orient === 'portrait') return false;
 
-        // Auto-detect from canvas dimensions (aspect ratio > 1.15 = landscape game)
-        const canvases = document.querySelectorAll('canvas');
+        // Auto-detect from the *game* canvas only (aspect ratio > 1.15 = landscape game).
+        // Decorative canvases (visual-effects overlay, 3D view) must not trigger the prompt,
+        // otherwise DOM board games like 9D Tic-Tac-Toe get blocked in portrait.
+        const canvases = document.querySelectorAll('#gameCanvas, #game-canvas, canvas[data-game-canvas]');
         for (const c of canvases) {
             if (c.width && c.height && (c.width / c.height) > 1.15) return true;
         }

@@ -41,14 +41,9 @@
     
     // Function to enable/disable scroll prevention
     window.setGameActive = function(active) {
+        // Only swallow scroll keys while a game is active. The page itself is
+        // never overflow-locked (that made game pages impossible to scroll).
         gameActive = active;
-        if (active) {
-            document.documentElement.style.overflow = 'hidden';
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.documentElement.style.overflow = '';
-            document.body.style.overflow = '';
-        }
     };
     
     // Auto-detect game pages and enable scroll prevention
@@ -59,13 +54,12 @@
         const gameCanvas = document.getElementById('game-canvas') ||
                            document.getElementById('gameCanvas') ||
                            document.querySelector(
-                               '#game-container canvas, .game-container canvas, ' +
-                               '.game-canvas-wrapper canvas, main canvas'
+                               '#game-container canvas, .game-canvas-wrapper canvas'
                            );
+        // (Decorative canvases such as the visual-effects overlay or a 3D view
+        // inside <main> no longer count as a game canvas.)
         if (gameCanvas) {
             gameActive = true;
-            document.documentElement.style.overflow = 'hidden';
-            document.body.style.overflow = 'hidden';
         }
     });
 
