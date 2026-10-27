@@ -42,8 +42,8 @@ class Auth {
             return { success: false, error: 'Invalid email address - reserved domain' };
         }
 
-        if (password.length < 6) {
-            return { success: false, error: 'Password must be at least 6 characters' };
+        if (password.length < 8) {
+            return { success: false, error: 'Password must be at least 8 characters' };
         }
 
         const existingUser = await storage.getUser(username);
@@ -77,7 +77,9 @@ class Auth {
                 avatar: this.generateAvatar(username),
                 bio: '',
                 location: '',
-                joinedAt: new Date().toISOString()
+                joinedAt: new Date().toISOString(),
+                caps: 0,  // Virtual CAPS currency
+                totalCapsEarned: 0  // Lifetime CAPS earned
             },
             social: {
                 twitter: null,
@@ -147,7 +149,9 @@ class Auth {
     // Verify JWT token
     verifyToken(token) {
         try {
-            const decoded = jwt.verify(token, config.JWT_SECRET);
+            // Explicitly restrict to HS256 to prevent algorithm-confusion attacks
+            // (e.g. alg:"none" bypass or RS256/HS256 confusion).
+            const decoded = jwt.verify(token, config.JWT_SECRET, { algorithms: ['HS256'] });
             return { valid: true, user: decoded };
         } catch (error) {
             return { valid: false, error: 'Invalid or expired token' };
@@ -159,7 +163,7 @@ class Auth {
         return jwt.sign(
             { id: user.id, username: user.username, email: user.email },
             config.JWT_SECRET,
-            { expiresIn: config.JWT_EXPIRES_IN }
+            { expiresIn: config.JWT_EXPIRES_IN, algorithm: 'HS256' }
         );
     }
 
@@ -190,9 +194,9 @@ class Auth {
         }
 
         // Profile updates
-        if (updates.bio !== undefined) user.profile.bio = updates.bio.slice(0, 200);
-        if (updates.location !== undefined) user.profile.location = updates.location.slice(0, 50);
-        if (updates.displayName !== undefined) user.displayName = updates.displayName.slice(0, 30);
+        if (updates.bio !== undefined) user.profile.bio = updates.bio.slice(0, 200).replace(/[<>]/g, '');
+        if (updates.location !== undefined) user.profile.location = updates.location.slice(0, 50).replace(/[<>]/g, '');
+        if (updates.displayName !== undefined) user.displayName = updates.displayName.slice(0, 30).replace(/[<>]/g, '');
         if (updates.avatar !== undefined) user.profile.avatar = updates.avatar;
 
         // Social links
@@ -338,6 +342,83 @@ class Auth {
         if (!link) return null;
         // Remove any potential malicious content, keep only username/handle
         return link.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50);
+    }
+
+    // CAPS Reward System - Atomic Fizz Integration
+
+    // Award CAPS to player for game completion
+    async awardCaps(username, amount, reason = 'game_win') {
+        const user = await storage.getUser(username);
+        if (!user) {
+            return { success: false, error: 'User not found' };
+        }
+
+        // Initialize CAPS if not present (for existing users)
+        if (user.profile.caps === undefined) user.profile.caps = 0;
+        if (user.profile.totalCapsEarned === undefined) user.profile.totalCapsEarned = 0;
+
+        user.profile.caps += amount;
+        user.profile.totalCapsEarned += amount;
+
+        await storage.setUser(username, user);
+
+        console.log(`[CAPS] Awarded ${amount} CAPS to ${username} for ${reason}. Total: ${user.profile.caps}`);
+
+        return { 
+            success: true, 
+            capsAwarded: amount, 
+            newBalance: user.profile.caps,
+            reason 
+        };
+    }
+
+    // Get player's CAPS balance
+    async getCapsBalance(username) {
+        const user = await storage.getUser(username);
+        if (!user) return null;
+
+        // Initialize CAPS if not present
+        if (user.profile.caps === undefined) user.profile.caps = 0;
+        if (user.profile.totalCapsEarned === undefined) user.profile.totalCapsEarned = 0;
+
+        return {
+            currentCaps: user.profile.caps,
+            totalEarned: user.profile.totalCapsEarned
+        };
+    }
+
+    // Redeem CAPS for real tokens (triggers XRP mechanics)
+    async redeemCaps(username, capsAmount) {
+        const user = await storage.getUser(username);
+        if (!user) {
+            return { success: false, error: 'User not found' };
+        }
+
+        if (user.profile.caps < capsAmount) {
+            return { success: false, error: 'Insufficient CAPS balance' };
+        }
+
+        // 10 CAPS = 1 real CAPS token
+        const tokenAmount = Math.floor(capsAmount / 10);
+        if (tokenAmount === 0) {
+            return { success: false, error: 'Minimum 10 CAPS required for redemption' };
+        }
+
+        // Deduct CAPS
+        user.profile.caps -= capsAmount;
+        await storage.setUser(username, user);
+
+        console.log(`[CAPS] ${username} redeemed ${capsAmount} CAPS for ${tokenAmount} real CAPS tokens`);
+
+        // TODO: Trigger XRP mechanics and treasury distribution
+        // This would integrate with Atomic Fizz treasury system
+
+        return {
+            success: true,
+            capsRedeemed: capsAmount,
+            tokensReceived: tokenAmount,
+            remainingCaps: user.profile.caps
+        };
     }
 
     // Generate a simple avatar based on username

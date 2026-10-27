@@ -21,20 +21,126 @@ class UltimateTicTacToe {
         this.gameId = null;
         this.playerSymbol = null; // 'X' or 'O' - which symbol this player is
         this.opponentInfo = null;
+
+        // vs-AI properties (offline). aiDifficulty null = local 2-player
+        this.aiDifficulty = null;
+        this.aiSymbol = 'O';
+        this.aiThinking = false;
+        this.aiGeneration = 0;
+
+        // 3D properties
+        this.is3DMode = false;
+        this.renderer3D = null;
+
+        // Visual effects system
+        this.visualEffects = null;
+
+        // Event listener cleanup
+        this.cellEventListeners = new Map(); // Store cell -> {click: handler, keydown: handler}
     }
 
     /**
      * Initialize the game board
      */
     initGame() {
+        if (this.is3DMode) {
+            this.init3DGame();
+        } else {
+            this.init2DGame();
+        }
+    }
+
+    /**
+     * Initialize 2D game board
+     */
+    init2DGame() {
         const ultimateBoard = document.getElementById('ultimate-board');
         ultimateBoard.innerHTML = '';
+
+        // Initialize visual effects system
+        this.initVisualEffects();
 
         for (let boardIndex = 0; boardIndex < 9; boardIndex++) {
             const smallBoard = this.createSmallBoard(boardIndex);
             ultimateBoard.appendChild(smallBoard);
         }
 
+        this.updateBoard();
+    }
+
+    /**
+     * Initialize visual effects system
+     */
+    initVisualEffects() {
+        // Create effects canvas
+        const gameContainer = document.querySelector('.game-container') || document.getElementById('ultimate-board').parentElement;
+        let effectsCanvas = gameContainer.querySelector('.effects-canvas');
+        
+        if (!effectsCanvas) {
+            effectsCanvas = document.createElement('canvas');
+            effectsCanvas.className = 'effects-canvas';
+            effectsCanvas.style.position = 'absolute';
+            effectsCanvas.style.top = '0';
+            effectsCanvas.style.left = '0';
+            effectsCanvas.style.pointerEvents = 'none';
+            effectsCanvas.style.zIndex = '10';
+            gameContainer.style.position = 'relative';
+            gameContainer.appendChild(effectsCanvas);
+        }
+
+        // Resize canvas to match container
+        const rect = gameContainer.getBoundingClientRect();
+        effectsCanvas.width = rect.width;
+        effectsCanvas.height = rect.height;
+
+        // Initialize visual effects
+        const ctx = effectsCanvas.getContext('2d');
+        this.visualEffects = new VisualEffects(effectsCanvas, ctx);
+
+        // Start effects animation loop
+        this.startEffectsLoop();
+    }
+
+    /**
+     * Start visual effects animation loop
+     */
+    startEffectsLoop() {
+        if (!this.visualEffects) return;
+
+        const animate = () => {
+            if (!this.visualEffects) return;
+
+            const ctx = this.visualEffects.ctx;
+            const canvas = this.visualEffects.canvas;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update and render effects
+            const shakeOffset = this.visualEffects.update();
+
+            // Apply screen shake to the game container
+            const gameContainer = canvas.parentElement;
+            if (shakeOffset.x !== 0 || shakeOffset.y !== 0) {
+                gameContainer.style.transform = `translate(${shakeOffset.x}px, ${shakeOffset.y}px)`;
+            } else {
+                gameContainer.style.transform = '';
+            }
+
+            requestAnimationFrame(animate);
+        };
+
+        requestAnimationFrame(animate);
+    }
+
+    /**
+     * Initialize 3D game board
+     */
+    async init3DGame() {
+        if (!this.renderer3D) {
+            this.renderer3D = new UltimateTicTacToe3D(this);
+        }
+        await this.renderer3D.init();
         this.updateBoard();
     }
 
@@ -68,13 +174,21 @@ class UltimateTicTacToe {
         cell.setAttribute('tabindex', '-1');
         cell.setAttribute('aria-label', `Board ${boardIndex + 1}, Cell ${cellIndex + 1}`);
         
-        cell.addEventListener('click', () => this.handleCellClick(boardIndex, cellIndex));
-        cell.addEventListener('keydown', (e) => {
+        // Create event handlers
+        const clickHandler = () => this.handleCellClick(boardIndex, cellIndex);
+        const keydownHandler = (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 this.handleCellClick(boardIndex, cellIndex);
             }
-        });
+        };
+
+        // Add event listeners
+        cell.addEventListener('click', clickHandler);
+        cell.addEventListener('keydown', keydownHandler);
+
+        // Store references for cleanup
+        this.cellEventListeners.set(cell, { click: clickHandler, keydown: keydownHandler });
 
         return cell;
     }
@@ -92,6 +206,12 @@ class UltimateTicTacToe {
                 this.showNotification("It's not your turn!");
                 return;
             }
+        }
+
+        // In vs-AI mode, block input while it's the AI's turn
+        if (!this.onlineMode && this.aiDifficulty && (this.aiThinking || this.currentPlayer === this.aiSymbol)) {
+            this.showNotification('Wait for the AI to move');
+            return;
         }
 
         // Check if this board is active
@@ -129,6 +249,28 @@ class UltimateTicTacToe {
         // Make the move
         this.boards[boardIndex].cells[cellIndex] = this.currentPlayer;
 
+        // Add move effect
+        if (this.visualEffects) {
+            const cellElement = document.querySelector(`[data-board="${boardIndex}"] [data-cell="${cellIndex}"]`);
+            if (cellElement) {
+                const rect = cellElement.getBoundingClientRect();
+                const containerRect = this.visualEffects.canvas.getBoundingClientRect();
+                const x = rect.left - containerRect.left + rect.width / 2;
+                const y = rect.top - containerRect.top + rect.height / 2;
+                
+                // Particle effect for the move
+                this.visualEffects.createParticleExplosion(x, y, 
+                    this.currentPlayer === 'X' ? '#FF6B35' : '#00FF88', 8, 0.8);
+                
+                // Button press ripple
+                this.visualEffects.createButtonPressEffect(
+                    rect.left - containerRect.left, 
+                    rect.top - containerRect.top, 
+                    rect.width, rect.height
+                );
+            }
+        }
+
         // Check if this board is won
         const boardWinner = this.checkWinner(this.boards[boardIndex].cells);
         if (boardWinner) {
@@ -137,6 +279,32 @@ class UltimateTicTacToe {
             const movesInSection = this.boards[boardIndex].cells.filter(cell => cell !== null).length;
             this.scores[boardWinner] += movesInSection;
             this.announceToScreenReader(`Board ${boardIndex + 1} won by ${boardWinner}! +${movesInSection} points!`);
+
+            // Add board win effect
+            if (this.visualEffects) {
+                const boardElement = document.querySelector(`[data-board="${boardIndex}"]`);
+                if (boardElement) {
+                    const rect = boardElement.getBoundingClientRect();
+                    const containerRect = this.visualEffects.canvas.getBoundingClientRect();
+                    const x = rect.left - containerRect.left + rect.width / 2;
+                    const y = rect.top - containerRect.top + rect.height / 2;
+                    
+                    // Celebration effect for board win
+                    this.visualEffects.createParticleExplosion(x, y, '#FFD700', 20, 1.2);
+                    this.visualEffects.createEnergyPulse(x, y, '#FFD700', 3);
+                    
+                    // Combo effect if multiple boards won in sequence
+                    const wonBoards = this.boards.filter(b => b.winner === boardWinner).length;
+                    if (wonBoards >= 2) {
+                        this.visualEffects.createComboEffect(x, y + 50, wonBoards);
+                    }
+                }
+            }
+
+            // 3D win effect
+            if (this.is3DMode && this.renderer3D) {
+                this.renderer3D.showWinEffect(boardIndex);
+            }
         } else if (this.boards[boardIndex].cells.every(cell => cell !== null)) {
             this.boards[boardIndex].winner = 'draw';
             this.announceToScreenReader(`Board ${boardIndex + 1} is a draw!`);
@@ -146,6 +314,11 @@ class UltimateTicTacToe {
         const targetBoard = cellIndex;
         if (this.boards[targetBoard].winner === null) {
             this.activeBoard = targetBoard;
+            // 3D camera focus and send effect
+            if (this.is3DMode && this.renderer3D) {
+                this.renderer3D.showSendToBoardEffect(boardIndex, targetBoard);
+                setTimeout(() => this.renderer3D.focusOnBoard(targetBoard), 500);
+            }
         } else {
             // If target board is complete, player can choose any available board
             this.activeBoard = null;
@@ -164,6 +337,88 @@ class UltimateTicTacToe {
 
         // Update the board
         this.updateBoard();
+
+        this.maybeScheduleAIMove();
+    }
+
+    /**
+     * Snapshot of the game in the AI engine's state format
+     */
+    getEngineState() {
+        return {
+            boards: this.boards.map(b => b.cells.slice()),
+            activeBoard: this.activeBoard,
+            currentPlayer: this.currentPlayer
+        };
+    }
+
+    /**
+     * Set vs-AI difficulty ('easy'|'medium'|'hard'|'expert') or null for local 2-player
+     */
+    setAIDifficulty(difficulty) {
+        this.aiDifficulty = difficulty || null;
+        this.resetGame();
+    }
+
+    /**
+     * Game-rule legality: must play on the active board (or any open board when
+     * activeBoard is null), the board must not be won/drawn, and the cell must be empty.
+     */
+    isLegalMove(boardIndex, cellIndex) {
+        if (this.ultimateWinner) return false;
+        if (!Number.isInteger(boardIndex) || !Number.isInteger(cellIndex)) return false;
+        if (boardIndex < 0 || boardIndex > 8 || cellIndex < 0 || cellIndex > 8) return false;
+        if (this.activeBoard !== null && this.activeBoard !== boardIndex) return false;
+        const board = this.boards[boardIndex];
+        return !board.winner && !board.cells[cellIndex];
+    }
+
+    legalMoves() {
+        const moves = [];
+        for (let b = 0; b < 9; b++) for (let c = 0; c < 9; c++) {
+            if (this.isLegalMove(b, c)) moves.push({ board: b, cell: c });
+        }
+        return moves;
+    }
+
+    markLastMove(boardIndex, cellIndex) {
+        document.querySelectorAll('.cell.last-move').forEach(el => el.classList.remove('last-move'));
+        const el = document.querySelector(`.cell[data-board="${boardIndex}"][data-cell="${cellIndex}"]`);
+        if (el) el.classList.add('last-move');
+    }
+
+    maybeScheduleAIMove() {
+        if (this.onlineMode || !this.aiDifficulty || this.ultimateWinner) return;
+        if (this.currentPlayer !== this.aiSymbol || this.aiThinking) return;
+        if (!window.TTT9DAI || !window.TTT9DEngine) return;
+        this.aiThinking = true;
+        const generation = this.aiGeneration;
+        const turnIndicator = document.getElementById('turn-indicator');
+        if (turnIndicator) turnIndicator.innerHTML = 'AI is thinking…';
+        // Let the browser paint before searching
+        setTimeout(async () => {
+            try {
+                const stateForAI = this.getEngineState();
+                const result = await window.TTT9DAI.getAIMove(stateForAI, this.aiDifficulty);
+                if (generation !== this.aiGeneration || this.ultimateWinner) return;
+                if (this.currentPlayer !== this.aiSymbol) return; // state moved on; ignore stale result
+                let move = result && result.move;
+                if (!move || !this.isLegalMove(move.board, move.cell)) {
+                    console.warn('Rejected illegal AI move', move, 'activeBoard =', this.activeBoard);
+                    move = window.TTT9DEngine.getMove(this.getEngineState(), this.aiDifficulty).move;
+                    if (!this.isLegalMove(move.board, move.cell)) move = this.legalMoves()[0];
+                }
+                if (!move) return;
+                this.aiThinking = false;
+                this.makeLocalMove(move.board, move.cell);
+                this.markLastMove(move.board, move.cell);
+                this.announceToScreenReader(`AI played board ${move.board + 1}, cell ${move.cell + 1}`);
+            } catch (e) {
+                console.error('AI move failed', e);
+            } finally {
+                if (generation === this.aiGeneration) this.aiThinking = false;
+            }
+        }, 250);
     }
 
     /**
@@ -191,9 +446,10 @@ class UltimateTicTacToe {
      */
     checkUltimateWinner() {
         const boardWinners = this.boards.map(board => board.winner);
-        const winner = this.checkWinner(boardWinners);
-        
-        if (winner && winner !== 'draw') {
+        // Only X/O boards count toward three-in-a-row; drawn boards must not mask a real line.
+        const winner = this.checkWinner(boardWinners.map(w => (w === 'X' || w === 'O') ? w : null));
+
+        if (winner) {
             return winner;
         }
 
@@ -216,6 +472,17 @@ class UltimateTicTacToe {
      * Update the board display
      */
     updateBoard() {
+        if (this.is3DMode && this.renderer3D) {
+            this.renderer3D.updateBoard();
+        } else {
+            this.update2DBoard();
+        }
+    }
+
+    /**
+     * Update the 2D board display
+     */
+    update2DBoard() {
         // Update cells
         this.boards.forEach((board, boardIndex) => {
             const boardElement = document.querySelector(`[data-board="${boardIndex}"].small-board`);
@@ -295,6 +562,23 @@ class UltimateTicTacToe {
     }
 
     /**
+     * Toggle between 2D and 3D modes
+     */
+    async toggle3DMode() {
+        this.is3DMode = !this.is3DMode;
+        const toggleBtn = document.getElementById('toggle-3d-btn');
+
+        if (this.is3DMode) {
+            toggleBtn.textContent = 'Switch to 2D';
+            await this.init3DGame();
+            this.renderer3D.show3D();
+        } else {
+            toggleBtn.textContent = 'Switch to 3D';
+            this.renderer3D.show2D();
+        }
+    }
+
+    /**
      * Show game over modal
      */
     showGameOver(winner) {
@@ -310,8 +594,19 @@ class UltimateTicTacToe {
             } else {
                 message.textContent = `You lost. Final Score - X: ${this.scores.X}, O: ${this.scores.O}`;
             }
+        } else if (this.aiDifficulty) {
+            message.textContent = (winner === this.aiSymbol ? `AI (${this.aiDifficulty}) wins.` : '🎉 You beat the AI!') +
+                ` Final Score - X: ${this.scores.X}, O: ${this.scores.O}`;
         } else {
             message.textContent = `Player ${winner} wins! Final Score - X: ${this.scores.X}, O: ${this.scores.O}`;
+        }
+
+        // Add victory celebration effect for wins
+        if (winner !== 'draw' && this.visualEffects) {
+            const canvas = this.visualEffects.canvas;
+            const x = canvas.width / 2;
+            const y = canvas.height / 2;
+            this.visualEffects.createWinCelebration(x, y);
         }
 
         modal.classList.add('show');
@@ -350,11 +645,25 @@ class UltimateTicTacToe {
     }
 
     /**
+     * Clean up all event listeners from cells
+     */
+    cleanupEventListeners() {
+        for (const [cell, handlers] of this.cellEventListeners) {
+            cell.removeEventListener('click', handlers.click);
+            cell.removeEventListener('keydown', handlers.keydown);
+        }
+        this.cellEventListeners.clear();
+    }
+
+    /**
      * Reset game
      * Note: Scores are preserved across games in the same session
      * This allows players to track their performance over multiple games
      */
     resetGame() {
+        // Clean up event listeners from previous game
+        this.cleanupEventListeners();
+
         this.currentPlayer = 'X';
         this.activeBoard = null;
         this.boards = Array(9).fill(null).map(() => ({
@@ -362,6 +671,8 @@ class UltimateTicTacToe {
             winner: null
         }));
         this.ultimateWinner = null;
+        this.aiGeneration++;
+        this.aiThinking = false;
         // Scores are intentionally kept across games for session tracking
         
         // Exit online mode on reset
@@ -613,9 +924,96 @@ document.addEventListener('DOMContentLoaded', () => {
     // Make game instance globally accessible for multiplayer events
     window.currentGame = game;
 
+    // Initialize tutorial system
+    function initTutorial() {
+        if (!window.tutorialSystem) {
+            window.tutorialSystem = new TutorialSystem();
+        }
+
+        // Check if tutorial has been completed
+        if (!window.tutorialSystem.isTutorialCompleted('ultimate-tictactoe-intro')) {
+            // Start tutorial after a short delay
+            setTimeout(() => {
+                startUltimateTicTacToeTutorial();
+            }, 1000);
+        }
+    }
+
+    // Define the Ultimate Tic-Tac-Toe tutorial
+    function startUltimateTicTacToeTutorial() {
+        const tutorialSteps = [
+            {
+                title: "Welcome to Ultimate Tic-Tac-Toe!",
+                description: "This is a strategic 9-board version of tic-tac-toe. Your move on one board determines where your opponent must play next. Let's learn how to play!",
+                target: "#ultimate-board",
+                effect: "welcome"
+            },
+            {
+                title: "The Game Board",
+                description: "You see 9 small tic-tac-toe boards arranged in a 3x3 grid. Each small board contains 9 cells, just like regular tic-tac-toe.",
+                target: "#ultimate-board",
+                effect: "highlight"
+            },
+            {
+                title: "How to Win a Small Board",
+                description: "Win a small board by getting 3 of your symbols (X or O) in a row, column, or diagonal - just like regular tic-tac-toe!",
+                target: ".small-board:first-child",
+                effect: "highlight"
+            },
+            {
+                title: "The Active Board Rule",
+                description: "The golden highlighted board shows where you MUST play. The cell your opponent just played picks your board: if they played the top-right cell of any board, you must play in the top-right board.",
+                target: ".small-board.active",
+                effect: "highlight"
+            },
+            {
+                title: "Winning the Whole Game",
+                description: "To win the entire game, get 3 small boards in a row (horizontally, vertically, or diagonally) on the big board. If every board is finished and nobody has 3 in a row, the higher score wins.",
+                target: "#ultimate-board",
+                effect: "highlight"
+            },
+            {
+                title: "Special Rules",
+                description: "If you're sent to a board that's already won or full, you can play anywhere! Watch for the golden highlights to know where to play.",
+                target: "#turn-indicator",
+                effect: "highlight"
+            },
+            {
+                title: "Ready to Play!",
+                description: "Click any empty cell in the highlighted board to make your move. Try to control the center boards and set up winning patterns. Good luck!",
+                target: "#new-game-btn",
+                effect: "celebrate"
+            }
+        ];
+
+        window.tutorialSystem.startTutorial('ultimate-tictactoe-intro', tutorialSteps);
+    }
+
+    // Listen for game ready event to initialize tutorial
+    window.addEventListener('gameReady', initTutorial);
+
     // Event listeners
     document.getElementById('new-game-btn').addEventListener('click', () => game.resetGame());
+    const aiModeSelect = document.getElementById('ai-mode-select');
+    if (aiModeSelect) {
+        // Default to vs AI (Medium); remember the player's last choice ('local' = 2 players).
+        const OPPONENT_KEY = '9dttt.uttt.opponent';
+        let saved = null;
+        try { saved = localStorage.getItem(OPPONENT_KEY); } catch (e) {}
+        const wanted = saved === null ? 'medium' : (saved === 'local' ? '' : saved);
+        const valid = [...aiModeSelect.options].some((o) => o.value === wanted);
+        aiModeSelect.value = valid ? wanted : 'medium';
+        game.setAIDifficulty(aiModeSelect.value || null);
+        aiModeSelect.addEventListener('change', () => {
+            try { localStorage.setItem(OPPONENT_KEY, aiModeSelect.value || 'local'); } catch (e) {}
+            game.setAIDifficulty(aiModeSelect.value || null);
+        });
+    }
     document.getElementById('modal-new-game-btn').addEventListener('click', () => game.resetGame());
+    
+    document.getElementById('toggle-3d-btn').addEventListener('click', async () => {
+        await game.toggle3DMode();
+    });
     
     document.getElementById('toggle-instructions-btn').addEventListener('click', () => {
         const instructions = document.getElementById('instructions');

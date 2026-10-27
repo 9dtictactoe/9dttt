@@ -6,6 +6,7 @@
 
 const { createClient } = require('redis');
 const config = require('./config');
+const { buildRedisOptions, describeRedisOptions } = require('./redis-options');
 
 class Storage {
     constructor() {
@@ -29,17 +30,23 @@ class Storage {
     async initialize() {
         if (config.REDIS_URL) {
             try {
-                this.redis = createClient({ url: config.REDIS_URL });
+                const redisOptions = buildRedisOptions(config.REDIS_URL);
+                console.log(`🔌 Redis: connecting to ${describeRedisOptions(redisOptions)}`);
+                this.redis = createClient(redisOptions);
                 this.redis.on('error', (err) => {
-                    console.error('Redis error:', err);
+                    console.error('Redis error:', err.message || err);
                     this.useRedis = false;
                 });
                 await this.redis.connect();
                 this.useRedis = true;
                 console.log('✅ Connected to Redis');
             } catch (error) {
-                console.log('⚠️ Redis not available, using in-memory storage');
+                console.log('⚠️ Redis not available, using in-memory storage:', error.message || error);
                 this.useRedis = false;
+                if (this.redis) {
+                    this.redis.disconnect().catch(() => {});
+                    this.redis = null;
+                }
             }
         } else {
             console.log('📦 Using in-memory storage (set REDIS_URL for persistence)');

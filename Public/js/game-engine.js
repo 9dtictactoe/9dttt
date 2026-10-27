@@ -20,14 +20,20 @@
     // Prevent arrow keys and space from scrolling the page when any game is active
     
     let gameActive = false;
-    
+
+    // All keys that browsers use to scroll the page
+    const SCROLL_KEYS = new Set([
+        'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+        'Space', 'PageUp', 'PageDown', 'Home', 'End'
+    ]);
+
     function preventGameKeyScroll(e) {
         if (!gameActive) return;
-        
-        const scrollKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'];
-        if (scrollKeys.includes(e.code)) {
-            e.preventDefault();
-        }
+        if (!SCROLL_KEYS.has(e.code)) return;
+        // Don't block input inside form elements
+        const el = document.activeElement;
+        if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT')) return;
+        e.preventDefault();
     }
     
     // Add global listener for scroll prevention
@@ -35,13 +41,23 @@
     
     // Function to enable/disable scroll prevention
     window.setGameActive = function(active) {
+        // Only swallow scroll keys while a game is active. The page itself is
+        // never overflow-locked (that made game pages impossible to scroll).
         gameActive = active;
     };
     
     // Auto-detect game pages and enable scroll prevention
     document.addEventListener('DOMContentLoaded', function() {
-        // If there's a game canvas, enable scroll prevention
-        const gameCanvas = document.getElementById('game-canvas');
+        // Enable on any page with a known game canvas id, or a canvas inside a
+        // recognised game container. Avoids false-positives from charts/analytics
+        // canvases that may appear on non-game pages.
+        const gameCanvas = document.getElementById('game-canvas') ||
+                           document.getElementById('gameCanvas') ||
+                           document.querySelector(
+                               '#game-container canvas, .game-canvas-wrapper canvas'
+                           );
+        // (Decorative canvases such as the visual-effects overlay or a 3D view
+        // inside <main> no longer count as a game canvas.)
         if (gameCanvas) {
             gameActive = true;
         }
@@ -98,6 +114,10 @@
             this.errorCount = 0;
             this.maxErrors = 10;
             this.lastError = null;
+
+            // Lifecycle
+            this._rafId = null;
+            this._inputSetup = false;
             
             // Initialize
             this._setupInput();
@@ -122,6 +142,10 @@
          */
         stop() {
             this.running = false;
+            if (this._rafId) {
+                cancelAnimationFrame(this._rafId);
+                this._rafId = null;
+            }
         }
 
         /**
@@ -202,7 +226,7 @@
             }
             
             // Continue the loop
-            requestAnimationFrame((t) => this._gameLoop(t));
+            this._rafId = requestAnimationFrame((t) => this._gameLoop(t));
         }
 
         /**
@@ -225,6 +249,8 @@
          * Setup keyboard and mouse input handlers
          */
         _setupInput() {
+            if (this._inputSetup) return;
+            this._inputSetup = true;
             // Keyboard
             window.addEventListener('keydown', (e) => {
                 if (!this.keys[e.code]) {

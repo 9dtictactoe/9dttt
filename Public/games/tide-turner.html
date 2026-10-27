@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Add-on unlock guard (client-side UX gate only; see js/unlock-guard.js) -->
+    <script src="../js/catalog.js"></script>
+    <script src="../js/unlock-guard.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a0e27">
@@ -14,6 +18,7 @@
     <link rel="stylesheet" href="../css/tide-turner.css">
     <link rel="stylesheet" href="../css/game-ui.css">
     <link rel="stylesheet" href="../css/game-chat.css">
+    <link rel="stylesheet" href="../css/responsive.css">
 </head>
 <body>
     <!-- Skip to main content link -->
@@ -120,6 +125,8 @@
     </div>
 
     <!-- JavaScript -->
+        <script src="../js/mobile-game-adapter.js"></script>
+    <script src="../js/fullscreen-manager.js"></script>
     <script src="../js/gamepad-manager.js"></script>
     <script src="../js/controller-guide.js"></script>
     <script src="../js/advanced-graphics.js"></script>
@@ -148,5 +155,6 @@
             });
         });
     </script>
+    <script src="../js/home-button.js"></script>
 </body>
 </html>

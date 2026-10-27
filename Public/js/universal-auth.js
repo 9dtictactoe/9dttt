@@ -4,7 +4,7 @@
  * ⚠️ DEPRECATED: This file is kept for backward compatibility only.
  * New code should use unified-auth.js and firebase-init.js instead.
  * 
- * Uses browser-based OAuth (Google, Microsoft, Apple) + Web3 wallets
+ * Uses browser-based OAuth (Google, Microsoft, Apple)
  * No Firebase needed - uses IndexedDB for local storage and your backend API
  * Cross-browser compatible with fallbacks for older browsers
  * 
@@ -65,7 +65,7 @@ class UniversalAuth {
         }
         
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open('9DTTT_GameDB', 1);
+            const request = indexedDB.open('9DTTT_GameDB', 2); // keep in sync with global-leaderboard.js
             
             request.onerror = () => {
                 console.error('IndexedDB error:', request.error);
@@ -74,6 +74,7 @@ class UniversalAuth {
             
             request.onsuccess = () => {
                 this.db = request.result;
+                this.db.onversionchange = () => this.db.close();
                 console.log('IndexedDB initialized successfully');
                 resolve(this.db);
             };
@@ -192,44 +193,6 @@ class UniversalAuth {
         }
     }
     
-    async loginWithWallet() {
-        try {
-            // Web3 wallet login (Phantom, MetaMask, etc.)
-            // Check Solana Phantom wallet first
-            if (window.solana && window.solana.isPhantom) {
-                const resp = await window.solana.connect();
-                const publicKey = resp.publicKey.toString();
-                
-                await this.createUserFromWallet(publicKey, 'Solana');
-            } 
-            // Check Ethereum MetaMask or other Web3 providers
-            else if (window.ethereum) {
-                const accounts = await window.ethereum.request({ 
-                    method: 'eth_requestAccounts' 
-                });
-                
-                await this.createUserFromWallet(accounts[0], 'Ethereum');
-            }
-            // No wallet detected
-            else {
-                const installWallet = confirm(
-                    'No Web3 wallet detected.\n\n' +
-                    'Install Phantom (Solana) or MetaMask (Ethereum)?\n\n' +
-                    'Click OK to learn more, or Cancel to use Guest mode.'
-                );
-                
-                if (installWallet) {
-                    window.open('https://phantom.app/', '_blank');
-                } else {
-                    await this.loginAsGuest();
-                }
-            }
-        } catch (error) {
-            console.error('Wallet login error:', error);
-            this.showError('Failed to connect wallet. Using Guest mode.');
-            await this.loginAsGuest();
-        }
-    }
     
     async loginAsGuest() {
         const guestId = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -284,23 +247,6 @@ class UniversalAuth {
         this.onAuthStateChanged(this.user);
     }
     
-    async createUserFromWallet(address, chain) {
-        this.user = {
-            id: chain.toLowerCase() + '_' + address,
-            name: address.substr(0, 6) + '...' + address.substr(-4),
-            email: null,
-            avatar: chain === 'Solana' ? '👻' : '🦊',
-            walletAddress: address,
-            chain: chain,
-            type: 'wallet',
-            tokens: 0,
-            createdAt: Date.now()
-        };
-        
-        await this.saveUser(this.user);
-        await this.syncWithBackend(this.user);
-        this.onAuthStateChanged(this.user);
-    }
     
     parseJwt(token) {
         const base64Url = token.split('.')[1];
@@ -406,7 +352,6 @@ class UniversalAuth {
                     userId: user.id,
                     name: user.name,
                     email: user.email,
-                    walletAddress: user.walletAddress,
                     chain: user.chain,
                     type: user.type
                 })

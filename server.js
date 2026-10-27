@@ -9,6 +9,7 @@ require('dotenv').config();
 
 const express = require('express');
 const http = require('http');
+const crypto = require('crypto');
 const { Server } = require('socket.io');
 const path = require('path');
 const config = require('./server/config');
@@ -17,6 +18,7 @@ const auth = require('./server/auth');
 const gameManager = require('./server/gameManager');
 const moderation = require('./server/moderation');
 const security = require('./server/security');
+const progression = new (require('./server/progression'))();
 const keepAlive = require('./server/keepAlive');
 const boot = require('./server/boot');
 const browserAuth = require('./server/browser-auth');
@@ -31,6 +33,11 @@ const allowedOrigins = [
     'https://d9ttt.com',
     'https://www.d9ttt.com',
     'https://9dttt.vercel.app',
+    'https://9dttt.com',
+    'https://www.9dttt.com',
+    'https://api.9dttt.com', // self-origin (Socket.io direct connect from the Vercel frontend)
+    'https://www.api.9dttt.com',
+    'https://ninedttt.onrender.com',
     process.env.VERCEL_URL,
     process.env.FRONTEND_URL
 ].filter(Boolean);
@@ -81,6 +88,38 @@ app.use(security.securityHeadersMiddleware());
 
 // Middleware
 app.use(express.json({ limit: '10kb' })); // Limit body size
+
+// When this server is deployed as an API-only backend (Render), redirect direct browser
+// navigation to the canonical frontend URL so users always land on the Vercel-served
+// version of the site. API, Socket.io, and keep-alive routes are still handled here.
+const FRONTEND_CANONICAL = process.env.FRONTEND_URL || 'https://www.d9ttt.com';
+const isApiOnlyMode = !!process.env.RENDER_EXTERNAL_URL;
+
+if (isApiOnlyMode) {
+    app.use((req, res, next) => {
+        // Pass through API calls, Socket.io, ping/health, and static assets
+        if (req.path.startsWith('/api/') ||
+            req.path.startsWith('/socket.io/') ||
+            req.path === '/ping' ||
+            req.path.startsWith('/css/') ||
+            req.path.startsWith('/js/') ||
+            req.path.startsWith('/images/') ||
+            req.path === '/favicon.ico' ||
+            req.path === '/icon.jpg') {
+            return next();
+        }
+
+        // Redirect HTML document requests to the canonical frontend (Vercel)
+        const accept = req.headers.accept || '';
+        if (accept.includes('text/html')) {
+            const qs = req.url.slice(req.path.length); // preserves ?query&string
+            const destination = FRONTEND_CANONICAL + req.path + qs;
+            return res.redirect(301, destination);
+        }
+
+        next();
+    });
+}
 
 // Maintenance mode middleware (before static files)
 app.use((req, res, next) => {
@@ -183,7 +222,12 @@ app.post('/api/auth/login', security.rateLimitMiddleware('api_auth'), async (req
     }
 });
 
-app.get('/api/auth/verify', async (req, res) => {
+// Session verification — accepts both GET and POST so the client-side
+// fetch({ method: 'POST' }) call in unified-auth.js is correctly handled.
+// Previously only GET was registered; a POST from the client would fall
+// through to a 404, causing JSON.parse to throw, and clearSession() to
+// fire on every page reload (perpetual logout bug).
+async function handleVerifyToken(req, res) {
     try {
         const token = req.headers.authorization?.replace('Bearer ', '');
         if (!token) {
@@ -200,29 +244,36 @@ app.get('/api/auth/verify', async (req, res) => {
     } catch (error) {
         res.json({ valid: false });
     }
-});
+}
+app.get('/api/auth/verify', security.rateLimitMiddleware('api_auth'), handleVerifyToken);
+app.post('/api/auth/verify', security.rateLimitMiddleware('api_auth'), handleVerifyToken);
 
-// ============================================
-// Web3 Wallet Authentication
-// Multi-chain support: Ethereum (MetaMask), Solana (Phantom), XRP (XUMM/Crossmark)
-// For AtomicFizz ecosystem integration
-// ============================================
-
-app.post('/api/auth/wallet', security.rateLimitMiddleware('api_auth'), async (req, res) => {
-    try {
-        const walletAuth = require('./api/auth/wallet');
-        await walletAuth(req, res);
-    } catch (error) {
-        console.error('Wallet auth error:', error);
-        res.status(500).json({ success: false, error: 'Wallet authentication failed' });
-    }
-});
 
 // ============================================
 // Browser-Native Authentication (Credential Management API)
 // FREE - no external dependencies or user limits
 // Uses browser's built-in password manager for seamless sign-in
 // ============================================
+
+// Firebase social-login status (called by Public/js/firebase-init.js and game-init.js).
+// Returns available:false unless the public Firebase web config is set in env.
+app.get('/api/auth/firebase/status', (req, res) => {
+    const { FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_PROJECT_ID, FIREBASE_APP_ID } = process.env;
+    if (!FIREBASE_API_KEY || !FIREBASE_PROJECT_ID) {
+        return res.json({ success: true, available: false });
+    }
+    res.json({
+        success: true,
+        available: true,
+        config: {
+            apiKey: FIREBASE_API_KEY,
+            authDomain: FIREBASE_AUTH_DOMAIN || `${FIREBASE_PROJECT_ID}.firebaseapp.com`,
+            projectId: FIREBASE_PROJECT_ID,
+            appId: FIREBASE_APP_ID
+        },
+        providers: [{ id: 'google.com', name: 'Google' }, { id: 'apple.com', name: 'Apple' }]
+    });
+});
 
 // Get browser auth status and configuration
 app.get('/api/auth/browser/status', (req, res) => {
@@ -454,6 +505,37 @@ app.get('/api/leaderboard', async (req, res) => {
     }
 });
 
+// CAPS Token routes - Atomic Fizz Reward Layer
+app.get('/api/caps/balance', authenticateToken, async (req, res) => {
+    try {
+        const balance = await auth.getCapsBalance(req.user.username);
+        if (!balance) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+        res.json({ success: true, balance });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Server error' });
+    }
+});
+
+app.post('/api/caps/redeem', authenticateToken, async (req, res) => {
+    try {
+        const { amount } = req.body;
+        if (!amount || typeof amount !== 'number' || amount <= 0) {
+            return res.status(400).json({ success: false, error: 'Valid amount required' });
+        }
+
+        const result = await auth.redeemCaps(req.user.username, amount);
+        if (!result.success) {
+            return res.status(400).json({ success: false, error: result.error });
+        }
+
+        res.json({ success: true, result });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Server error' });
+    }
+});
+
 // Game routes
 app.get('/api/games/active', authenticateToken, async (req, res) => {
     try {
@@ -468,6 +550,49 @@ app.get('/api/games/recent', authenticateToken, async (req, res) => {
     try {
         const games = await gameManager.getRecentGames(req.user.username);
         res.json({ success: true, games });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Server error' });
+    }
+});
+
+// Progression routes
+app.get('/api/progression/stats', authenticateToken, async (req, res) => {
+    try {
+        const stats = progression.getPlayerStats(req.user.username);
+        res.json({ success: true, stats });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Server error' });
+    }
+});
+
+app.post('/api/progression/claim-challenge', authenticateToken, async (req, res) => {
+    try {
+        const { challengeId } = req.body;
+        if (!challengeId) {
+            return res.status(400).json({ success: false, error: 'Challenge ID required' });
+        }
+
+        const progress = progression.getPlayerProgress(req.user.username);
+        const challenge = progress.dailyChallenges.find(c => c.id === challengeId);
+
+        if (!challenge || !challenge.completed || challenge.claimed) {
+            return res.status(400).json({ success: false, error: 'Challenge not available for claiming' });
+        }
+
+        // Award rewards
+        challenge.claimed = true;
+        const rewards = {
+            caps: challenge.reward.caps,
+            xp: challenge.reward.xp
+        };
+
+        // Award CAPS
+        await auth.awardCaps(req.user.username, rewards.caps, `daily_challenge_${challengeId}`);
+
+        // Award XP
+        progression.awardXP(req.user.username, rewards.xp, `daily_challenge_${challengeId}`);
+
+        res.json({ success: true, rewards });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Server error' });
     }
@@ -496,13 +621,13 @@ app.get('/api/stats', async (req, res) => {
 });
 
 // Client configuration (public values only)
+// SECURITY: Never expose API keys or secrets here. infuraKey / alchemyKey are
+// server-side keys and must NOT be returned to unauthenticated clients.
 app.get('/api/config', (req, res) => {
     res.json({
         success: true,
         config: {
-            // Only expose safe, public configuration
-            infuraKey: config.INFURA_KEY,
-            alchemyKey: config.ALCHEMY_API_KEY,
+            // Only expose safe, non-secret public configuration
             environment: config.NODE_ENV,
             maintenanceMode: config.MAINTENANCE_MODE
         }
@@ -635,11 +760,17 @@ function authenticateToken(req, res, next) {
 const connectedUsers = new Map();
 const userSockets = new Map();
 
+// Monster Rampage arcade sessions (co-op, up to 3 players per room)
+const rampageSessions = new Map(); // sessionId -> { players, hostSocket, created }
+const RAMPAGE_MAX_PLAYERS   = 3;
+const RAMPAGE_MIN_REMOTE_SLOT = 2; // slots 2-3 are remote players; slot 1 is always host
+
 io.on('connection', (socket) => {
     console.log(`Socket connected: ${socket.id}`);
 
     // Authenticate socket connection
     socket.on('authenticate', async (token) => {
+        try {
         const result = auth.verifyToken(token);
         if (!result.valid) {
             socket.emit('auth_error', { error: 'Invalid token' });
@@ -680,6 +811,10 @@ io.on('connection', (socket) => {
 
         socket.emit('authenticated', { user, restrictions });
         console.log(`User authenticated: ${user.username}`);
+        } catch (error) {
+            console.error('[socket] authenticate error:', error);
+            socket.emit('auth_error', { error: 'Authentication failed. Please try again.' });
+        }
     });
 
     // Matchmaking
@@ -823,8 +958,14 @@ io.on('connection', (socket) => {
 
     // Game moves
     socket.on('make_move', async (data) => {
+        try {
         const user = connectedUsers.get(socket.id);
         if (!user) return;
+
+        if (!data || typeof data.gameId !== 'string' || data.move === undefined) {
+            socket.emit('move_error', { error: 'Invalid move data' });
+            return;
+        }
 
         const result = await gameManager.makeMove(data.gameId, user.username, data.move);
         
@@ -832,6 +973,38 @@ io.on('connection', (socket) => {
             io.to(`game:${data.gameId}`).emit('game_update', result.game);
             
             if (result.game.status === 'finished') {
+                // Award CAPS and XP for game completion
+                const game = result.game;
+                const winner = game.winner;
+
+                if (winner && winner !== 'draw') {
+                    // Award CAPS and XP to winner
+                    const winnerUsername = game.players[winner].username;
+                    const capsAmount = game.type === 'ultimate-tictactoe' ? 50 : 25;
+                    await auth.awardCaps(winnerUsername, capsAmount, `win_${game.type}`);
+
+                    // Award XP for winning
+                    const winnerXP = game.type === 'ultimate-tictactoe' ? 100 : 50;
+                    progression.trackGameCompletion(winnerUsername, game.type, true, 0, 0);
+
+                    // Award smaller CAPS and XP to loser for participation
+                    const loserSymbol = winner === 'X' ? 'O' : 'X';
+                    if (game.players[loserSymbol]) {
+                        const loserUsername = game.players[loserSymbol].username;
+                        await auth.awardCaps(loserUsername, Math.floor(capsAmount / 4), `participation_${game.type}`);
+                        progression.trackGameCompletion(loserUsername, game.type, false, 0, 0);
+                    }
+                } else if (winner === 'draw') {
+                    // Award participation CAPS and XP to both players in a draw
+                    const drawCaps = game.type === 'ultimate-tictactoe' ? 15 : 10;
+                    for (const [symbol, player] of Object.entries(game.players)) {
+                        if (player && player.username) {
+                            await auth.awardCaps(player.username, drawCaps, `draw_${game.type}`);
+                            progression.trackGameCompletion(player.username, game.type, false, 0, 0);
+                        }
+                    }
+                }
+
                 io.to(`game:${data.gameId}`).emit('game_ended', {
                     game: result.game,
                     winner: result.game.winner
@@ -840,16 +1013,42 @@ io.on('connection', (socket) => {
         } else {
             socket.emit('move_error', { error: result.error });
         }
+        } catch (error) {
+            console.error('[socket] make_move error:', error);
+            socket.emit('move_error', { error: 'Internal error processing move' });
+        }
     });
 
     // Forfeit game
     socket.on('forfeit_game', async (data) => {
         const user = connectedUsers.get(socket.id);
         if (!user) return;
+        if (!data || typeof data.gameId !== 'string') {
+            socket.emit('error', { error: 'Invalid forfeit data' });
+            return;
+        }
 
         const result = await gameManager.forfeitGame(data.gameId, user.username);
         
         if (result.success) {
+            // Award CAPS for forfeit - winner gets full amount, forfeiter gets small participation
+            const game = result.game;
+            const winner = game.winner;
+            
+            if (winner && winner !== 'draw') {
+                const winnerUsername = game.players[winner].username;
+                const capsAmount = game.type === 'ultimate-tictactoe' ? 40 : 20; // Slightly less for forfeit
+                await auth.awardCaps(winnerUsername, capsAmount, `forfeit_win_${game.type}`);
+
+                // Award XP for winning by forfeit
+                const winnerXP = game.type === 'ultimate-tictactoe' ? 80 : 40;
+                progression.trackGameCompletion(winnerUsername, game.type, true, 0, 0);
+
+                // Award very small participation to forfeiter
+                await auth.awardCaps(user.username, Math.floor(capsAmount / 10), `forfeit_participation_${game.type}`);
+                progression.trackGameCompletion(user.username, game.type, false, 0, 0);
+            }
+
             io.to(`game:${data.gameId}`).emit('game_ended', {
                 game: result.game,
                 winner: result.game.winner,
@@ -862,6 +1061,10 @@ io.on('connection', (socket) => {
     socket.on('game_chat', async (data) => {
         const user = connectedUsers.get(socket.id);
         if (!user) return;
+        if (!data || typeof data.gameId !== 'string' || typeof data.message !== 'string') {
+            socket.emit('chat_error', { error: 'Invalid chat data' });
+            return;
+        }
 
         // Check if muted
         const canSend = await moderation.canSendMessage(user.username);
@@ -886,6 +1089,8 @@ io.on('connection', (socket) => {
 
     // Lobby chat
     socket.on('join_lobby', () => {
+        const user = connectedUsers.get(socket.id);
+        if (!user) { socket.emit('error', { error: 'Not authenticated' }); return; }
         socket.join('lobby');
         socket.emit('joined_lobby');
     });
@@ -893,6 +1098,10 @@ io.on('connection', (socket) => {
     socket.on('lobby_chat', async (data) => {
         const user = connectedUsers.get(socket.id);
         if (!user) return;
+        if (!data || typeof data.message !== 'string') {
+            socket.emit('chat_error', { error: 'Invalid message data' });
+            return;
+        }
 
         const canSend = await moderation.canSendMessage(user.username);
         if (!canSend.allowed) {
@@ -918,6 +1127,10 @@ io.on('connection', (socket) => {
     socket.on('direct_message', async (data) => {
         const user = connectedUsers.get(socket.id);
         if (!user) return;
+        if (!data || typeof data.to !== 'string' || typeof data.message !== 'string') {
+            socket.emit('dm_error', { error: 'Invalid message data' });
+            return;
+        }
 
         // Check if blocked
         const blocked = await moderation.areBlocked(user.username, data.to);
@@ -989,6 +1202,94 @@ io.on('connection', (socket) => {
     });
 
     // Disconnect handling
+    // ── Monster Rampage: Online Co-op ────────────────────────────────
+
+    // Create a new co-op session (host)
+    socket.on('rampage_create', (data) => {
+        const user = connectedUsers.get(socket.id);
+        if (!user) { socket.emit('error', { error: 'Not authenticated' }); return; }
+        // Use crypto for a collision-resistant, URL-safe session ID
+        const sessionId = crypto.randomBytes(3).toString('hex').toUpperCase(); // e.g. "A3F7B2"
+        rampageSessions.set(sessionId, {
+            players: [{ socketId: socket.id, name: (data && data.name) || 'P1', slot: 1 }],
+            hostSocket: socket.id,
+            created: Date.now()
+        });
+        socket.join(`rampage:${sessionId}`);
+        socket.emit('rampage_created', { sessionId, slot: 1 });
+        console.log(`[rampage] Session created: ${sessionId}`);
+    });
+
+    // Join an existing co-op session
+    socket.on('rampage_join', (data) => {
+        const user = connectedUsers.get(socket.id);
+        if (!user) { socket.emit('error', { error: 'Not authenticated' }); return; }
+        if (!data || !data.sessionId) return;
+        const session = rampageSessions.get(data.sessionId);
+        if (!session) {
+            socket.emit('rampage_error', { error: 'Session not found' });
+            return;
+        }
+        if (session.players.length >= RAMPAGE_MAX_PLAYERS) {
+            socket.emit('rampage_error', { error: `Session is full (max ${RAMPAGE_MAX_PLAYERS} players)` });
+            return;
+        }
+        const slot = session.players.length + 1;
+        const name = (data.name) || `P${slot}`;
+        session.players.push({ socketId: socket.id, name, slot });
+        socket.join(`rampage:${data.sessionId}`);
+        socket.emit('rampage_joined', { sessionId: data.sessionId, slot });
+        io.to(`rampage:${data.sessionId}`).emit('rampage_player_joined', {
+            slot, name, playerCount: session.players.length
+        });
+        console.log(`[rampage] Player joined session ${data.sessionId} as slot ${slot}`);
+    });
+
+    // Relay remote player input to the host for authoritative simulation
+    socket.on('rampage_input', (data) => {
+        // Require an authenticated user before relaying any input.
+        // Without this check, any connected socket knowing a session ID
+        // could flood the host with arbitrary inputs (DoS vector).
+        const user = connectedUsers.get(socket.id);
+        if (!user) return;
+        if (!data || !data.sessionId) return;
+        const session = rampageSessions.get(data.sessionId);
+        if (!session) return;
+        // Only relay valid slot numbers and compact input objects
+        const slot = parseInt(data.slot, 10);
+        if (isNaN(slot) || slot < RAMPAGE_MIN_REMOTE_SLOT || slot > RAMPAGE_MAX_PLAYERS) return;
+        io.to(session.hostSocket).emit('rampage_remote_input', { slot, input: data.input });
+    });
+
+    // Host broadcasts authoritative game state to all remote players
+    socket.on('rampage_state', (data) => {
+        if (!data || !data.sessionId) return;
+        const session = rampageSessions.get(data.sessionId);
+        if (!session || session.hostSocket !== socket.id) return;
+        socket.to(`rampage:${data.sessionId}`).emit('rampage_state_update', { state: data.state });
+    });
+
+    // Leave a co-op session
+    socket.on('rampage_leave', (data) => {
+        if (!data || !data.sessionId) return;
+        const session = rampageSessions.get(data.sessionId);
+        if (!session) return;
+        session.players = session.players.filter(p => p.socketId !== socket.id);
+        socket.leave(`rampage:${data.sessionId}`);
+        if (session.players.length === 0) {
+            rampageSessions.delete(data.sessionId);
+            console.log(`[rampage] Session ${data.sessionId} closed (empty)`);
+        } else {
+            // If the host left, promote the next player as host
+            if (session.hostSocket === socket.id && session.players.length > 0) {
+                session.hostSocket = session.players[0].socketId;
+            }
+            io.to(`rampage:${data.sessionId}`).emit('rampage_player_left', {
+                playerCount: session.players.length
+            });
+        }
+    });
+
     socket.on('disconnect', async () => {
         const user = connectedUsers.get(socket.id);
         if (user) {
@@ -1008,12 +1309,33 @@ io.on('connection', (socket) => {
 
             console.log(`User disconnected: ${user.username}`);
         }
+
+        // Clean up any Monster Rampage co-op sessions this socket was part of
+        for (const [sid, session] of rampageSessions) {
+            const wasInSession = session.players.some(p => p.socketId === socket.id);
+            if (!wasInSession) continue;
+            session.players = session.players.filter(p => p.socketId !== socket.id);
+            if (session.players.length === 0) {
+                rampageSessions.delete(sid);
+            } else {
+                if (session.hostSocket === socket.id) {
+                    session.hostSocket = session.players[0].socketId;
+                }
+                io.to(`rampage:${sid}`).emit('rampage_player_left', {
+                    playerCount: session.players.length
+                });
+            }
+        }
     });
 });
 
 // ============================================
 // Catch-all route for SPA
 // ============================================
+
+app.use('/api', (req, res) => {
+    res.status(404).json({ success: false, error: 'API endpoint not found' });
+});
 
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
@@ -1032,13 +1354,38 @@ async function startServer() {
     
     server.listen(config.PORT, () => {
         // Start keep-alive service for Render (prevents free tier from sleeping)
-        const renderUrl = process.env.RENDER_EXTERNAL_URL;
-        if (renderUrl) {
-            keepAlive.start(renderUrl, 14 * 60 * 1000); // Ping every 14 minutes
+        // RENDER_EXTERNAL_URL is Render's *.onrender.com name, which is disabled for this
+        // service (404 "blocked-render-subdomain"), so ping the public custom domain instead.
+        // Override with KEEPALIVE_URL.
+        const keepAliveUrl = process.env.KEEPALIVE_URL ||
+            (process.env.RENDER_EXTERNAL_URL ? (process.env.PUBLIC_BACKEND_URL || 'https://api.9dttt.com') : null);
+        if (keepAliveUrl) {
+            keepAlive.start(keepAliveUrl.replace(/\/$/, ''), 14 * 60 * 1000); // Ping every 14 minutes
         }
         
         console.log(`  ${'\x1b[32m'}✓ Server listening on port ${config.PORT}${'\x1b[0m'}\n`);
     });
 }
 
-startServer();
+startServer().catch((err) => {
+    console.error('[server] Fatal startup error:', err);
+    process.exit(1);
+});
+
+// ============================================
+// Global Process Error Handlers
+// ============================================
+
+// Catch unhandled promise rejections — prevents Node from crashing silently.
+// We log the rejection and exit so the process manager (Render) can restart clean.
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[server] Unhandled promise rejection at:', promise, 'reason:', reason);
+    process.exit(1);
+});
+
+// Catch synchronous uncaught exceptions. After an uncaught exception the
+// process is in an undefined state; exit immediately so it can be restarted.
+process.on('uncaughtException', (err) => {
+    console.error('[server] Uncaught exception:', err);
+    process.exit(1);
+});

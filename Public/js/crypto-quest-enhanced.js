@@ -25,7 +25,12 @@ class CryptoQuestGame {
         // Input handling
         this.keys = {};
         this.mouse = { x: 0, y: 0, clicked: false };
+        this._inputSetup = false;
         this.setupInputHandlers();
+        
+        // RAF tracking (cancellable loop)
+        this._rafId = null;
+        this._stopped = false;
         
         // Load progress
         this.loadProgress();
@@ -36,6 +41,8 @@ class CryptoQuestGame {
     }
     
     setupInputHandlers() {
+        if (this._inputSetup) return;
+        this._inputSetup = true;
         window.addEventListener('keydown', (e) => {
             this.keys[e.key.toLowerCase()] = true;
             if (e.key === 'Escape') this.scene = 'menu';
@@ -63,6 +70,12 @@ class CryptoQuestGame {
     // ==================== GAME LOOP ====================
     
     gameLoop() {
+        // Stop the loop when explicitly halted
+        if (this._stopped) {
+            this._rafId = null;
+            return;
+        }
+
         const now = Date.now();
         const deltaTime = (now - this.lastTime) / 1000;
         this.lastTime = now;
@@ -70,7 +83,15 @@ class CryptoQuestGame {
         this.update(deltaTime);
         this.render();
         
-        requestAnimationFrame(() => this.gameLoop());
+        this._rafId = requestAnimationFrame(() => this.gameLoop());
+    }
+    
+    stop() {
+        this._stopped = true;
+        if (this._rafId !== null) {
+            cancelAnimationFrame(this._rafId);
+            this._rafId = null;
+        }
     }
     
     update(dt) {
@@ -885,6 +906,8 @@ class CryptoQuestGame {
     // ==================== PROGRESS MANAGEMENT ====================
     
     async saveProgress() {
+        // Strip privateKey before persisting – never store private keys in localStorage
+        const { privateKey: _privateKey, ...safeWallet } = this.wallet || {};
         const progress = {
             userId: this.userId,
             coins: this.coins,
@@ -892,18 +915,21 @@ class CryptoQuestGame {
             achievements: this.achievements,
             completedLevels: this.completedLevels,
             currentLevel: this.currentLevel,
-            wallet: this.wallet,
+            wallet: safeWallet,
             mining: this.mining
         };
         
         // Save to localStorage
         localStorage.setItem('cryptoQuestProgress', JSON.stringify(progress));
         
-        // Sync to API
+        // Sync to API (also use the safe wallet without privateKey)
         try {
+            const token = window.authClient?.getToken?.() || localStorage.getItem('authToken') || '';
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
             const response = await fetch('/api/crypto-quest/progress', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify(progress)
             });
             console.log('Progress saved:', await response.json());

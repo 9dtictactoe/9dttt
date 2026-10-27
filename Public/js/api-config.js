@@ -13,22 +13,21 @@
                        window.location.hostname.includes('192.168.');
     
     const isVercel = window.location.hostname.includes('vercel.app');
-    const isProduction = window.location.hostname === '9dttt.vercel.app' || 
-                        window.location.hostname === 'd9ttt.com' || 
-                        window.location.hostname === 'www.d9ttt.com';
-    
-    // Backend URLs
-    const API_CONFIG = {
-        // Development - backend running locally
-        development: 'http://localhost:3000',
-        
-        // Production - backend on Render
-        production: 'https://ninedttt.onrender.com',
-        
-        // Vercel preview - use production backend
-        preview: 'https://ninedttt.onrender.com'
-    };
-    
+
+    // All known production front-end hostnames (Vercel + custom domain)
+    // (9dttt.com was previously missing here - only the 'd9ttt.com' typo was listed -
+    // so the live site skipped the Vercel proxy and called the backend cross-origin.)
+    const PRODUCTION_HOSTS = ['9dttt.vercel.app', '9dttt.com', 'www.9dttt.com', 'd9ttt.com', 'www.d9ttt.com'];
+    const isProduction = PRODUCTION_HOSTS.includes(window.location.hostname);
+
+    // Canonical backend URL (Render custom domain). Override with window.NINEDTTT_BACKEND_URL.
+    // ninedttt.onrender.com is disabled on Render ("blocked-render-subdomain").
+    const BACKEND_URL = (window.NINEDTTT_BACKEND_URL || 'https://api.9dttt.com').replace(/\/$/, '');
+
+    // Accessing the backend directly
+    const BACKEND_HOSTS = ['api.9dttt.com', 'www.api.9dttt.com', 'ninedttt.onrender.com'];
+    const isRenderDirect = BACKEND_HOSTS.includes(window.location.hostname);
+
     // Determine which backend to use
     let backendUrl;
     let wsUrl;
@@ -36,19 +35,23 @@
 
     if (isLocalhost) {
         // Development: Connect directly to local backend
-        backendUrl = API_CONFIG.development;
-        wsUrl = backendUrl.replace('https:', 'wss:').replace('http:', 'ws:');
+        backendUrl = 'http://localhost:3000';
+        wsUrl = 'ws://localhost:3000';
+    } else if (isRenderDirect) {
+        // Accessed via Render URL directly: connect to backend on same host
+        backendUrl = BACKEND_URL;
+        wsUrl = BACKEND_URL.replace('https:', 'wss:');
     } else if (isProduction || isVercel) {
-        // Production/Vercel: Use relative URLs (proxied by Vercel)
+        // Production/Vercel: HTTP API calls use relative URLs (proxied by Vercel to Render).
+        // Socket.io connects DIRECTLY to the Render backend to avoid Vercel WebSocket
+        // proxy limitations (Vercel rewrites do not reliably upgrade WebSocket connections).
         backendUrl = ''; // Empty string = same domain (proxied by Vercel)
-        // WebSocket URL needs to be the current domain
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        wsUrl = `${protocol}//${window.location.host}`;
+        wsUrl = BACKEND_URL; // Socket.io accepts HTTPS URLs and upgrades to WSS internally
         isProxied = true;
     } else {
         // Fallback: Direct connection to production backend
-        backendUrl = API_CONFIG.production;
-        wsUrl = backendUrl.replace('https:', 'wss:').replace('http:', 'ws:');
+        backendUrl = BACKEND_URL;
+        wsUrl = BACKEND_URL.replace('https:', 'wss:');
     }
 
     // Global API configuration

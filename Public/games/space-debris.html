@@ -1,14 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Add-on unlock guard (client-side UX gate only; see js/unlock-guard.js) -->
+    <script src="../js/catalog.js"></script>
+    <script src="../js/unlock-guard.js"></script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0a0e27">
     <meta name="description" content="Space Debris - Original asteroid-style arcade shooter">
     <title>Space Debris - Arcade Shooter</title>
     
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/arcade-games.css">
+    <link rel="stylesheet" href="../css/game-ui.css">
+    <link rel="stylesheet" href="../css/responsive.css">
 </head>
 <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -23,7 +28,7 @@
 
         <main id="main-content" role="main">
             <div class="game-container">
-                <canvas id="game-canvas" width="800" height="600"></canvas>
+                <canvas id="game-canvas" width="800" height="600" data-mobile-controls="dpad"></canvas>
                 
                 <div class="controls">
                     <button onclick="game.startGame()">Start Game</button>
@@ -52,6 +57,8 @@
         </footer>
     </div>
 
+        <script src="../js/mobile-game-adapter.js"></script>
+    <script src="../js/fullscreen-manager.js"></script>
     <script src="../js/gamepad-manager.js"></script>
     <script src="../js/controller-guide.js"></script>
     <script src="../js/advanced-graphics.js"></script>
@@ -82,11 +89,14 @@
                 this.particles = [];
                 
                 this.keys = {};
+                this._inputSetup = false;
                 this.setupInput();
                 this.gameLoop();
             }
             
             setupInput() {
+                if (this._inputSetup) return;
+                this._inputSetup = true;
                 window.addEventListener('keydown', e => {
                     this.keys[e.code] = true;
                     if (e.code === 'Space') e.preventDefault();
@@ -95,6 +105,7 @@
             }
             
             startGame() {
+                if (this._rafId) { cancelAnimationFrame(this._rafId); this._rafId = null; }
                 this.state = 'playing';
                 this.score = 0;
                 this.lives = 3;
@@ -114,6 +125,7 @@
                 };
                 
                 this.spawnAsteroids(4 + this.level);
+                this.gameLoop();
             }
             
             spawnAsteroids(count) {
@@ -161,9 +173,10 @@
             }
             
             gameLoop() {
+                if (this.state === 'gameover') { cancelAnimationFrame(this._rafId); this._rafId = null; return; }
                 this.update();
                 this.render();
-                requestAnimationFrame(() => this.gameLoop());
+                this._rafId = requestAnimationFrame(() => this.gameLoop());
             }
             
             update() {
@@ -513,5 +526,6 @@
             if (window.GamepadWidget) new GamepadWidget('gamepad-status');
         });
     </script>
+    <script src="../js/home-button.js"></script>
 </body>
 </html>

@@ -1,10 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Add-on unlock guard (client-side UX gate only; see js/unlock-guard.js) -->
+    <script src="../js/catalog.js"></script>
+    <script src="../js/unlock-guard.js"></script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Crypto Quest Academy - Learn Blockchain & Crypto!</title>
     <link rel="stylesheet" href="../css/crypto-quest.css">
+    <link rel="stylesheet" href="../css/responsive.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -26,8 +30,8 @@
             animation: glow 2s ease-in-out infinite;
         }
         @keyframes glow {
-            0%, 100% { text-shadow: 0 0 20px #00ffff, 0 0 30px #00ffff; }
-            50% { text-shadow: 0 0 30px #ff00ff, 0 0 40px #ff00ff; }
+            0%, 100% { text-shadow: 0 0 8px #00ffff; }
+            50% { text-shadow: 0 0 10px #ff00ff; }
         }
         #gameCanvas {
             display: block;
@@ -157,7 +161,7 @@
             display: inline-block;
             color: #ffd700;
             font-weight: bold;
-            text-shadow: 0 0 10px #ffa500;
+            text-shadow: 0 0 5px rgba(255,165,0,0.6);
         }
         .achievement-popup {
             position: fixed;
@@ -235,7 +239,7 @@
         </div>
 
         <!-- Main Game Area -->
-        <canvas id="gameCanvas" width="1200" height="600"></canvas>
+        <canvas id="gameCanvas" width="1200" height="600" data-mobile-controls="tap"></canvas>
 
         <!-- Controls -->
         <div class="controls-info">
@@ -339,12 +343,12 @@
     </div>
 
     <!-- Scripts -->
+        <script src="../js/mobile-game-adapter.js"></script>
     <script src="../js/gamepad-manager.js"></script>
     <script src="../js/controller-guide.js"></script>
     <script src="../js/advanced-graphics.js"></script>
     <script src="../js/game-error-handler.js"></script>
     <script src="../js/accessibility-manager.js"></script>
-    <script src="../js/multi-chain-wallet.js"></script>
     <script src="../js/unified-auth.js"></script>
     <script src="../js/global-leaderboard.js"></script>
     <script src="../js/leaderboard-ui.js"></script>
@@ -359,6 +363,12 @@
         document.addEventListener('DOMContentLoaded', () => {
             window.gameIntegration = new UniversalGameIntegration('crypto-quest', 'Crypto Quest Academy');
         });
+
+        function closeInfo() {
+            const panel = document.getElementById('infoPanel');
+            if (panel) panel.style.display = 'none';
+        }
     </script>
+    <script src="../js/home-button.js"></script>
 </body>
 </html>

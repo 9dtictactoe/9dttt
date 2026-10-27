@@ -49,19 +49,42 @@ class GamepadManager {
     init() {
         window.addEventListener('gamepadconnected', (e) => this.onGamepadConnected(e));
         window.addEventListener('gamepaddisconnected', (e) => this.onGamepadDisconnected(e));
-        
-        // Check for already connected gamepads
-        this.scanGamepads();
+
+        // Check for already connected gamepads and start polling immediately
+        // (some browsers don't fire gamepadconnected for pre-connected devices)
+        const found = this.scanGamepads();
+        if (!this.polling) {
+            this.startPolling();
+        }
+
+        // Show helpful message if no gamepad detected initially
+        if (!found) {
+            setTimeout(() => {
+                if (Object.keys(this.gamepads).length === 0) {
+                    console.log('🎮 No gamepad detected. Connect a USB/Bluetooth controller to play!');
+                    this.emit('no-gamepad-detected', {
+                        message: 'No gamepad detected. You can still play with keyboard/touch controls, or connect a controller.'
+                    });
+                }
+            }, 1000);
+        }
     }
 
     scanGamepads() {
         const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+        let found = false;
         for (const gp of gamepads) {
             if (gp) {
                 this.gamepads[gp.index] = gp;
-                this.previousStates[gp.index] = this.captureState(gp);
+                if (!this.previousStates[gp.index]) {
+                    this.previousStates[gp.index] = this.captureState(gp);
+                    this.emit('connected', { gamepad: gp, playerIndex: gp.index });
+                    console.log(`🎮 Gamepad detected: ${gp.id} (Player ${gp.index + 1})`);
+                }
+                found = true;
             }
         }
+        return found;
     }
 
     onGamepadConnected(event) {
@@ -71,10 +94,7 @@ class GamepadManager {
         
         console.log(`🎮 Gamepad connected: ${gp.id} (Player ${gp.index + 1})`);
         this.emit('connected', { gamepad: gp, playerIndex: gp.index });
-        
-        if (!this.polling) {
-            this.startPolling();
-        }
+        // polling is always running so no need to start it here
     }
 
     onGamepadDisconnected(event) {
@@ -85,9 +105,8 @@ class GamepadManager {
         console.log(`🎮 Gamepad disconnected: ${gp.id}`);
         this.emit('disconnected', { gamepad: gp, playerIndex: gp.index });
         
-        if (Object.keys(this.gamepads).length === 0) {
-            this.stopPolling();
-        }
+        // Keep polling alive even with no gamepads — allows hot-plug detection
+        // without relying solely on the gamepadconnected event
     }
 
     startPolling() {

@@ -30,6 +30,18 @@ class ContraCommando {
         
         this.keys = {};
         this.lastTime = 0;
+        this.running = false;
+        this.eventListeners = new Map(); // Track event listeners for cleanup
+
+        // Konami Code sequence: ↑↑↓↓←→←→BA (KeyboardEvent.code values)
+        this.konamiCode = [
+            'ArrowUp','ArrowUp','ArrowDown','ArrowDown',
+            'ArrowLeft','ArrowRight','ArrowLeft','ArrowRight',
+            'KeyB','KeyA'
+        ];
+        this.konamiProgress = 0;
+        this.konamiBannerTimer = 0;  // counts down in frames; 240 ≈ 4 s at 60 fps
+        this._inputSetup = false;
         
         this.weaponTypes = {
             rifle: { name: 'RIFLE', icon: '🔫', damage: 10, speed: 15, spread: 0, cooldown: 100 },
@@ -43,7 +55,10 @@ class ContraCommando {
     }
     
     setupInput() {
-        window.addEventListener('keydown', (e) => {
+        if (this._inputSetup) return;
+        this._inputSetup = true;
+        
+        const keydownHandler = (e) => {
             this.keys[e.code] = true;
             if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
                 e.preventDefault();
@@ -54,23 +69,56 @@ class ContraCommando {
             } else if (e.code === 'KeyP' && this.state === 'paused') {
                 this.state = 'playing';
             }
-        });
+
+            // Konami Code: ↑↑↓↓←→←→BA
+            if (e.code === this.konamiCode[this.konamiProgress]) {
+                this.konamiProgress++;
+                if (this.konamiProgress === this.konamiCode.length) {
+                    this.konamiProgress = 0;
+                    this.activateKonamiCode();
+                }
+            } else {
+                this.konamiProgress = e.code === this.konamiCode[0] ? 1 : 0;
+            }
+        };
         
-        window.addEventListener('keyup', (e) => {
+        const keyupHandler = (e) => {
             this.keys[e.code] = false;
-        });
+        };
+        
+        window.addEventListener('keydown', keydownHandler);
+        window.addEventListener('keyup', keyupHandler);
+        
+        // Store references for cleanup
+        this.eventListeners.set('keydown', keydownHandler);
+        this.eventListeners.set('keyup', keyupHandler);
+    }
+
+    activateKonamiCode() {
+        this.lives += 30;
+        this.konamiBannerTimer = 240;
+        this.updateHUD();
     }
     
     start(coop = false) {
         this.coopMode = coop;
         this.state = 'playing';
+        this.running = true;
+        this.lastTime = 0;
         document.getElementById('startScreen').classList.add('hidden');
-        
+        if (this._rafId) { cancelAnimationFrame(this._rafId); this._rafId = null; }
         this.initLevel();
         this.gameLoop(0);
     }
     
     initLevel() {
+        // Clear game objects from previous level
+        this.bullets = [];
+        this.powerups = [];
+        this.particles = [];
+        this.explosions = [];
+        this.camera = { x: 0, y: 0 };
+
         // Create player(s)
         this.players = [{
             x: 100,
@@ -638,14 +686,21 @@ class ContraCommando {
     
     nextLevel() {
         this.level++;
-        this.players.forEach(p => {
-            p.health = Math.min(p.health + 30, p.maxHealth);
-        });
+        // Save player state before re-initializing the level
+        const savedWeapons = this.players.map(p => p.weapon);
+        const savedHealth = this.players.map(p => Math.min(p.health + 30, p.maxHealth));
         this.initLevel();
+        // Restore player state
+        this.players.forEach((p, i) => {
+            if (savedWeapons[i]) p.weapon = savedWeapons[i];
+            if (savedHealth[i] !== undefined) p.health = savedHealth[i];
+        });
     }
     
     gameOver() {
+        this.cleanup(); // Clean up all resources
         this.state = 'gameover';
+        this.running = false;
         document.getElementById('gameOverScreen').classList.remove('hidden');
         document.getElementById('finalScore').innerHTML = 
             `<h3>Final Score: ${this.score}</h3><p>Level Reached: ${this.level}</p>`;
@@ -702,22 +757,41 @@ class ContraCommando {
         // Draw enemies
         this.enemies.forEach(enemy => {
             if (enemy.health <= 0) return;
-            
-            this.ctx.fillStyle = enemy.color;
-            this.ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
-            
+
             // Health bar
             const healthPercent = enemy.health / enemy.maxHealth;
             this.ctx.fillStyle = '#000';
             this.ctx.fillRect(enemy.x, enemy.y - 8, enemy.width, 4);
             this.ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : '#ff0000';
             this.ctx.fillRect(enemy.x, enemy.y - 8, enemy.width * healthPercent, 4);
-            
-            // Boss indicator
+
             if (enemy.isBoss) {
                 this.ctx.fillStyle = '#fff';
                 this.ctx.font = 'bold 12px Arial';
-                this.ctx.fillText('BOSS', enemy.x + enemy.width / 2 - 18, enemy.y - 12);
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('BOSS', enemy.x + enemy.width / 2, enemy.y - 12);
+                this.ctx.textAlign = 'left';
+            }
+
+            if (window.humanoidRenderer) {
+                window.humanoidRenderer.draw(this.ctx,
+                    enemy.x + enemy.width / 2, enemy.y + enemy.height, {
+                    facing:    enemy.facingRight ? 1 : -1,
+                    scale:     enemy.isBoss ? 0.58 : 0.45,
+                    state:     'idle',
+                    animTime:  Date.now(),
+                    cloth:     enemy.color || '#c03030',
+                    accent:    '#660000',
+                    skin:      '#c89060',
+                    hair:      '#1a1a1a',
+                    boot:      '#1a1a1a',
+                    muscular:  enemy.isBoss || false,
+                    headStyle: 'helmet',
+                    headColor: '#333',
+                });
+            } else {
+                this.ctx.fillStyle = enemy.color;
+                this.ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
             }
         });
         
@@ -740,25 +814,40 @@ class ContraCommando {
             // Shadow
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
             this.ctx.fillRect(player.x + 5, player.y + player.height, player.width - 10, 4);
-            
-            // Body
-            this.ctx.fillStyle = player.color;
-            this.ctx.fillRect(player.x, player.y, player.width, player.height);
-            
-            // Gun
-            this.ctx.fillStyle = '#888';
-            if (player.facingRight) {
-                this.ctx.fillRect(player.x + player.width, player.y + player.height / 2, 15, 4);
-            } else {
-                this.ctx.fillRect(player.x - 15, player.y + player.height / 2, 15, 4);
-            }
-            
+
             // Health bar
             const healthPercent = player.health / player.maxHealth;
             this.ctx.fillStyle = '#000';
             this.ctx.fillRect(player.x, player.y - 10, player.width, 4);
             this.ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : '#ff0000';
             this.ctx.fillRect(player.x, player.y - 10, player.width * healthPercent, 4);
+
+            if (window.humanoidRenderer) {
+                window.humanoidRenderer.draw(this.ctx,
+                    player.x + player.width / 2, player.y + player.height, {
+                    facing:    player.facingRight ? 1 : -1,
+                    scale:     0.48,
+                    state:     !player.onGround ? 'jump' : (Math.abs(player.vx) > 0.5 ? 'walk' : 'idle'),
+                    animTime:  Date.now(),
+                    cloth:     player.color || '#3a7a3a',
+                    accent:    '#c8a030',
+                    skin:      '#e8c090',
+                    hair:      '#1a1a1a',
+                    boot:      '#2a2a1a',
+                    muscular:  false,
+                    headStyle: 'normal',
+                    weapon:    'rifle',
+                });
+            } else {
+                this.ctx.fillStyle = player.color;
+                this.ctx.fillRect(player.x, player.y, player.width, player.height);
+                this.ctx.fillStyle = '#888';
+                if (player.facingRight) {
+                    this.ctx.fillRect(player.x + player.width, player.y + player.height / 2, 15, 4);
+                } else {
+                    this.ctx.fillRect(player.x - 15, player.y + player.height / 2, 15, 4);
+                }
+            }
         });
         
         // Draw explosions
@@ -796,6 +885,25 @@ class ContraCommando {
             this.ctx.fillText('PAUSED', this.canvas.width / 2, this.canvas.height / 2);
             this.ctx.textAlign = 'left';
         }
+
+        // Draw Konami Code banner
+        if (this.konamiBannerTimer > 0) {
+            this.konamiBannerTimer--;
+            const alpha = Math.min(1, this.konamiBannerTimer / 30);
+            this.ctx.globalAlpha = alpha;
+            this.ctx.fillStyle = '#000';
+            this.ctx.fillRect(0, this.canvas.height / 2 - 60, this.canvas.width, 120);
+            this.ctx.globalAlpha = alpha;
+            this.ctx.fillStyle = '#ffd700';
+            this.ctx.font = 'bold 28px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('↑↑↓↓←→←→BA', this.canvas.width / 2, this.canvas.height / 2 - 15);
+            this.ctx.fillStyle = '#fff';
+            this.ctx.font = 'bold 20px Arial';
+            this.ctx.fillText('+30 LIVES!  CHEAT ACTIVATED 🎮', this.canvas.width / 2, this.canvas.height / 2 + 20);
+            this.ctx.globalAlpha = 1;
+            this.ctx.textAlign = 'left';
+        }
     }
     
     updateHUD() {
@@ -811,14 +919,32 @@ class ContraCommando {
         }
     }
     
+    /**
+     * Clean up all event listeners and RAF
+     */
+    cleanup() {
+        // Cancel RAF
+        if (this._rafId) {
+            cancelAnimationFrame(this._rafId);
+            this._rafId = null;
+        }
+        
+        // Remove event listeners
+        for (const [event, handler] of this.eventListeners) {
+            window.removeEventListener(event, handler);
+        }
+        this.eventListeners.clear();
+    }
+    
     gameLoop(timestamp) {
-        const deltaTime = timestamp - this.lastTime;
+        if (!this.running) return;
+        const deltaTime = this.lastTime === 0 ? 16 : timestamp - this.lastTime; // 16 ms ≈ one frame at 60 fps
         this.lastTime = timestamp;
         
         this.update(deltaTime);
         this.draw();
         
-        requestAnimationFrame((ts) => this.gameLoop(ts));
+        this._rafId = requestAnimationFrame((ts) => this.gameLoop(ts));
     }
 }
 

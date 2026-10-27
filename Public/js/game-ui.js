@@ -5,30 +5,38 @@
 
 class GameUI {
     constructor() {
-        this.authModal = null;
+        // authModal removed — unified auth-ui.js (window.authUI) handles sign-in
         this.profileModal = null;
         this.multiplayerModal = null;
         this.onlineMode = false;
+        
+        // Event listener cleanup
+        this.eventListeners = new Map(); // Store element -> {event: handler}
     }
 
     /**
      * Initialize UI components
      */
     async init() {
-        this.createAuthModal();
+        // DO NOT create auth modal - unified-auth.js and auth-ui.js handle all authentication
+        // This prevents duplicate login popups
         this.createProfileModal();
         this.createMultiplayerModal();
         this.createHeaderUI();
-        
-        // Initialize auth client (unified auth provides compatibility layer)
-        if (window.authClient) {
-            await window.authClient.init();
+
+        // Use unified auth system if available, fall back to legacy authClient
+        if (window.unifiedAuth) {
+            await window.unifiedAuth.init();
             this.updateAuthUI();
             // Listen for auth state changes
+            window.unifiedAuth.onAuthStateChanged(() => this.updateAuthUI());
+        } else if (window.authClient) {
+            await window.authClient.init();
+            this.updateAuthUI();
             window.authClient.addListener(() => this.updateAuthUI());
         }
-        
-        // Check URL params for auth callbacks (legacy)
+
+        // Check URL params for auth callbacks (legacy support)
         this.handleAuthCallback();
     }
 
@@ -83,110 +91,34 @@ class GameUI {
             multiplayerBtn.setAttribute('aria-label', 'Play online multiplayer');
             controls.insertBefore(multiplayerBtn, controls.firstChild);
             
-            multiplayerBtn.addEventListener('click', () => this.showMultiplayerModal());
+            const multiplayerClickHandler = () => this.showMultiplayerModal();
+            multiplayerBtn.addEventListener('click', multiplayerClickHandler);
+            this.eventListeners.set(multiplayerBtn, { click: multiplayerClickHandler });
         }
 
         // Event listeners - signin button now in bottom right corner (auth-ui.js)
-        document.getElementById('profile-btn')?.addEventListener('click', () => this.showProfileModal());
-        document.getElementById('logout-btn')?.addEventListener('click', () => this.handleLogout());
+        const profileBtn = document.getElementById('profile-btn');
+        if (profileBtn) {
+            const profileClickHandler = () => this.showProfileModal();
+            profileBtn.addEventListener('click', profileClickHandler);
+            this.eventListeners.set(profileBtn, { click: profileClickHandler });
+        }
+        
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            const logoutClickHandler = () => this.handleLogout();
+            logoutBtn.addEventListener('click', logoutClickHandler);
+            this.eventListeners.set(logoutBtn, { click: logoutClickHandler });
+        }
     }
 
     /**
-     * Create auth modal
+     * Create auth modal - REMOVED
+     * Auth modal is now handled by auth-ui.js to prevent duplicate login popups
+     * All authentication is managed by unified-auth.js and auth-ui.js
      */
     createAuthModal() {
-        const modal = document.createElement('div');
-        modal.id = 'auth-modal';
-        modal.className = 'modal';
-        modal.setAttribute('role', 'dialog');
-        modal.setAttribute('aria-labelledby', 'auth-modal-title');
-        modal.setAttribute('aria-modal', 'true');
-        
-        modal.innerHTML = `
-            <div class="modal-content auth-modal-content">
-                <button class="modal-close" id="auth-modal-close" aria-label="Close">&times;</button>
-                <h2 id="auth-modal-title">Login</h2>
-                
-                <div class="auth-tabs">
-                    <button class="auth-tab active" data-tab="login">Login</button>
-                    <button class="auth-tab" data-tab="register">Register</button>
-                </div>
-                
-                <div class="auth-form-container">
-                    <!-- Login Form -->
-                    <form id="login-form" class="auth-form">
-                        <div class="form-group">
-                            <label for="login-username">Username or Email</label>
-                            <input type="text" id="login-username" required autocomplete="username">
-                        </div>
-                        <div class="form-group">
-                            <label for="login-password">Password</label>
-                            <input type="password" id="login-password" required autocomplete="current-password">
-                        </div>
-                        <div class="form-error" id="login-error"></div>
-                        <button type="submit" class="auth-submit">Login</button>
-                    </form>
-                    
-                    <!-- Register Form -->
-                    <form id="register-form" class="auth-form" style="display: none;">
-                        <div class="form-group">
-                            <label for="register-username">Username</label>
-                            <input type="text" id="register-username" required minlength="3" maxlength="20" pattern="[a-zA-Z0-9_]+" autocomplete="username">
-                            <small>3-20 characters, letters, numbers, and underscores only</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="register-email">Email</label>
-                            <input type="email" id="register-email" required autocomplete="email">
-                        </div>
-                        <div class="form-group">
-                            <label for="register-password">Password</label>
-                            <input type="password" id="register-password" required minlength="6" autocomplete="new-password">
-                            <small>At least 6 characters</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="register-confirm">Confirm Password</label>
-                            <input type="password" id="register-confirm" required autocomplete="new-password">
-                        </div>
-                        <div class="form-error" id="register-error"></div>
-                        <button type="submit" class="auth-submit">Create Account</button>
-                    </form>
-                </div>
-                
-                <div class="auth-divider">
-                    <span>or continue with</span>
-                </div>
-                
-                <div class="oauth-buttons" id="oauth-buttons">
-                    <button class="oauth-btn browser-credential-btn" data-provider="browser" title="Use saved password from your browser">
-                        <span class="oauth-icon">🔐</span> Saved Password
-                    </button>
-                </div>
-                <p class="oauth-note" style="font-size: 0.8rem; color: var(--text-secondary); text-align: center; margin-top: 8px;">
-                    Use your browser's saved passwords for quick sign-in
-                </p>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        this.authModal = modal;
-        
-        // Event listeners
-        modal.querySelector('#auth-modal-close').addEventListener('click', () => this.hideAuthModal());
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) this.hideAuthModal();
-        });
-        
-        // Tab switching
-        modal.querySelectorAll('.auth-tab').forEach(tab => {
-            tab.addEventListener('click', () => this.switchAuthTab(tab.dataset.tab));
-        });
-        
-        // Form submissions
-        modal.querySelector('#login-form').addEventListener('submit', (e) => this.handleLogin(e));
-        modal.querySelector('#register-form').addEventListener('submit', (e) => this.handleRegister(e));
-        
-        // Browser credential button
-        modal.querySelector('.browser-credential-btn')?.addEventListener('click', () => this.handleBrowserCredentialAuth());
+        // Intentionally empty — auth-ui.js owns the auth modal
     }
 
     /**
@@ -250,11 +182,25 @@ class GameUI {
         this.profileModal = modal;
         
         // Event listeners
-        modal.querySelector('#profile-modal-close').addEventListener('click', () => this.hideProfileModal());
-        modal.addEventListener('click', (e) => {
+        const closeBtn = modal.querySelector('#profile-modal-close');
+        if (closeBtn) {
+            const closeClickHandler = () => this.hideProfileModal();
+            closeBtn.addEventListener('click', closeClickHandler);
+            this.eventListeners.set(closeBtn, { click: closeClickHandler });
+        }
+        
+        const modalClickHandler = (e) => {
             if (e.target === modal) this.hideProfileModal();
-        });
-        modal.querySelector('#profile-form').addEventListener('submit', (e) => this.handleProfileUpdate(e));
+        };
+        modal.addEventListener('click', modalClickHandler);
+        this.eventListeners.set(modal, { click: modalClickHandler });
+        
+        const profileForm = modal.querySelector('#profile-form');
+        if (profileForm) {
+            const formSubmitHandler = (e) => this.handleProfileUpdate(e);
+            profileForm.addEventListener('submit', formSubmitHandler);
+            this.eventListeners.set(profileForm, { submit: formSubmitHandler });
+        }
     }
 
     /**
@@ -359,41 +305,98 @@ class GameUI {
         this.selectedTimeControl = 'blitz-5';
         
         // Event listeners
-        modal.querySelector('#multiplayer-modal-close').addEventListener('click', () => this.hideMultiplayerModal());
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) this.hideMultiplayerModal();
-        });
+        const modalCloseBtn = modal.querySelector('#multiplayer-modal-close');
+        if (modalCloseBtn) {
+            const modalCloseClickHandler = () => this.hideMultiplayerModal();
+            modalCloseBtn.addEventListener('click', modalCloseClickHandler);
+            this.eventListeners.set(modalCloseBtn, { click: modalCloseClickHandler });
+        }
         
-        modal.querySelector('#mp-login-btn')?.addEventListener('click', () => {
-            this.hideMultiplayerModal();
-            this.showAuthModal('login');
-        });
+        const mpModalClickHandler = (e) => {
+            if (e.target === modal) this.hideMultiplayerModal();
+        };
+        modal.addEventListener('click', mpModalClickHandler);
+        this.eventListeners.set(modal, { click: mpModalClickHandler });
+        
+        const mpLoginBtn = modal.querySelector('#mp-login-btn');
+        if (mpLoginBtn) {
+            const mpLoginClickHandler = () => {
+                this.hideMultiplayerModal();
+                window.authUI?.show();
+            };
+            mpLoginBtn.addEventListener('click', mpLoginClickHandler);
+            this.eventListeners.set(mpLoginBtn, { click: mpLoginClickHandler });
+        }
         
         // Time control selection
         modal.querySelectorAll('.tc-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            const tcClickHandler = () => {
                 modal.querySelectorAll('.tc-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 this.selectedTimeControl = btn.dataset.tc;
-            });
+            };
+            btn.addEventListener('click', tcClickHandler);
+            this.eventListeners.set(btn, { click: tcClickHandler });
         });
         
         // Tab switching
         modal.querySelectorAll('.mp-tab').forEach(tab => {
-            tab.addEventListener('click', () => this.switchMultiplayerTab(tab.dataset.tab));
+            const tabClickHandler = () => this.switchMultiplayerTab(tab.dataset.tab);
+            tab.addEventListener('click', tabClickHandler);
+            this.eventListeners.set(tab, { click: tabClickHandler });
         });
         
-        modal.querySelector('#mp-find-match')?.addEventListener('click', () => this.handleFindMatch());
-        modal.querySelector('#mp-create-private')?.addEventListener('click', () => this.handleCreatePrivate());
-        modal.querySelector('#mp-join-btn')?.addEventListener('click', () => this.handleJoinPrivate());
-        modal.querySelector('#mp-cancel-btn')?.addEventListener('click', () => this.handleCancelMatchmaking());
-        modal.querySelector('#mp-copy-code')?.addEventListener('click', () => this.handleCopyCode());
+        const findMatchBtn = modal.querySelector('#mp-find-match');
+        if (findMatchBtn) {
+            const findMatchClickHandler = () => this.handleFindMatch();
+            findMatchBtn.addEventListener('click', findMatchClickHandler);
+            this.eventListeners.set(findMatchBtn, { click: findMatchClickHandler });
+        }
+        
+        const createPrivateBtn = modal.querySelector('#mp-create-private');
+        if (createPrivateBtn) {
+            const createPrivateClickHandler = () => this.handleCreatePrivate();
+            createPrivateBtn.addEventListener('click', createPrivateClickHandler);
+            this.eventListeners.set(createPrivateBtn, { click: createPrivateClickHandler });
+        }
+        
+        const joinBtn = modal.querySelector('#mp-join-btn');
+        if (joinBtn) {
+            const joinClickHandler = () => this.handleJoinPrivate();
+            joinBtn.addEventListener('click', joinClickHandler);
+            this.eventListeners.set(joinBtn, { click: joinClickHandler });
+        }
+        
+        const cancelBtn = modal.querySelector('#mp-cancel-btn');
+        if (cancelBtn) {
+            const cancelClickHandler = () => this.handleCancelMatchmaking();
+            cancelBtn.addEventListener('click', cancelClickHandler);
+            this.eventListeners.set(cancelBtn, { click: cancelClickHandler });
+        }
+        
+        const copyCodeBtn = modal.querySelector('#mp-copy-code');
+        if (copyCodeBtn) {
+            const copyCodeClickHandler = () => this.handleCopyCode();
+            copyCodeBtn.addEventListener('click', copyCodeClickHandler);
+            this.eventListeners.set(copyCodeBtn, { click: copyCodeClickHandler });
+        }
         
         // Friends search
-        modal.querySelector('#friend-search-btn')?.addEventListener('click', () => this.handleFriendSearch());
-        modal.querySelector('#friend-search-input')?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.handleFriendSearch();
-        });
+        const friendSearchBtn = modal.querySelector('#friend-search-btn');
+        if (friendSearchBtn) {
+            const friendSearchClickHandler = () => this.handleFriendSearch();
+            friendSearchBtn.addEventListener('click', friendSearchClickHandler);
+            this.eventListeners.set(friendSearchBtn, { click: friendSearchClickHandler });
+        }
+        
+        const friendSearchInput = modal.querySelector('#friend-search-input');
+        if (friendSearchInput) {
+            const friendSearchKeypressHandler = (e) => {
+                if (e.key === 'Enter') this.handleFriendSearch();
+            };
+            friendSearchInput.addEventListener('keypress', friendSearchKeypressHandler);
+            this.eventListeners.set(friendSearchInput, { keypress: friendSearchKeypressHandler });
+        }
     }
 
     /**
@@ -427,18 +430,18 @@ class GameUI {
                 <div class="friend-item">
                     <div class="friend-avatar">
                         ${friend.avatar?.type === 'custom' 
-                            ? `<img src="${friend.avatar.data}" alt="">` 
-                            : `<div class="avatar-initial" style="background: ${friend.avatar?.color || '#4a90e2'}">${friend.avatar?.initial || friend.username[0].toUpperCase()}</div>`
+                            ? `<img src="${this.escapeHtml(friend.avatar.data)}" alt="">` 
+                            : `<div class="avatar-initial" style="background: ${this.safeCssColor(friend.avatar?.color)}">${this.escapeHtml(friend.avatar?.initial || (friend.username && friend.username[0].toUpperCase()))}</div>`
                         }
                     </div>
                     <div class="friend-info">
-                        <span class="friend-name">${friend.displayName || friend.username}</span>
+                        <span class="friend-name">${this.escapeHtml(friend.displayName || friend.username)}</span>
                         <span class="friend-status ${friend.isOnline ? 'online' : 'offline'}">
                             ${friend.isOnline ? '● Online' : '○ Offline'}
                         </span>
                     </div>
                     <button class="challenge-btn ${friend.isOnline ? '' : 'disabled'}" 
-                            data-username="${friend.username}"
+                            data-username="${this.escapeHtml(friend.username)}"
                             ${friend.isOnline ? '' : 'disabled'}>
                         Challenge
                     </button>
@@ -484,12 +487,12 @@ class GameUI {
                     <div class="friend-item">
                         <div class="friend-avatar">
                             ${user.avatar?.type === 'custom' 
-                                ? `<img src="${user.avatar.data}" alt="">` 
-                                : `<div class="avatar-initial" style="background: ${user.avatar?.color || '#4a90e2'}">${user.avatar?.initial || user.username[0].toUpperCase()}</div>`
+                                ? `<img src="${this.escapeHtml(user.avatar.data)}" alt="">` 
+                                : `<div class="avatar-initial" style="background: ${this.safeCssColor(user.avatar?.color)}">${this.escapeHtml(user.avatar?.initial || (user.username && user.username[0].toUpperCase()))}</div>`
                             }
                         </div>
                         <div class="friend-info">
-                            <span class="friend-name">${user.displayName || user.username}</span>
+                            <span class="friend-name">${this.escapeHtml(user.displayName || user.username)}</span>
                             <span class="friend-status ${user.isOnline ? 'online' : 'offline'}">
                                 ${user.isOnline ? '● Online' : '○ Offline'}
                             </span>
@@ -497,10 +500,10 @@ class GameUI {
                         <div class="friend-actions">
                             ${user.isFollowing 
                                 ? '<span class="following-badge">Following</span>' 
-                                : `<button class="follow-btn small" data-username="${user.username}">Follow</button>`
+                                : `<button class="follow-btn small" data-username="${this.escapeHtml(user.username)}">Follow</button>`
                             }
                             ${user.isOnline 
-                                ? `<button class="challenge-btn small" data-username="${user.username}">Challenge</button>` 
+                                ? `<button class="challenge-btn small" data-username="${this.escapeHtml(user.username)}">Challenge</button>` 
                                 : ''
                             }
                         </div>
@@ -557,170 +560,19 @@ class GameUI {
     }
 
     /**
-     * Show auth modal
+     * Show auth modal — delegates to the unified auth-ui.js
      */
-    async showAuthModal(tab = 'login') {
-        this.authModal.classList.add('show');
-        this.switchAuthTab(tab);
-        this.authModal.querySelector(`#${tab}-username, #${tab}-email`)?.focus();
-        
-        // Check Firebase and browser auth availability and update OAuth buttons
-        await this.updateOAuthButtons();
+    showAuthModal(tab = 'login') {
+        window.authUI?.show();
     }
 
     /**
-     * Update OAuth buttons based on browser auth availability
-     */
-    async updateOAuthButtons() {
-        const oauthButtons = this.authModal.querySelector('#oauth-buttons');
-        const oauthNote = this.authModal.querySelector('.oauth-note');
-        const divider = this.authModal.querySelector('.auth-divider');
-        const browserCredBtn = this.authModal.querySelector('.browser-credential-btn');
-        
-        // Check browser credential API support
-        const browserAuthSupported = window.browserAuth && window.browserAuth.isSupported();
-        
-        // Update browser credential button visibility
-        if (browserCredBtn) {
-            browserCredBtn.style.display = browserAuthSupported ? 'flex' : 'none';
-        }
-        
-        if (browserAuthSupported) {
-            // Show OAuth section
-            if (oauthButtons) oauthButtons.style.display = 'flex';
-            if (divider) divider.style.display = 'flex';
-            
-            // Update note
-            if (oauthNote) {
-                oauthNote.textContent = '🔐 Use passwords saved in your browser (Chrome, Edge, Safari)';
-                oauthNote.style.display = 'block';
-            }
-        } else {
-            // No OAuth options available
-            if (oauthButtons) oauthButtons.style.display = 'none';
-            if (divider) divider.style.display = 'none';
-        }
-    }
-
-    /**
-     * Hide auth modal
+     * Hide auth modal — delegates to the unified auth-ui.js
      */
     hideAuthModal() {
-        this.authModal.classList.remove('show');
-        this.clearAuthErrors();
+        window.authUI?.hide();
     }
 
-    /**
-     * Switch auth tab
-     */
-    switchAuthTab(tab) {
-        const modal = this.authModal;
-        modal.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-        modal.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-        
-        modal.querySelector('#login-form').style.display = tab === 'login' ? 'block' : 'none';
-        modal.querySelector('#register-form').style.display = tab === 'register' ? 'block' : 'none';
-        modal.querySelector('#auth-modal-title').textContent = tab === 'login' ? 'Login' : 'Create Account';
-    }
-
-    /**
-     * Clear auth errors
-     */
-    clearAuthErrors() {
-        this.authModal.querySelector('#login-error').textContent = '';
-        this.authModal.querySelector('#register-error').textContent = '';
-    }
-
-    /**
-     * Handle login form submission
-     */
-    async handleLogin(e) {
-        e.preventDefault();
-        const form = e.target;
-        const username = form.querySelector('#login-username').value;
-        const password = form.querySelector('#login-password').value;
-        const errorEl = form.querySelector('#login-error');
-        const submitBtn = form.querySelector('.auth-submit');
-        
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Logging in...';
-        
-        const result = await window.authClient.login(username, password);
-        
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Login';
-        
-        if (result.success) {
-            this.hideAuthModal();
-            this.showNotification('Welcome back, ' + result.user.username + '!', 'success');
-        } else {
-            errorEl.textContent = result.error;
-        }
-    }
-
-    /**
-     * Handle register form submission
-     */
-    async handleRegister(e) {
-        e.preventDefault();
-        const form = e.target;
-        const username = form.querySelector('#register-username').value;
-        const email = form.querySelector('#register-email').value;
-        const password = form.querySelector('#register-password').value;
-        const confirm = form.querySelector('#register-confirm').value;
-        const errorEl = form.querySelector('#register-error');
-        const submitBtn = form.querySelector('.auth-submit');
-        
-        if (password !== confirm) {
-            errorEl.textContent = 'Passwords do not match';
-            return;
-        }
-        
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Creating account...';
-        
-        const result = await window.authClient.register(username, email, password);
-        
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Create Account';
-        
-        if (result.success) {
-            this.hideAuthModal();
-            let message = 'Welcome, ' + result.user.username + '!';
-            if (result.bonus) {
-                message += ' ' + result.bonus.description;
-            }
-            this.showNotification(message, 'success');
-        } else {
-            errorEl.textContent = result.error;
-        }
-    }
-
-    /**
-     * Handle browser credential authentication (Saved Password)
-     */
-    async handleBrowserCredentialAuth() {
-        if (!window.browserAuth || !window.browserAuth.isSupported()) {
-            this.showNotification('Browser credential storage is not supported in this browser.', 'error');
-            return;
-        }
-
-        try {
-            const result = await window.browserAuth.requestCredential();
-            
-            if (result.success) {
-                this.hideAuthModal();
-                const message = `Welcome back, ${result.user.displayName || result.user.username}!`;
-                this.showNotification(message, 'success');
-            } else if (result.error !== 'No credential selected') {
-                // Only show error if it's not just the user cancelling
-                this.showNotification(result.error || 'Authentication failed', 'error');
-            }
-        } catch (error) {
-            console.error('Browser credential auth error:', error);
-            this.showNotification('Failed to retrieve saved credentials', 'error');
-        }
-    }
     /**
      * Handle OAuth login (Legacy - kept for backwards compatibility)
      */
@@ -751,9 +603,9 @@ class GameUI {
         // Update avatar
         const avatarEl = modal.querySelector('#profile-avatar');
         if (user.profile.avatar.type === 'custom') {
-            avatarEl.innerHTML = `<img src="${user.profile.avatar.data}" alt="Avatar">`;
+            avatarEl.innerHTML = `<img src="${this.escapeHtml(user.profile.avatar.data)}" alt="Avatar">`;
         } else {
-            avatarEl.innerHTML = `<div class="avatar-initial" style="background: ${user.profile.avatar.color}">${user.profile.avatar.initial}</div>`;
+            avatarEl.innerHTML = `<div class="avatar-initial" style="background: ${this.safeCssColor(user.profile.avatar.color)}">${this.escapeHtml(user.profile.avatar.initial)}</div>`;
         }
         
         // Update info
@@ -944,6 +796,8 @@ class GameUI {
      * Setup multiplayer event listeners
      */
     setupMultiplayerListeners() {
+        if (this._multiplayerListenersAttached) return;
+        this._multiplayerListenersAttached = true;
         const mp = window.multiplayerClient;
         
         mp.on('matchmaking_queued', (data) => {
@@ -1025,7 +879,7 @@ class GameUI {
         
         const tcName = challenge.timeControlName || '10 min';
         challengeModal.querySelector('#challenge-text').innerHTML = 
-            `<strong>${challenge.challenger}</strong> challenges you to a <strong>${tcName}</strong> game!`;
+            `<strong>${this.escapeHtml(challenge.challenger)}</strong> challenges you to a <strong>${this.escapeHtml(tcName)}</strong> game!`;
         
         challengeModal.classList.add('show');
         
@@ -1089,7 +943,8 @@ class GameUI {
      * Update auth UI based on login state
      */
     updateAuthUI() {
-        const user = window.authClient.user;
+        const user = (window.authClient && window.authClient.user) ||
+                     (window.unifiedAuth && window.unifiedAuth.user);
         const authButtons = document.getElementById('auth-buttons');
         const userInfo = document.getElementById('user-info');
         
@@ -1101,14 +956,17 @@ class GameUI {
             
             // Update avatar
             const avatarEl = document.getElementById('user-avatar');
-            if (user.profile.avatar.type === 'custom') {
-                avatarEl.innerHTML = `<img src="${user.profile.avatar.data}" alt="Avatar">`;
-            } else {
-                avatarEl.innerHTML = `<div class="avatar-initial" style="background: ${user.profile.avatar.color}">${user.profile.avatar.initial}</div>`;
+            if (avatarEl && user.profile?.avatar) {
+                if (user.profile.avatar.type === 'custom') {
+                    avatarEl.innerHTML = `<img src="${this.escapeHtml(user.profile.avatar.data)}" alt="Avatar">`;
+                } else {
+                    avatarEl.innerHTML = `<div class="avatar-initial" style="background: ${this.safeCssColor(user.profile.avatar.color)}">${this.escapeHtml(user.profile.avatar.initial)}</div>`;
+                }
             }
             
             // Update name
-            document.getElementById('user-name').textContent = user.displayName || user.username;
+            const userNameEl = document.getElementById('user-name');
+            if (userNameEl) userNameEl.textContent = user.displayName || user.username;
         } else {
             authButtons.style.display = 'flex';
             userInfo.style.display = 'none';
@@ -1137,6 +995,49 @@ class GameUI {
             notification.classList.remove('show');
             setTimeout(() => notification.remove(), 300);
         }, 3000);
+    }
+
+    /**
+     * Escape HTML special characters to prevent XSS
+     */
+    _escapeHtml(str) {
+        return String(str == null ? '' : str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    /**
+     * Escape HTML special characters to prevent XSS (alias for _escapeHtml)
+     */
+    escapeHtml(str) {
+        return this._escapeHtml(str);
+    }
+
+    /**
+     * Validate a CSS color value (only allow safe color formats)
+     */
+    safeCssColor(color) {
+        if (typeof color !== 'string') return '#4a90e2';
+        // Allow hex colors, rgb(), hsl(), and named colors (letters only)
+        if (/^(#[0-9a-fA-F]{3,8}|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|hsl\([\d\s,%a-zA-Z.]+\)|[a-zA-Z]+)$/.test(color)) {
+            return color;
+        }
+        return '#4a90e2';
+    }
+
+    /**
+     * Clean up all event listeners
+     */
+    cleanupEventListeners() {
+        for (const [element, handlers] of this.eventListeners) {
+            for (const [event, handler] of Object.entries(handlers)) {
+                element.removeEventListener(event, handler);
+            }
+        }
+        this.eventListeners.clear();
     }
 }
 

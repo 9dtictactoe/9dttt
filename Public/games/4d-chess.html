@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Add-on unlock guard (client-side UX gate only; see js/unlock-guard.js) -->
+    <script src="../js/catalog.js"></script>
+    <script src="../js/unlock-guard.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
@@ -10,23 +13,24 @@
     <meta name="description" content="Play 4D Chess online! Chess across multiple timelines where moves affect multiple boards simultaneously. Strategic multiplayer chess variant, free to play.">
     <meta name="keywords" content="4d chess, multi-timeline chess, chess variant, strategic chess, online chess, multiplayer chess, dimensional chess">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://www.d9ttt.com/games/4d-chess.html">
+    <link rel="canonical" href="https://9dttt.com/games/4d-chess.html">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://www.d9ttt.com/games/4d-chess.html">
+    <meta property="og:url" content="https://9dttt.com/games/4d-chess.html">
     <meta property="og:title" content="4D Chess - Multi-Timeline Chess Game">
     <meta property="og:description" content="Play 4D Chess online! Chess across multiple timelines where moves affect multiple boards simultaneously.">
-    <meta property="og:image" content="https://www.d9ttt.com/icon.jpg">
+    <meta property="og:image" content="https://9dttt.com/icon.jpg">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://www.d9ttt.com/games/4d-chess.html">
+    <meta property="twitter:url" content="https://9dttt.com/games/4d-chess.html">
     <meta property="twitter:title" content="4D Chess - Multi-Timeline Chess Game">
     <meta property="twitter:description" content="Play 4D Chess online! Chess across multiple timelines where moves affect multiple boards simultaneously.">
-    <meta property="twitter:image" content="https://www.d9ttt.com/icon.jpg">
+    <meta property="twitter:image" content="https://9dttt.com/icon.jpg">
     
     <!-- Mobile App -->
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a0e27">
@@ -38,6 +42,7 @@
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/4d-chess.css">
     <link rel="stylesheet" href="../css/game-ui.css">
+    <link rel="stylesheet" href="../css/responsive.css">
     
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -50,7 +55,7 @@
         "gamePlatform": "Web Browser",
         "numberOfPlayers": "2",
         "playMode": "MultiPlayer",
-        "url": "https://www.d9ttt.com/games/4d-chess.html",
+        "url": "https://9dttt.com/games/4d-chess.html",
         "genre": "Strategy Game",
         "offers": {
             "@type": "Offer",
@@ -60,7 +65,7 @@
     }
     </script>
 </head>
-<body>
+<body data-orientation="landscape">
     <!-- Skip to main content link -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
@@ -166,11 +171,14 @@
     </div>
 
     <!-- UNIFIED SCRIPT LOADING -->
+        <script src="../js/mobile-game-adapter.js"></script>
+    <script src="../js/fullscreen-manager.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="../js/unified-auth.js"></script>
     <script src="../js/auth-ui.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="../js/api-config.js"></script>
+    <script src="https://cdn.socket.io/4.8.3/socket.io.min.js" crossorigin="anonymous"></script>
     <script src="../js/gamepad-manager.js"></script>
     <script src="../js/controller-guide.js"></script>
     <script src="../js/advanced-graphics.js"></script>
@@ -181,5 +189,6 @@
     <script src="../js/game-ui.js"></script>
     <script src="../js/game-init.js"></script>
     <script src="../js/4d-chess.js"></script>
+    <script src="../js/home-button.js"></script>
 </body>
 </html>

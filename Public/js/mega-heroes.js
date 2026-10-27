@@ -4,11 +4,14 @@
 class MegaHeroes {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
+        if (!this.canvas) { console.error('[MegaHeroes] gameCanvas not found'); return; }
         this.ctx = this.canvas.getContext('2d');
+        if (!this.ctx) { console.error('[MegaHeroes] 2D context unavailable'); return; }
         this.canvas.width = 800;
         this.canvas.height = 600;
         
         this.keys = {};
+        this._inputSetup = false;
         this.player = null;
         this.enemies = [];
         this.projectiles = [];
@@ -29,6 +32,8 @@ class MegaHeroes {
             spread: { name: 'SPREAD', damage: 8, cooldown: 250, color: '#ff0', speed: 10 },
             wave: { name: 'WAVE', damage: 12, cooldown: 300, color: '#0f0', speed: 8 }
         };
+
+        this.state = 'playing';
         
         this.setupInput();
         this.init();
@@ -36,6 +41,8 @@ class MegaHeroes {
     }
     
     setupInput() {
+        if (this._inputSetup) return;
+        this._inputSetup = true;
         window.addEventListener('keydown', (e) => {
             this.keys[e.code] = true;
             if (e.code === 'Space' && this.player) this.jump();
@@ -474,8 +481,8 @@ class MegaHeroes {
                 this.player.x = 100;
                 this.player.y = 100;
             } else {
-                alert('Game Over! Score: ' + this.score);
-                location.reload();
+                this.state = 'gameover';
+                this._showGameOver();
             }
         }
     }
@@ -521,19 +528,51 @@ class MegaHeroes {
         // Enemies
         this.enemies.forEach(enemy => {
             if (enemy.health <= 0) return;
-            this.ctx.fillStyle = '#f44';
-            this.ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+            if (window.humanoidRenderer) {
+                window.humanoidRenderer.draw(this.ctx,
+                    enemy.x + enemy.width / 2, enemy.y + enemy.height, {
+                    facing:    enemy.vx >= 0 ? 1 : -1,
+                    scale:     0.38,
+                    state:     'walk',
+                    animTime:  Date.now(),
+                    cloth:     '#c03030',
+                    accent:    '#ff4400',
+                    skin:      '#c88060',
+                    hair:      '#111',
+                    boot:      '#111',
+                    headStyle: 'helmet',
+                    headColor: '#333',
+                });
+            } else {
+                this.ctx.fillStyle = '#f44';
+                this.ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+            }
         });
         
         // Boss
         if (this.currentBoss && this.currentBoss.health > 0) {
-            this.ctx.fillStyle = '#f0f';
-            this.ctx.fillRect(
-                this.currentBoss.x, 
-                this.currentBoss.y,
-                this.currentBoss.width,
-                this.currentBoss.height
-            );
+            if (window.humanoidRenderer) {
+                window.humanoidRenderer.draw(this.ctx,
+                    this.currentBoss.x + this.currentBoss.width / 2,
+                    this.currentBoss.y + this.currentBoss.height, {
+                    facing:    1,
+                    scale:     0.75,
+                    state:     'attack',
+                    animTime:  Date.now(),
+                    cloth:     '#8800aa',
+                    accent:    '#ff00ff',
+                    skin:      '#c08060',
+                    hair:      '#220022',
+                    boot:      '#110011',
+                    muscular:  true,
+                    headStyle: 'helmet',
+                    headColor: '#550066',
+                });
+            } else {
+                this.ctx.fillStyle = '#f0f';
+                this.ctx.fillRect(this.currentBoss.x, this.currentBoss.y,
+                    this.currentBoss.width, this.currentBoss.height);
+            }
         }
         
         // Projectiles
@@ -552,8 +591,25 @@ class MegaHeroes {
         
         // Player
         if (this.player.invincible % 200 < 100) {
-            this.ctx.fillStyle = '#0ff';
-            this.ctx.fillRect(this.player.x, this.player.y, this.player.width, this.player.height);
+            if (window.humanoidRenderer) {
+                window.humanoidRenderer.draw(this.ctx,
+                    this.player.x + this.player.width / 2,
+                    this.player.y + this.player.height, {
+                    facing:    this.player.facingRight ? 1 : -1,
+                    scale:     0.42,
+                    state:     !this.player.onGround ? 'jump' : (Math.abs(this.player.vx || 0) > 0.5 ? 'walk' : 'idle'),
+                    animTime:  Date.now(),
+                    cloth:     '#0080c0',
+                    accent:    '#f0c040',
+                    skin:      '#e8c090',
+                    hair:      '#1a1a1a',
+                    boot:      '#1a2a50',
+                    weapon:    'gun',
+                });
+            } else {
+                this.ctx.fillStyle = '#0ff';
+                this.ctx.fillRect(this.player.x, this.player.y, this.player.width, this.player.height);
+            }
         }
         
         this.ctx.restore();
@@ -568,9 +624,26 @@ class MegaHeroes {
     }
     
     gameLoop() {
+        if (this.state === 'gameover') return;
         this.update();
         this.draw();
-        requestAnimationFrame(() => this.gameLoop());
+        this._rafId = requestAnimationFrame(() => this.gameLoop());
+    }
+
+    _showGameOver() {
+        if (this._rafId) { cancelAnimationFrame(this._rafId); this._rafId = null; }
+        const existing = document.getElementById('megaHeroesGameOver');
+        if (existing) existing.remove();
+        const overlay = document.createElement('div');
+        overlay.id = 'megaHeroesGameOver';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;font-family:"Press Start 2P",cursive;color:#FFD700;text-align:center;';
+        overlay.innerHTML = `<div style="font-size:28px;margin-bottom:16px;">GAME OVER</div>
+            <div style="font-size:16px;margin-bottom:28px;">Score: ${this.score}</div>
+            <button style="padding:14px 28px;font-size:12px;font-family:inherit;background:#7c3aed;color:#fff;border:none;border-radius:8px;cursor:pointer;"
+                onclick="document.getElementById('megaHeroesGameOver').remove();location.reload();">
+                PLAY AGAIN
+            </button>`;
+        document.body.appendChild(overlay);
     }
 }
 

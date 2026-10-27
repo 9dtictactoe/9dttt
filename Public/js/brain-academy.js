@@ -51,7 +51,7 @@ class BrainAcademy {
         };
         
         // Spawn asteroids with problems
-        setInterval(() => {
+        this._spawnInterval = setInterval(() => {
             if (asteroids.length < 5) {
                 asteroids.push(generateProblem());
             }
@@ -59,8 +59,17 @@ class BrainAcademy {
         
         const gameLoop = () => {
             if (lives <= 0) {
-                alert(`Game Over! Final Score: ${score}`);
-                backToMenu();
+                clearInterval(this._spawnInterval);
+                this.ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.fillStyle = '#FFD700';
+                this.ctx.font = 'bold 36px sans-serif';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('GAME OVER', this.canvas.width / 2, this.canvas.height / 2 - 20);
+                this.ctx.font = '22px sans-serif';
+                this.ctx.fillText(`Final Score: ${score}`, this.canvas.width / 2, this.canvas.height / 2 + 20);
+                this.ctx.textAlign = 'left';
+                setTimeout(() => backToMenu(), 2500);
                 return;
             }
             
@@ -114,7 +123,7 @@ class BrainAcademy {
             this.ctx.fillText(`Score: ${score}`, 20, 30);
             this.ctx.fillText(`Lives: ${'❤️'.repeat(lives)}`, 20, 60);
             
-            requestAnimationFrame(gameLoop);
+            academy._rafId = requestAnimationFrame(gameLoop);
         };
         
         // Input for answers
@@ -169,13 +178,29 @@ class BrainAcademy {
             }
         };
         
-        setInterval(spawnWord, 2000);
+        this._wordInterval = setInterval(spawnWord, 2000);
+        
+        // Remove any previous typing listener before adding a new one
+        if (this._handleTyping) {
+            document.removeEventListener('keydown', this._handleTyping);
+            this._handleTyping = null;
+        }
         
         const gameLoop = () => {
             if (lives <= 0) {
+                clearInterval(this._wordInterval);
                 const wpm = Math.floor(score * 1.5);
-                alert(`Game Over! Score: ${score}\nEstimated WPM: ${wpm}`);
-                backToMenu();
+                this.ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.fillStyle = '#FFD700';
+                this.ctx.font = 'bold 36px sans-serif';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('GAME OVER', this.canvas.width / 2, this.canvas.height / 2 - 30);
+                this.ctx.font = '22px sans-serif';
+                this.ctx.fillText(`Score: ${score}`, this.canvas.width / 2, this.canvas.height / 2 + 10);
+                this.ctx.fillText(`Est. WPM: ${wpm}`, this.canvas.width / 2, this.canvas.height / 2 + 44);
+                this.ctx.textAlign = 'left';
+                setTimeout(() => backToMenu(), 2500);
                 return;
             }
             
@@ -224,13 +249,11 @@ class BrainAcademy {
             this.ctx.fillText(`Lives: ${lives}`, 20, 60);
             this.ctx.fillText(`WPM: ${Math.floor(score * 1.5)}`, 20, 90);
             
-            requestAnimationFrame(gameLoop);
+            academy._rafId = requestAnimationFrame(gameLoop);
         };
         
-        // Keyboard input
-        document.addEventListener('keydown', handleTyping);
-        
-        function handleTyping(e) {
+        // Keyboard input – stored on `this` so backToMenu() can remove it
+        this._handleTyping = (e) => {
             if (e.key === 'Backspace') {
                 currentInput = currentInput.slice(0, -1);
             } else if (e.key.length === 1 && /[a-z]/.test(e.key)) {
@@ -249,7 +272,8 @@ class BrainAcademy {
                     }
                 });
             }
-        }
+        };
+        document.addEventListener('keydown', this._handleTyping);
         
         document.getElementById('gameControls').innerHTML = '<p style="text-align: center; font-size: 18px;">Type the falling words!</p>';
         
@@ -353,7 +377,9 @@ class BrainAcademy {
         const animate = () => {
             draw();
             if (matched.length < cards.length) {
-                requestAnimationFrame(animate);
+                academy._matchRafId = requestAnimationFrame(animate);
+            } else {
+                academy._matchRafId = null;
             }
         };
         animate();
@@ -387,12 +413,35 @@ function loadGame(gameType) {
         case 'memory-match':
             academy.memoryMatch();
             break;
-        default:
-            alert('Game coming soon!');
+        default: {
+            // Show a brief "coming soon" toast instead of a silent log
+            const toast = document.createElement('div');
+            toast.textContent = 'Coming soon! 🚀';
+            toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.85);color:#FFD700;font-family:"Press Start 2P",cursive;font-size:14px;padding:20px 32px;border-radius:10px;z-index:9999;pointer-events:none;';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
             backToMenu();
+        }
     }
 }
 
 function backToMenu() {
-    location.reload();
+    // Clean up RAF loop and intervals from any running mini-game
+    if (academy && academy._rafId) { cancelAnimationFrame(academy._rafId); academy._rafId = null; }
+    if (academy && academy._matchRafId) { cancelAnimationFrame(academy._matchRafId); academy._matchRafId = null; }
+    if (academy && academy._spawnInterval) { clearInterval(academy._spawnInterval); academy._spawnInterval = null; }
+    if (academy && academy._wordInterval) { clearInterval(academy._wordInterval); academy._wordInterval = null; }
+    // Clean up the Typing Master keydown listener if it is still attached
+    if (academy && academy._handleTyping) {
+        document.removeEventListener('keydown', academy._handleTyping);
+        academy._handleTyping = null;
+    }
+    document.getElementById('gamesMenu').style.removeProperty('display');
+    const gameArea = document.getElementById('gameArea');
+    if (gameArea) gameArea.classList.remove('active');
+    const canvas = document.getElementById('gameCanvas');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
 }

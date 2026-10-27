@@ -6,7 +6,7 @@
 class GlobalLeaderboard {
     constructor() {
         this.db = null;
-        this.apiEndpoint = 'https://atomicfizzcaps.xyz/api';
+        this.apiEndpoint = (window.API_CONFIG && window.API_CONFIG.apiUrl) ? window.API_CONFIG.apiUrl : '/api';
         this.games = [
             'monster-rampage', 'contra-commando', 'sky-ace-combat', 
             'mega-heroes', 'tournament-fighters', 'brain-academy',
@@ -19,10 +19,36 @@ class GlobalLeaderboard {
     }
     
     async initDB() {
-        const dbRequest = indexedDB.open('9DTTT_GameDB', 1);
+        // Same DB/schema as universal-auth.js. Version 2 + an upgrade handler here too:
+        // pages that load this file without universal-auth.js used to create an EMPTY v1
+        // database (no stores), which then broke leaderboards everywhere in that browser
+        // ("NotFoundError: One of the specified object stores was not found").
+        if (!window.indexedDB) return;
+        const dbRequest = indexedDB.open('9DTTT_GameDB', 2);
+        dbRequest.onupgradeneeded = (e) => GlobalLeaderboard.upgradeSchema(e.target.result);
         dbRequest.onsuccess = (e) => {
             this.db = e.target.result;
+            this.db.onversionchange = () => this.db.close();
         };
+        dbRequest.onerror = () => console.warn('Leaderboard DB unavailable:', dbRequest.error);
+    }
+
+    static upgradeSchema(db) {
+        if (!db.objectStoreNames.contains('users')) {
+            db.createObjectStore('users', { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains('scores')) {
+            const scoreStore = db.createObjectStore('scores', { keyPath: 'id', autoIncrement: true });
+            scoreStore.createIndex('userId', 'userId', { unique: false });
+            scoreStore.createIndex('game', 'game', { unique: false });
+            scoreStore.createIndex('score', 'score', { unique: false });
+        }
+        if (!db.objectStoreNames.contains('achievements')) {
+            db.createObjectStore('achievements', { keyPath: 'id', autoIncrement: true });
+        }
+        if (!db.objectStoreNames.contains('tokens')) {
+            db.createObjectStore('tokens', { keyPath: 'userId' });
+        }
     }
     
     // Submit score with token reward calculation
@@ -112,9 +138,13 @@ class GlobalLeaderboard {
     
     async syncScoreToBackend(scoreEntry) {
         try {
+            const token = window.authClient?.token || localStorage.getItem('auth_token') || '';
             await fetch(`${this.apiEndpoint}/scores/submit`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify(scoreEntry)
             });
         } catch (error) {
@@ -134,9 +164,13 @@ class GlobalLeaderboard {
             }
             
             // Sync with blockchain
+            const token = window.authClient?.token || localStorage.getItem('auth_token') || '';
             await fetch(`${this.apiEndpoint}/tokens/award`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify({
                     userId,
                     amount,
@@ -328,7 +362,7 @@ class GlobalLeaderboard {
         notification.innerHTML = `
             <div style="position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 20px 30px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); z-index: 10000; animation: slideIn 0.5s ease-out;">
                 <div style="font-size: 18px; font-weight: bold;">🎉 Tokens Earned!</div>
-                <div style="font-size: 32px; margin: 10px 0;">+${amount} 🪙</div>
+                <div style="font-size: 32px; margin: 10px 0;">+${Number(amount) || 0} 🪙</div>
                 <div style="font-size: 12px; opacity: 0.8;">Added to your wallet</div>
             </div>
         `;

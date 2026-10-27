@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- Primary Meta Tags -->
-    <title>9DTTT - Free Online Multiplayer Games | Play Ultimate Tic-Tac-Toe, 4D Chess, Farkle & More</title>
-    <meta name="title" content="9DTTT - Free Online Multiplayer Games | Play Ultimate Tic-Tac-Toe, 4D Chess, Farkle & More">
-    <meta name="description" content="Play 31 free online multiplayer games instantly! No download required. Ultimate Tic-Tac-Toe, 4D Chess, Crypto Quest Academy, Farkle dice game, Pong, Air Hockey & more. Real-time multiplayer with friends. d9ttt.com">
-    <meta name="keywords" content="9dttt, d9ttt, free online games, multiplayer games, ultimate tic-tac-toe, 4d chess, connect four, farkle, dice games, pong, air hockey, browser games, no download games, play with friends, strategic games, board games online, retro arcade games">
+    <title>9D Ultimate Tic-Tac-Toe vs AI | 9DTTT</title>
+    <meta name="title" content="9D Ultimate Tic-Tac-Toe vs AI | 9DTTT">
+    <meta name="description" content="Play 9D Ultimate Tic-Tac-Toe: nine boards, one strategy. Challenge an offline AI opponent at four difficulty levels or play a friend, then unlock more games from the add-on catalog.">
+    <meta name="keywords" content="9dttt, 9d tic-tac-toe, ultimate tic-tac-toe, tic-tac-toe ai, tic-tac-toe vs computer, strategy game, board game, two player game, ultimate tic tac toe app">
     <meta name="author" content="Bastion Quartet">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-    <link rel="canonical" href="https://www.d9ttt.com/">
+    <link rel="canonical" href="https://9dttt.com/">
     
     <!-- Additional SEO Meta Tags -->
     <meta name="rating" content="General">
@@ -23,28 +23,28 @@
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://www.d9ttt.com/">
-    <meta property="og:title" content="9DTTT - Free Online Multiplayer Games | Play Instantly">
-    <meta property="og:description" content="Play 31 free online multiplayer games instantly! Ultimate Tic-Tac-Toe, 4D Chess, Crypto Quest Academy, Connect Four, Farkle & more. No download required.">
-    <meta property="og:image" content="https://www.d9ttt.com/icon.jpg">
+    <meta property="og:url" content="https://9dttt.com/">
+    <meta property="og:title" content="9D Ultimate Tic-Tac-Toe vs AI | 9DTTT">
+    <meta property="og:description" content="9D Ultimate Tic-Tac-Toe: nine boards, one strategy. Beat the AI opponent at four difficulty levels, play a friend, and explore the add-on game catalog.">
+    <meta property="og:image" content="https://9dttt.com/icon.jpg">
     <meta property="og:image:width" content="512">
     <meta property="og:image:height" content="512">
-    <meta property="og:image:alt" content="9DTTT Game Library - Free Online Multiplayer Games">
-    <meta property="og:site_name" content="9DTTT Game Library">
+    <meta property="og:image:alt" content="9DTTT - 9D Ultimate Tic-Tac-Toe">
+    <meta property="og:site_name" content="9DTTT">
     <meta property="og:locale" content="en_US">
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://www.d9ttt.com/">
-    <meta name="twitter:title" content="9DTTT - Free Online Multiplayer Games | Play Instantly">
-    <meta name="twitter:description" content="Play 31 free online multiplayer games instantly! Ultimate Tic-Tac-Toe, 4D Chess, Crypto Quest Academy, Connect Four, Farkle & more. No download required.">
-    <meta name="twitter:image" content="https://www.d9ttt.com/icon.jpg">
-    <meta name="twitter:image:alt" content="9DTTT Game Library - Free Online Multiplayer Games">
+    <meta name="twitter:url" content="https://9dttt.com/">
+    <meta name="twitter:title" content="9D Ultimate Tic-Tac-Toe vs AI | 9DTTT">
+    <meta name="twitter:description" content="9D Ultimate Tic-Tac-Toe: nine boards, one strategy. Beat the AI opponent at four difficulty levels, play a friend, and explore the add-on game catalog.">
+    <meta name="twitter:image" content="https://9dttt.com/icon.jpg">
+    <meta name="twitter:image:alt" content="9DTTT - 9D Ultimate Tic-Tac-Toe">
     
     <!-- Mobile App -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="9DTTT Games">
+    <meta name="apple-mobile-web-app-title" content="9DTTT">
     <meta name="theme-color" content="#0a0e27">
     <meta name="application-name" content="9DTTT">
     <meta name="mobile-web-app-capable" content="yes">
@@ -115,7 +115,8 @@
         }
 
         .game-card:hover,
-        .game-card:focus {
+        .game-card:focus,
+        .game-card.controller-focused {
             transform: translateY(-8px) scale(1.02);
             border-color: var(--accent-color);
             box-shadow: 
@@ -154,9 +155,7 @@
             font-weight: bold;
             margin-bottom: var(--spacing-sm);
             color: var(--primary-color);
-            text-shadow: 
-                0 0 10px var(--primary-color),
-                0 0 20px var(--primary-color);
+            text-shadow: 0 0 6px var(--primary-color);
             font-family: 'Press Start 2P', 'Courier New', monospace;
             letter-spacing: 1px;
         }
@@ -185,7 +184,6 @@
             border-radius: 12px;
             font-size: 0.8rem;
             font-weight: bold;
-            text-shadow: 0 0 8px currentColor;
             border: 2px solid currentColor;
         }
 
@@ -217,6 +215,37 @@
             border-radius: var(--radius-md);
             font-weight: bold;
             font-size: 1.2rem;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-btn {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #000;
+            border: 2px solid #000;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .header-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
         }
 
         .library-header {
@@ -261,7 +290,6 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            text-shadow: 0 0 5px var(--primary-color);
             box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
         }
 
@@ -327,7 +355,7 @@
             margin-bottom: var(--spacing-lg);
             font-weight: bold;
             color: #00ffff;
-            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff;
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
             font-size: 1.1rem;
             font-family: 'Press Start 2P', 'Courier New', monospace;
             letter-spacing: 2px;
@@ -376,220 +404,33 @@
     {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        "name": "9DTTT Game Library",
-        "alternateName": ["9DTTT", "d9ttt", "9D Tic-Tac-Toe", "Nine Dimensional Tic Tac Toe"],
-        "url": "https://www.d9ttt.com",
-        "description": "Free online multiplayer game library featuring 31 games including Ultimate Tic-Tac-Toe, 4D Chess, Crypto Quest Academy, Connect Four, Farkle, and more",
+        "name": "9DTTT",
+        "alternateName": ["9D Tic-Tac-Toe", "9D Ultimate Tic-Tac-Toe", "Nine Dimensional Tic Tac Toe"],
+        "url": "https://9dttt.com/",
+        "description": "9D Ultimate Tic-Tac-Toe with an AI opponent, plus a catalog of add-on games.",
         "inLanguage": "en-US",
-        "potentialAction": {
-            "@type": "SearchAction",
-            "target": {
-                "@type": "EntryPoint",
-                "urlTemplate": "https://www.d9ttt.com/?search={search_term_string}"
-            },
-            "query-input": "required name=search_term_string"
-        },
         "publisher": {
             "@type": "Organization",
             "name": "Bastion Quartet",
-            "logo": {
-                "@type": "ImageObject",
-                "url": "https://www.d9ttt.com/icon.jpg",
-                "width": 512,
-                "height": 512
-            }
+            "logo": { "@type": "ImageObject", "url": "https://9dttt.com/icon.jpg", "width": 512, "height": 512 }
         }
     }
     </script>
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "9DTTT Game Library",
+        "@type": "VideoGame",
+        "name": "9D Ultimate Tic-Tac-Toe",
+        "alternateName": "9DTTT",
+        "url": "https://9dttt.com/",
+        "image": "https://9dttt.com/icon.jpg",
+        "description": "Ultimate Tic-Tac-Toe across nine boards: every move sends your opponent to a board. Play the built-in AI opponent (Easy to Master) or a friend.",
+        "genre": ["Strategy", "Board Game"],
+        "gamePlatform": ["Web Browser", "iOS", "Android"],
         "applicationCategory": "GameApplication",
-        "applicationSubCategory": "Multiplayer Games",
-        "operatingSystem": "Web Browser (Chrome, Firefox, Safari, Edge)",
-        "browserRequirements": "Requires JavaScript",
-        "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "USD",
-            "availability": "https://schema.org/InStock"
-        },
-        "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.8",
-            "ratingCount": "150",
-            "bestRating": "5",
-            "worstRating": "1"
-        },
-        "featureList": [
-            "Real-time Multiplayer Gaming",
-            "Ultimate Tic-Tac-Toe",
-            "4D Chess",
-            "Connect Four",
-            "Farkle Dice Game",
-            "Dimensional Dice",
-            "Pong",
-            "Air Hockey",
-            "Memory Game",
-            "Hangman",
-            "Free to Play",
-            "No Download Required",
-            "Accessible Gameplay",
-            "Player Profiles and Leaderboards",
-            "In-Game Chat",
-            "31 Strategic & Educational Games"
-        ]
-    }
-    </script>
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "ItemList",
-        "name": "Free Online Games at 9DTTT",
-        "description": "Collection of free multiplayer games playable instantly in your browser",
-        "numberOfItems": 31,
-        "itemListElement": [
-            {
-                "@type": "ListItem",
-                "position": 1,
-                "item": {
-                    "@type": "VideoGame",
-                    "name": "Ultimate Tic-Tac-Toe",
-                    "url": "https://www.d9ttt.com/games/ultimate-tictactoe.html",
-                    "description": "Strategic twist on classic Tic-Tac-Toe with nested boards",
-                    "genre": "Strategy",
-                    "gamePlatform": "Web Browser"
-                }
-            },
-            {
-                "@type": "ListItem",
-                "position": 2,
-                "item": {
-                    "@type": "VideoGame",
-                    "name": "4D Chess",
-                    "url": "https://www.d9ttt.com/games/4d-chess.html",
-                    "description": "Mind-bending chess across four dimensions",
-                    "genre": "Strategy",
-                    "gamePlatform": "Web Browser"
-                }
-            },
-            {
-                "@type": "ListItem",
-                "position": 3,
-                "item": {
-                    "@type": "VideoGame",
-                    "name": "Connect Four",
-                    "url": "https://www.d9ttt.com/games/connect-four.html",
-                    "description": "Classic four-in-a-row strategy game",
-                    "genre": "Strategy",
-                    "gamePlatform": "Web Browser"
-                }
-            },
-            {
-                "@type": "ListItem",
-                "position": 4,
-                "item": {
-                    "@type": "VideoGame",
-                    "name": "Farkle",
-                    "url": "https://www.d9ttt.com/games/farkle.html",
-                    "description": "Classic dice game - push your luck to score big",
-                    "genre": "Dice Game",
-                    "gamePlatform": "Web Browser"
-                }
-            },
-            {
-                "@type": "ListItem",
-                "position": 5,
-                "item": {
-                    "@type": "VideoGame",
-                    "name": "Dimensional Dice",
-                    "url": "https://www.d9ttt.com/games/dimensional-dice.html",
-                    "description": "Roll dice across multiple dimensions for strategic scoring",
-                    "genre": "Dice Game",
-                    "gamePlatform": "Web Browser"
-                }
-            },
-            {
-                "@type": "ListItem",
-                "position": 6,
-                "item": {
-                    "@type": "VideoGame",
-                    "name": "Pong",
-                    "url": "https://www.d9ttt.com/games/pong.html",
-                    "description": "Classic arcade paddle game",
-                    "genre": "Arcade",
-                    "gamePlatform": "Web Browser"
-                }
-            },
-            {
-                "@type": "ListItem",
-                "position": 7,
-                "item": {
-                    "@type": "VideoGame",
-                    "name": "Air Hockey",
-                    "url": "https://www.d9ttt.com/games/air-hockey.html",
-                    "description": "Fast-paced arcade air hockey",
-                    "genre": "Arcade",
-                    "gamePlatform": "Web Browser"
-                }
-            },
-            {
-                "@type": "ListItem",
-                "position": 8,
-                "item": {
-                    "@type": "VideoGame",
-                    "name": "Hangman",
-                    "url": "https://www.d9ttt.com/games/hangman.html",
-                    "description": "Classic word guessing game",
-                    "genre": "Word Game",
-                    "gamePlatform": "Web Browser"
-                }
-            },
-            {
-                "@type": "ListItem",
-                "position": 9,
-                "item": {
-                    "@type": "VideoGame",
-                    "name": "Memory Game",
-                    "url": "https://www.d9ttt.com/games/memory-game.html",
-                    "description": "Test your memory with card matching",
-                    "genre": "Puzzle",
-                    "gamePlatform": "Web Browser"
-                }
-            },
-            {
-                "@type": "ListItem",
-                "position": 10,
-                "item": {
-                    "@type": "VideoGame",
-                    "name": "Quantum Sudoku",
-                    "url": "https://www.d9ttt.com/games/quantum-sudoku.html",
-                    "description": "Sudoku with a quantum twist",
-                    "genre": "Puzzle",
-                    "gamePlatform": "Web Browser"
-                }
-            },
-            {
-                "@type": "ListItem",
-                "position": 11,
-                "item": {
-                    "@type": "VideoGame",
-                    "name": "Crypto Quest Academy",
-                    "url": "https://www.d9ttt.com/games/crypto-quest.html",
-                    "description": "Learn blockchain, cryptocurrency, and Web3 through interactive adventure",
-                    "genre": "Educational",
-                    "gamePlatform": "Web Browser",
-                    "educationalAlignment": {
-                        "@type": "AlignmentObject",
-                        "alignmentType": "educationalLevel",
-                        "educationalFramework": "Blockchain Education",
-                        "targetDescription": "Cryptocurrency and blockchain fundamentals for beginners"
-                    }
-                }
-            }
-        ]
+        "numberOfPlayers": { "@type": "QuantitativeValue", "minValue": 1, "maxValue": 2 },
+        "playMode": ["SinglePlayer", "MultiPlayer"],
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock" }
     }
     </script>
     <script type="application/ld+json">
@@ -597,9 +438,8 @@
         "@context": "https://schema.org",
         "@type": "Organization",
         "name": "9DTTT",
-        "alternateName": "d9ttt",
-        "url": "https://www.d9ttt.com",
-        "logo": "https://www.d9ttt.com/icon.jpg",
+        "url": "https://9dttt.com/",
+        "logo": "https://9dttt.com/icon.jpg",
         "sameAs": []
     }
     </script>
@@ -609,7 +449,14 @@
 
     <div class="container">
         <header role="banner" class="arcade-frame">
-            <h1 class="pixel-font neon-cyan">🎮 9DTTT Game Library</h1>
+            <div class="header-content">
+                <h1 class="pixel-font neon-cyan">🎮 9DTTT Game Library</h1>
+                <div class="header-actions">
+                    <button id="progression-btn" class="header-btn" aria-label="View player progression" style="display: none;">
+                        📊 PROGRESSION
+                    </button>
+                </div>
+            </div>
             <p class="subtitle">Retro Arcade Collection</p>
         </header>
 
@@ -620,13 +467,20 @@
                 <div class="retro-banner">
                     🕹️ CLASSIC 16-BIT • 32-BIT • 64-BIT STYLE GAMING 🕹️
                 </div>
-                
+
+                <!-- Show Game Downloads link only if user is signed in -->
+                <div id="downloads-link-container" style="margin-bottom:18px; text-align:center;">
+                    <a href="games.html" class="downloads-link" style="font-size:1.2rem; color:#FFD700; font-weight:bold; text-shadow:0 0 6px rgba(255,215,0,0.7);">
+                        ⬇️ Download More Games &rarr;
+                    </a>
+                </div>
+
                 <!-- Insert Coin Animation -->
                 <button class="insert-coin pulse" id="insert-coin" aria-label="Click to play coin sound">
                     🪙 INSERT COIN TO PLAY 🪙
                 </button>
-                
-                <p>Welcome to the 9DTTT Game Library! Filter by category or browse all games:</p>
+
+                <p>Welcome to 9DTTT — the 9-dimensional tic-tac-toe arena.</p>
                 <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: var(--spacing-sm);">
                     🎮 <strong>Controller Support:</strong> D-Pad/Left Stick to navigate • A to select • LB/RB to switch to filters
                 </p>
@@ -664,288 +518,19 @@
                 </ul>
             </div>
 
-            <!-- Category Filter Tabs -->
-            <div class="category-filters" role="tablist" aria-label="Game categories">
-                <button class="filter-btn active" data-category="all" role="tab" aria-selected="true">
-                    <span class="filter-icon">🎮</span> All Games
-                </button>
-                <button class="filter-btn" data-category="arcade" role="tab" aria-selected="false">
-                    <span class="filter-icon">👾</span> Arcade
-                </button>
-                <button class="filter-btn" data-category="racing" role="tab" aria-selected="false">
-                    <span class="filter-icon">🏁</span> Racing
-                </button>
-                <button class="filter-btn" data-category="shooter" role="tab" aria-selected="false">
-                    <span class="filter-icon">🔫</span> Shooter
-                </button>
-                <button class="filter-btn" data-category="puzzle" role="tab" aria-selected="false">
-                    <span class="filter-icon">🧩</span> Puzzle
-                </button>
-                <button class="filter-btn" data-category="strategy" role="tab" aria-selected="false">
-                    <span class="filter-icon">♟️</span> Strategy
-                </button>
-                <button class="filter-btn" data-category="cards" role="tab" aria-selected="false">
-                    <span class="filter-icon">🃏</span> Cards
-                </button>
-                <button class="filter-btn" data-category="dice" role="tab" aria-selected="false">
-                    <span class="filter-icon">🎲</span> Dice
-                </button>
-                <button class="filter-btn" data-category="words" role="tab" aria-selected="false">
-                    <span class="filter-icon">📝</span> Words
-                </button>
-                <button class="filter-btn" data-category="educational" role="tab" aria-selected="false">
-                    <span class="filter-icon">🎓</span> Educational
-                </button>
-                <button class="filter-btn" data-category="sports" role="tab" aria-selected="false">
-                    <span class="filter-icon">🏒</span> Sports
-                </button>
-                <button class="filter-btn" data-category="multiplayer" role="tab" aria-selected="false">
-                    <span class="filter-icon">👥</span> Multiplayer
-                </button>
-            </div>
-
-            <div class="game-grid" role="list" id="game-grid">
-                <!-- 9D Tic-Tac-Toe (Main Game, always unlocked) -->
-                <a href="games/ultimate-tictactoe.html" class="game-card" role="listitem" data-categories="strategy,puzzle,multiplayer">
-                    <div class="game-icon">⭕❌</div>
-                    <h2 class="game-title">9D Tic-Tac-Toe</h2>
-                    <p class="game-description">
-                        9 Dimensional Tic-Tac-Toe - A strategic twist on classic tic-tac-toe! Play on 9 interconnected boards where your move determines your opponent's next board. Win boards to win the game!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 10-20 min</span>
-                        <span class="badge new">STRATEGY</span>
-                    </div>
-                </a>
-
-                <!-- All other games: locked by default, require sign-in/account to unlock -->
-                <div id="addon-games-locked">
-                    <div class="game-card locked" role="listitem" data-game-id="4d-chess" style="opacity:0.6;position:relative;">
-                        <div class="game-icon">♟️</div>
-                        <h2 class="game-title">4D Chess</h2>
-                        <p class="game-description">Sign in to unlock this game and more!</p>
-                        <div class="game-meta">
-                            <span>⏱️ 20-40 min</span>
-                            <span class="badge new">STRATEGY</span>
-                        </div>
-                        <div class="lock-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-size:1.2rem;z-index:10;">
-                            <span style="font-size:2rem;">🔒</span>
-                            <span>Sign in to unlock</span>
-                            <button class="add-game-btn" style="margin-top:16px;padding:8px 18px;font-size:1rem;border-radius:8px;border:none;background:#FFD700;color:#222;font-weight:bold;cursor:pointer;display:none;">Add Game</button>
-                        </div>
-                    </div>
-                    <!-- Repeat for each add-on game, or generate dynamically in future -->
-                    <!-- ...existing code for other games, but wrapped in locked card with overlay... -->
-                </div>
-
-                <!-- Space Debris (Asteroids-style) -->
-                <a href="games/space-debris.html" class="game-card" role="listitem" data-categories="arcade,shooter">
-                    <div class="game-icon">🚀</div>
-                    <h2 class="game-title">Space Debris</h2>
-                    <p class="game-description">
-                        Navigate through asteroid fields! Blast space rocks and survive as long as you can!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ Endless</span>
-                        <span class="badge popular">ARCADE</span>
-                    </div>
-                </a>
-
-                <!-- Air Hockey -->
-                <a href="games/air-hockey.html" class="game-card" role="listitem" data-categories="arcade,sports,multiplayer">
-                    <div class="game-icon">🏒</div>
-                    <h2 class="game-title">Air Hockey</h2>
-                    <p class="game-description">
-                        Fast-paced 2-player action! Score goals by hitting the puck into your opponent's goal!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 5-10 min</span>
-                        <span class="badge new">SPORTS</span>
-                    </div>
-                </a>
-
-                <!-- Carnival Shooter -->
-                <a href="games/carnival-shooter.html" class="game-card" role="listitem" data-categories="arcade,shooter">
-                    <div class="game-icon">🎯</div>
-                    <h2 class="game-title">Carnival Shooter</h2>
-                    <p class="game-description">
-                        Shoot the star to win prizes! Classic carnival challenge where you can actually win!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 2-5 min</span>
-                        <span class="badge popular">WIN PRIZES</span>
-                    </div>
-                </a>
-
-                <!-- FPS Arena -->
-                <a href="games/fps-arena.html" class="game-card" role="listitem" data-categories="shooter,arcade">
-                    <div class="game-icon">🔫</div>
-                    <h2 class="game-title">FPS Arena</h2>
-                    <p class="game-description">
-                        Top-down arena shooter! Survive waves of enemies with WASD movement and mouse aiming. Multiple difficulty levels!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 5-15 min</span>
-                        <span class="badge new">SHOOTER</span>
-                    </div>
-                </a>
-
-                <!-- MotoGP Excite -->
-                <a href="games/motogp-excite.html" class="game-card" role="listitem" data-categories="racing,arcade">
-                    <div class="game-icon">🏍️</div>
-                    <h2 class="game-title">MotoGP Excite</h2>
-                    <p class="game-description">
-                        Excite Bike style MotoGP racing! Change lanes, hit boost pads, avoid obstacles, and use turbo wisely!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 5-10 min</span>
-                        <span class="badge new">RACING</span>
-                    </div>
-                </a>
-
-                <!-- Dragon Fist -->
-                <a href="games/dragon-fist.html" class="game-card" role="listitem" data-categories="arcade,multiplayer">
-                    <div class="game-icon">🐉</div>
-                    <h2 class="game-title">Dragon Fist</h2>
-                    <p class="game-description">
-                        Double Dragon style beat 'em up! Punch, kick, and combo your way through waves of enemies. 2-player co-op!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 10-20 min</span>
-                        <span class="badge popular">BEAT 'EM UP</span>
-                    </div>
-                </a>
-
-                <!-- Beach Games -->
-                <a href="games/beach-games.html" class="game-card" role="listitem" data-categories="arcade,sports">
-                    <div class="game-icon">🏄</div>
-                    <h2 class="game-title">Beach Games</h2>
-                    <p class="game-description">
-                        T&C Surf style minigames! Surfing, skateboarding, and hacky sack - all the beach vibes in one game!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 5-15 min</span>
-                        <span class="badge new">3 GAMES!</span>
-                    </div>
-                </a>
-
-                <!-- Crypto Quest Academy -->
-                <a href="games/crypto-quest.html" class="game-card" role="listitem" data-categories="educational,puzzle">
-                    <div class="game-icon">🚀💰</div>
-                    <h2 class="game-title">Crypto Quest Academy</h2>
-                    <p class="game-description">
-                        Learn blockchain, crypto, and Web3 through adventure! Create wallets, spot scams, mint NFTs, and master DeFi. 25 interactive lessons!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 30-90 min</span>
-                        <span class="badge new">FULL WEB3!</span>
-                    </div>
-                </a>
-
-                <!-- Brain Academy -->
-                <a href="games/brain-academy.html" class="game-card" role="listitem" data-categories="puzzle,educational">
-                    <div class="game-icon">🧠</div>
-                    <h2 class="game-title">Brain Academy</h2>
-                    <p class="game-description">
-                        Educational game collection! Math, spelling, geography, typing, memory, and pattern challenges for all ages.
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 5-10 min</span>
-                        <span class="badge new">EDUCATIONAL</span>
-                    </div>
-                </a>
-
-                <!-- Brain Age -->
-                <a href="games/brain-age.html" class="game-card" role="listitem" data-categories="puzzle,educational">
-                    <div class="game-icon">🎓</div>
-                    <h2 class="game-title">Brain Age</h2>
-                    <p class="game-description">
-                        Test your mental fitness! Quick calculation and memory challenges to keep your brain sharp.
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 3-5 min</span>
-                        <span class="badge popular">BRAIN TRAINING</span>
-                    </div>
-                </a>
-
-                <!-- Contra Commando -->
-                <a href="games/contra-commando.html" class="game-card" role="listitem" data-categories="arcade,shooter">
-                    <div class="game-icon">🎖️</div>
-                    <h2 class="game-title">Contra Commando</h2>
-                    <p class="game-description">
-                        Run-and-gun action! Platform shooter with power-ups, explosions, and wave-based enemies!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 10-15 min</span>
-                        <span class="badge new">RUN & GUN</span>
-                    </div>
-                </a>
-
-                <!-- Mega Heroes -->
-                <a href="games/mega-heroes.html" class="game-card" role="listitem" data-categories="arcade,shooter">
-                    <div class="game-icon">🤖</div>
-                    <h2 class="game-title">Mega Heroes</h2>
-                    <p class="game-description">
-                        Mega Man inspired action! Run, jump, and shoot through robot-filled levels. Defeat bosses to gain powers!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 15-30 min</span>
-                        <span class="badge popular">PLATFORMER</span>
-                    </div>
-                </a>
-
-                <!-- Monster Rampage -->
-                <a href="games/monster-rampage.html" class="game-card" role="listitem" data-categories="arcade">
-                    <div class="game-icon">🦖</div>
-                    <h2 class="game-title">Monster Rampage</h2>
-                    <p class="game-description">
-                        Rampage style destruction! Play as giant monsters and destroy buildings, vehicles, and everything in sight!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 10-20 min</span>
-                        <span class="badge new">DESTROY!</span>
-                    </div>
-                </a>
-
-                <!-- Reflex Master -->
-                <a href="games/reflex-master.html" class="game-card" role="listitem" data-categories="puzzle,arcade">
-                    <div class="game-icon">⚡</div>
-                    <h2 class="game-title">Reflex Master</h2>
-                    <p class="game-description">
-                        Test your reflexes! Quick reaction challenges, pattern recognition, and speed trials.
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 3-5 min</span>
-                        <span class="badge popular">SPEED TEST</span>
-                    </div>
-                </a>
-
-                <!-- Sky Ace Combat -->
-                <a href="games/sky-ace-combat.html" class="game-card" role="listitem" data-categories="arcade,shooter">
-                    <div class="game-icon">✈️</div>
-                    <h2 class="game-title">Sky Ace Combat</h2>
-                    <p class="game-description">
-                        1942-style vertical shooter! Pilot WWII fighters, dodge enemy fire, and defeat boss planes!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 10-15 min</span>
-                        <span class="badge new">SHMUP</span>
-                    </div>
-                </a>
-
-                <!-- Tournament Fighters -->
-                <a href="games/tournament-fighters.html" class="game-card" role="listitem" data-categories="arcade,multiplayer">
-                    <div class="game-icon">🥊</div>
-                    <h2 class="game-title">Tournament Fighters</h2>
-                    <p class="game-description">
-                        Street Fighter style combat! Special moves, combos, and one-on-one battles. Challenge the CPU or a friend!
-                    </p>
-                    <div class="game-meta">
-                        <span>⏱️ 5-15 min</span>
-                        <span class="badge popular">FIGHTER</span>
-                    </div>
-                </a>
-            </div>
+            <!-- Flagship: 9D Tic-Tac-Toe is the only game on the home page.
+                 All other games live in the add-on catalog (games.html). -->
+            <section class="flagship" aria-labelledby="flagship-title" style="text-align:center; padding: var(--spacing-xl); border: 2px solid var(--primary-color); border-radius: var(--radius-lg); background: var(--secondary-bg);">
+                <div class="game-icon" style="font-size:4rem;">⭕❌</div>
+                <h2 id="flagship-title" class="game-title">9D Tic-Tac-Toe</h2>
+                <p class="game-description" style="max-width:640px; margin:0 auto var(--spacing-md);">
+                    A strategic twist on classic tic-tac-toe: play on 9 interconnected boards where your move decides your opponent's next board. Win boards to win the game.
+                </p>
+                <a href="games/ultimate-tictactoe.html" class="game-card flagship-play" style="display:inline-block; font-size:1.3rem; padding: var(--spacing-md) var(--spacing-xl);">▶ PLAY NOW</a>
+                <p style="margin-top: var(--spacing-lg);">
+                    <a href="games.html" class="downloads-link" style="color:#FFD700; font-weight:bold;">🎮 Browse add-on games &rarr;</a>
+                </p>
+            </section>
 
             <!-- About Section -->
             <section style="background: var(--secondary-bg); padding: var(--spacing-xl); border-radius: var(--radius-lg); border: 2px solid var(--primary-color); margin-top: var(--spacing-xxl);">
@@ -1001,18 +586,12 @@
     <script src="js/accessibility-manager.js"></script>
     <script src="js/retro-arcade.js"></script>
     <script src="js/game-launcher.js"></script>
+    <script src="js/progression.js"></script>
     
     <!-- API Configuration (Must load first) -->
     <script src="js/api-config.js"></script>
     
-    <!-- WalletConnect SDK (CDN) -->
-    <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
     
-    <!-- WalletConnect Integration -->
-    <script src="js/walletconnect-integration.js"></script>
-    
-    <!-- Multi-Chain Wallet Integration -->
-    <script src="js/multi-chain-wallet.js"></script>
     
     <!-- Unified Authentication System -->
     <script src="js/unified-auth.js"></script>
@@ -1024,6 +603,21 @@
             // Initialize unified auth
             await window.unifiedAuth.init();
             console.log('✅ Unified auth initialized');
+            // Show downloads link if signed in
+            const downloadsLink = document.getElementById('downloads-link-container');
+            if (window.unifiedAuth.user) {
+                downloadsLink.style.display = 'block';
+            }
+            if (window.unifiedAuth && window.unifiedAuth.addListener) {
+                window.unifiedAuth.addListener(function(user) {
+                    // Catalog link is always visible now (flagship layout)
+                    // Show/hide progression button based on auth status
+                    const progressionBtn = document.getElementById('progression-btn');
+                    if (progressionBtn) {
+                        progressionBtn.style.display = user ? 'block' : 'none';
+                    }
+                });
+            }
         })();
         
         // Category filtering functionality
@@ -1047,17 +641,19 @@
                 lockedCards.forEach(card => {
                     const gameId = card.dataset.gameId;
                     const overlay = card.querySelector('.lock-overlay');
+                    if (!overlay) return;
                     const addBtn = overlay.querySelector('.add-game-btn');
+                    const labelSpan = overlay.querySelector('span:last-of-type');
                     if (isSignedIn) {
-                        overlay.querySelector('span:last-child').textContent = unlocked.includes(gameId) ? 'Added!' : 'Click to add';
+                        if (labelSpan) labelSpan.textContent = unlocked.includes(gameId) ? 'Added!' : 'Click to add';
                         card.style.pointerEvents = 'auto';
                         card.style.opacity = unlocked.includes(gameId) ? '1' : '0.6';
-                        addBtn.style.display = unlocked.includes(gameId) ? 'none' : 'inline-block';
+                        if (addBtn) addBtn.style.display = unlocked.includes(gameId) ? 'none' : 'inline-block';
                     } else {
-                        overlay.querySelector('span:last-child').textContent = 'Sign in to unlock';
+                        if (labelSpan) labelSpan.textContent = 'Sign in to unlock';
                         card.style.pointerEvents = 'none';
                         card.style.opacity = '0.6';
-                        addBtn.style.display = 'none';
+                        if (addBtn) addBtn.style.display = 'none';
                     }
                 });
             }
@@ -1130,81 +726,73 @@
                 });
             });
             
-            // Controller Navigation
+            // Controller Navigation for game library
             let currentFocus = 0;
-            let focusMode = 'games'; // 'games' or 'filters'
-            
+
             function getVisibleGameCards() {
-                return Array.from(document.querySelectorAll('.game-card:not(.hidden)'));
+                // .locked cards are non-interactive divs (premium/sign-in-required games); exclude them
+                return Array.from(document.querySelectorAll('.game-card:not(.hidden):not(.locked)'));
             }
-            
-            function updateFocus() {
-                if (focusMode === 'games') {
-                    // Category filtering functionality and game visibility by auth
-                    document.addEventListener('DOMContentLoaded', function() {
-                        const filterButtons = document.querySelectorAll('.filter-btn');
-                        const gameCards = document.querySelectorAll('.game-card');
-                        const lockedGames = document.querySelectorAll('#addon-games-locked .game-card');
 
-                        // Initialize gamepad widget
-                        if (window.GamepadWidget) {
-                            new GamepadWidget('gamepad-status');
-                        }
+            function updateControllerFocus() {
+                const visibleCards = getVisibleGameCards();
+                visibleCards.forEach((card, idx) => {
+                    if (idx === currentFocus) {
+                        card.classList.add('controller-focused');
+                        card.setAttribute('tabindex', '0');
+                        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    } else {
+                        card.classList.remove('controller-focused');
+                        card.setAttribute('tabindex', '-1');
+                    }
+                });
+            }
 
-                        // Initialize auth UI for shared login across all pages
-                        if (window.GameUI) {
-                            window.gameUI = new GameUI();
-                            window.gameUI.init();
-                        }
-
-                        // Hide locked games by default
-                        lockedGames.forEach(card => card.classList.add('hidden'));
-
-                        // Listen for auth state changes
-                        if (window.unifiedAuth && window.unifiedAuth.addListener) {
-                            window.unifiedAuth.addListener(function(user) {
-                                if (user) {
-                                    // User is signed in, show locked games
-                                    lockedGames.forEach(card => card.classList.remove('hidden'));
-                                } else {
-                                    // User is signed out, hide locked games
-                                    lockedGames.forEach(card => card.classList.add('hidden'));
-                                }
-                            });
-                        }
-
-                        filterButtons.forEach(button => {
-                            button.addEventListener('click', function() {
-                                const category = this.dataset.category;
-                                // Update active button
-                                filterButtons.forEach(btn => {
-                                    btn.classList.remove('active');
-                                    btn.setAttribute('aria-selected', 'false');
-                                });
-                                this.classList.add('active');
-                                this.setAttribute('aria-selected', 'true');
-                                // Filter games
-                                gameCards.forEach(card => {
-                                    const cardCategories = card.dataset.categories ? card.dataset.categories.split(',') : [];
-                                    if (category === 'all' || cardCategories.includes(category)) {
-                                        card.classList.remove('hidden');
-                                    } else {
-                                        card.classList.add('hidden');
-                                    }
-                                });
-                                // Announce to screen readers
-                                const visibleCount = document.querySelectorAll('.game-card:not(.hidden)').length;
-                                const announcement = document.createElement('div');
-                                announcement.setAttribute('aria-live', 'polite');
-                                announcement.setAttribute('aria-atomic', 'true');
-                                announcement.className = 'sr-only';
-                                announcement.textContent = `Showing ${visibleCount} games in ${category === 'all' ? 'all categories' : category}`;
-                                document.body.appendChild(announcement);
-                                setTimeout(() => announcement.remove(), 1000);
-                            });
-                        });
-
-                        // ...existing code for controller navigation and keyboard navigation...
-                        // (No changes needed below this for game visibility)
-                    });
+            if (window.gamepadManager) {
                 window.gamepadManager.on('buttondown', (data) => {
+                    const visibleCards = getVisibleGameCards();
+                    if (!visibleCards.length) return;
+
+                    if (data.button === 'down' || data.button === 's') {
+                        currentFocus = (currentFocus + 1) % visibleCards.length;
+                        updateControllerFocus();
+                    } else if (data.button === 'up' || data.button === 'w') {
+                        currentFocus = (currentFocus - 1 + visibleCards.length) % visibleCards.length;
+                        updateControllerFocus();
+                    } else if (data.button === 'right') {
+                        currentFocus = Math.min(currentFocus + 3, visibleCards.length - 1);
+                        updateControllerFocus();
+                    } else if (data.button === 'left') {
+                        currentFocus = Math.max(currentFocus - 3, 0);
+                        updateControllerFocus();
+                    } else if (data.button === 'a') {
+                        // Launch focused game
+                        const card = visibleCards[currentFocus];
+                        if (card) card.click();
+                    } else if (data.button === 'start') {
+                        // Toggle between filter buttons and game cards
+                        const firstFilter = document.querySelector('.filter-btn');
+                        if (firstFilter) firstFilter.focus();
+                    }
+                });
+
+                // Highlight the first card when a controller connects
+                window.gamepadManager.on('connected', () => {
+                    currentFocus = 0;
+                    updateControllerFocus();
+                });
+            }
+
+            // Progression button handler
+            const progressionBtn = document.getElementById('progression-btn');
+            if (progressionBtn) {
+                progressionBtn.addEventListener('click', () => {
+                    if (window.progressionClient) {
+                        window.progressionClient.toggle();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

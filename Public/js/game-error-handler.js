@@ -289,7 +289,7 @@ class GameErrorHandler {
         
         // Provide context-specific suggestions
         const suggestions = this.getSuggestions(errorInfo);
-        suggestionsEl.innerHTML = suggestions.map(s => `<li>${s}</li>`).join('');
+        suggestionsEl.innerHTML = suggestions.map(s => `<li>${this._escapeHtml(s)}</li>`).join('');
         
         // Show error history if multiple errors
         const historyEl = document.getElementById('errorHistory');
@@ -299,7 +299,7 @@ class GameErrorHandler {
             historyListEl.innerHTML = this.errors
                 .slice(-5)
                 .reverse()
-                .map(e => `<div>${new Date(e.timestamp).toLocaleTimeString()}: ${e.message}</div>`)
+                .map(e => `<div>${new Date(e.timestamp).toLocaleTimeString()}: ${this._escapeHtml(e.message)}</div>`)
                 .join('');
         } else {
             historyEl.style.display = 'none';
@@ -378,6 +378,21 @@ class GameErrorHandler {
         }
         
         return suggestions;
+    }
+
+    /**
+     * Escape HTML special characters to prevent XSS when inserting into innerHTML.
+     * @param {string} str - Raw string to escape
+     * @returns {string} HTML-safe string
+     */
+    _escapeHtml(str) {
+        if (typeof str !== 'string') return String(str);
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     monitorCanvas() {

@@ -18,8 +18,8 @@ class BrainAgeTraining {
     startCalculation20() {
         this.problems = [];
         for (let i = 0; i < 20; i++) {
-            const a = Math.floor(Math.random() * 20) + 1;
-            const b = Math.floor(Math.random() * 20) + 1;
+            let a = Math.floor(Math.random() * 20) + 1;
+            let b = Math.floor(Math.random() * 20) + 1;
             const ops = ['+', '-', '×'];
             const op = ops[Math.floor(Math.random() * ops.length)];
             
@@ -40,6 +40,7 @@ class BrainAgeTraining {
         }
         
         this.currentProblem = 0;
+        this.currentGame = 'calculation';
         this.startTime = Date.now();
         this.drawCalculationProblem();
         
@@ -208,6 +209,7 @@ class BrainAgeTraining {
         }
         
         this.memorizeNumber = numberString;
+        this.currentGame = 'counting';
         this.startTime = Date.now();
         
         // Show number
@@ -261,7 +263,9 @@ class BrainAgeTraining {
             this.displayResult('Number Memory', this.memorizeNumber.length + ' digits', brainAge);
         } else {
             alert('Incorrect! The number was: ' + this.memorizeNumber);
-            location.reload();
+            document.getElementById('gameArea').style.display = 'none';
+            document.getElementById('menu').style.display = '';
+            brainGame = new BrainAgeTraining();
         }
     }
     
@@ -323,7 +327,9 @@ function loadBrainGame(type) {
             break;
         default:
             alert('Coming soon!');
-            location.reload();
+            document.getElementById('gameArea').style.display = 'none';
+            document.getElementById('menu').style.display = '';
+            brainGame = new BrainAgeTraining();
     }
 }
 

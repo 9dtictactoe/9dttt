@@ -1,19 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Add-on unlock guard (client-side UX gate only; see js/unlock-guard.js) -->
+    <script src="../js/catalog.js"></script>
+    <script src="../js/unlock-guard.js"></script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Contra Commando - 9DTTT Arcade</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/game-ui.css">
     <link rel="stylesheet" href="../css/responsive.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
             padding: 0;
             background: #000;
             font-family: 'Press Start 2P', cursive;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto; /* was overflow:hidden; page taller than viewport hid the HUD/controls */
+        }
+
+        /* No horizontal overflow on phones: border/padding inside the width */
+        #gameContainer, #gameCanvas, #hud { box-sizing: border-box; max-width: 100%; }
+
+        @media (max-width: 480px) {
+            #hud { flex-wrap: wrap; gap: 8px; padding: 8px; }
+            .hud-item { font-size: 10px; }
         }
 
         #gameContainer {
@@ -111,11 +124,11 @@
 </head>
 <body>
     <div id="gameContainer">
-        <h1 style="color: #ff0000; text-shadow: 0 0 10px #ff0000; font-size: 28px;">
+        <h1 style="color: #ff0000; text-shadow: 0 0 6px rgba(255,0,0,0.6); font-size: 28px;">
             💥 CONTRA COMMANDO 💥
         </h1>
         
-        <canvas id="gameCanvas"></canvas>
+        <canvas id="gameCanvas" data-mobile-controls="dpad"></canvas>
         
         <div id="hud">
             <div class="hud-section">
@@ -138,6 +151,7 @@
 
         <div class="controls-info">
             WASD/Arrows: Move | Space: Jump | J/Z: Shoot | K/X: Special | L/C: Switch Weapon | P: Pause
+            <br>🎮 SECRET: ↑↑↓↓←→←→BA for 30 extra lives!
         </div>
 
         <div id="startScreen">
@@ -159,13 +173,13 @@
     </div>
 
     <!-- Core Enhancement Systems -->
+        <script src="../js/mobile-game-adapter.js"></script>
     <script src="../js/gamepad-manager.js"></script>
     <script src="../js/controller-guide.js"></script>
     <script src="../js/advanced-graphics.js"></script>
     <script src="../js/game-error-handler.js"></script>
     
     <!-- Universal Integration Systems -->
-    <script src="../js/multi-chain-wallet.js"></script>
     <script src="../js/unified-auth.js"></script>
     <script src="../js/global-leaderboard.js"></script>
     <script src="../js/leaderboard-ui.js"></script>
@@ -176,6 +190,8 @@
     <script src="../js/universal-game-integration.js"></script>
     <script src="../js/achievements.js"></script>
     
+    <script src="../js/skeleton-engine.js"></script>
+    <script src="../js/humanoid-renderer.js"></script>
     <script src="../js/contra-commando.js"></script>
     <script>
         // Initialize Universal Integration
@@ -187,5 +203,6 @@
             }
         });
     </script>
+    <script src="../js/home-button.js"></script>
 </body>
 </html>
